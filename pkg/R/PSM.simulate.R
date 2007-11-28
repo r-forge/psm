@@ -195,7 +195,8 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
     # SubSampling
     idx <- which(where %*% rep(T,len) == 1)
 
-    Result[[i]] <- list(X=X[,idx],Y=Y[,idx],Time=SampleTime,U=Ulist[[i]],eta=eta)
+    Result[[i]] <- list(X=matrix(X[,idx],nrow=dimX),Y=matrix(Y[,idx],nrow=dimY),
+                        Time=SampleTime,U=Ulist[[i]],eta=eta)
 
   } #end individual loop
   
