@@ -37,9 +37,9 @@ function(phi, Model, Data) {
   matD  <- tmpM$matD 
   
                                         # Output prediction covariance
-  S   <- Model$S(Time=Time[k] , phi=phi ,U=Uk )
-  X0  <- Model$X0(Time=Time[1] , phi=phi ,U=Uk)
-  SIG <- Model$SIG(Time=Time[1], phi=phi ,U=Uk)
+  S   <- Model$S(phi=phi)
+  X0  <- Model$X0(phi=phi)
+  SIG <- Model$SIG(phi=phi)
 
 
   dimN  <- length(Time)     # Time is vector -> use length
