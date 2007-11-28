@@ -1,0 +1,30 @@
+`IndividualLL.KF.gr` <-
+function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0) {
+  # Forward gradient function for IndividualLL.KF
+  
+  L <- length(eta)
+  ILL <- rep(0,length=(L+1))
+  GRAD <- rep(0,length=L)
+  
+  TP <- matrix(0,nrow=L+1,ncol=L)
+  for (i in 1:L) {
+    TP[i, ] <- eta
+    TP[i,i] <- eta[i] + GradSTEP * ( abs(eta[i])  + GradSTEP );
+  }
+  TP[L+1,] <- eta
+  
+  for ( i in 1:(L+1) )
+    ILL[i] <- IndividualLL.KF(eta=TP[i,],theta=theta,OMEGA=OMEGA,Model=Model,Data=Data)
+        
+  # Calculate Gradient and insert
+  for (i in 1:L)
+    GRAD[i] = (ILL[i]-ILL[L+1])/( TP[i,i]-eta[i] ) 
+
+  if(GUIFlag>4) {
+    print(c("<eta> =", signif(eta,5)),q=F)
+    print(c("<GR>    =", signif(GRAD,5)),q=F)
+  }
+   
+  GRAD
+}
+
