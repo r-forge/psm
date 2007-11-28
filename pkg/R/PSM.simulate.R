@@ -72,9 +72,6 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
     } else {
       Ustart <- NA
     }
-
-    # Check for DOSE 
-    ModelHasDose <- "Dose" %in% names(Model)
     
 
     # Create Matrices
@@ -188,7 +185,7 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
     # SubSampling
     idx <- which(where %*% rep(T,len) == 1)
 
-    Result[[i]] <- list(X=X[,idx],Y=Y[,idx],TIME=SampleTime,U=Ulist[[i]],eta=eta)
+    Result[[i]] <- list(X=X[,idx],Y=Y[,idx],Time=SampleTime,U=Ulist[[i]],eta=eta)
 
   } #end individual loop
   
@@ -198,6 +195,11 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
 
 
 
+#matrix square root
+sqrtm <- function(A) {
+  e <- eigen(A)
+  e$vectors %*% diag(sqrt(e$values),nrow = length(e$values)) %*% t(e$vectors)
+}
 
 
 

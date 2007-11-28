@@ -16,7 +16,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   for(i in 1:dimS) {
     Di <- Data[[i]]
     Y <- Di$Y
-    TIME <- Di$TIME
+    Time <- Di$Time
     # Check for INPUT and set it
     if(is.null(Di[["U"]])) { #check if U exists.
       ModelHasInput <- FALSE
@@ -29,7 +29,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     }
     U <- if( !ModelHasInput) { NA } else { Di[["U"]] }
     if(subsample) {
-      n <- length(TIME)
+      n <- length(Time)
       N <- n+(n-1)*subsample
       TT <- vector(length=N)
       YY <- matrix(0,nrow=dimY,ncol=N)
@@ -42,16 +42,16 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
       for(j in 1:n) {
         idx0 <- j+(j-1)*subsample
         YY[,idx0] <- Y[,j]
-        TT[idx0] <- TIME[j]
+        TT[idx0] <- Time[j]
         if(ModelHasInput)
           UU[,idx0] <- U[,j]
         if(j==n)
           break
         YY[,(idx0+1):(idx0+subsample)] = NA
-        TT[(idx0+1):(idx0+subsample)] <- seq(from=TIME[j],to=TIME[j+1],length.out=(subsample+2))[-c(1,subsample+2)]
+        TT[(idx0+1):(idx0+subsample)] <- seq(from=Time[j],to=Time[j+1],length.out=(subsample+2))[-c(1,subsample+2)]
         if(ModelHasInput) UU[,(idx0+1):(idx0+subsample)] = matrix(U[,j],nrow=dim(U)[1],ncol = subsample)
       }
-      Di <- list(Y = YY, TIME = TT, U = UU)
+      Di <- list(Y = YY, Time = TT, U = UU)
     }
     if(!is.null(OMEGA)) {
       phi <- Model$h(apl$etaList[,i],theta)

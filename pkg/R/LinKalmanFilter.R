@@ -8,7 +8,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
 #       $SIG          function  input:  phi,u,t
 #
 #     Data            type: list
-#       $TIME         matrix [1 dimT]
+#       $Time         matrix [1 dimT]
 #       $Y            matrix [dimY dimT]
 #       $U            matrix [dimU dimT]
 #
@@ -35,7 +35,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
   if(echo) cat("phi:" , paste(round(as.double(phi),2) , "\t"))
 
     # Extract Data components
-    TIME  <- Data[["TIME"]]
+    Time  <- Data[["Time"]]
  
     Y     <- Data[["Y"]]
 
@@ -69,7 +69,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     SIG           <- Model$SIG(phi=phi)
 
 
-    dimT  <- length(TIME)     # TIME is vector -> use length
+    dimT  <- length(Time)     # Time is vector -> use length
     dimY  <- nrow(Y)          # Dimensionality of observations
     dimU  <- ifelse(ModelHasInput,nrow(U),0)
     dimX  <- nrow(InitialState)
@@ -80,7 +80,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     
     # P0 CTSM MathGuide page 19 (1.118) and page 8 (1.49)
     PS  <- 1.0;
-    tau <- TIME[2] - TIME[1]
+    tau <- Time[2] - Time[1]
 
     # Dimensions Pintegral:[2*dimX 2*dimX]
     tmp <-  rbind( cbind(-matA , SIG%*%t.default(SIG)) ,
@@ -139,7 +139,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
                   E%*%matC%*%Xp[,k,drop=F]} }
 
         # Output prediction covariance    
-        # S     <- Model$S(Time=TIME[k] , phi=phi ,U=Uk )
+        # S     <- Model$S(Time=Time[k] , phi=phi ,U=Uk )
         S     <- Model$S(phi=phi)
         R[ObsIndex,ObsIndex,k]  <- E%*%matC%*%Pp[,,k]%*%t.default(matC)%*%t.default(E) + E%*%S%*%t.default(E)
 
@@ -165,7 +165,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         }
 
         if(ModelHasDose) {
-          idxD = which(TIME[k]==Model$Dose$Time)
+          idxD = which(Time[k]==Model$Dose$Time)
           if(length(idxD)==1) {
             Xf[Model$Dose$State[idxD],k] <- Xf[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
           }
@@ -182,8 +182,8 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         
 
         # State prediction
-        tau   <- TIME[k+1]-TIME[k]
-        #SIG   <- Model$SIG(Time=TIME[k], phi=phi ,U=Uk)
+        tau   <- Time[k+1]-Time[k]
+        #SIG   <- Model$SIG(Time=Time[k], phi=phi ,U=Uk)
         # Try to optimize
         tmp   <- tau* rbind( cbind(-matA , SIG%*%t.default(SIG)) ,
                   cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))

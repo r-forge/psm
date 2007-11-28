@@ -2,7 +2,7 @@ ModelCheck <- function(Model , Data , Par) {
   # Check the dimensions of the Model and Data
   #
   # Data is data for a single subject
-  # Data$TIME ; Data$Y ; Data$U
+  # Data$Time ; Data$Y ; Data$U
 
 
   if ( is.null(Data$U) ) {
@@ -49,9 +49,9 @@ ModelCheck <- function(Model , Data , Par) {
   matD  <- tmp$matD
 
   
-  X0 <- Model$X0( Time=Data$TIME[1], phi=phi, U=Uk)
-  SIG <-  Model$SIG( Time=Data$TIME[1], phi=phi,U=Uk)
-  S <- Model$S( Time=Data$TIME[1], phi=phi, U=Uk)
+  X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
+  SIG <-  Model$SIG( Time=Data$Time[1], phi=phi,U=Uk)
+  S <- Model$S( Time=Data$Time[1], phi=phi, U=Uk)
 
   # Test for positive semidefinit
   if( any( eigen(SIG)$values <0 ) ) {
@@ -61,12 +61,12 @@ ModelCheck <- function(Model , Data , Par) {
   
   
   # dimT
-  dimT <- length(Data$TIME) 
+  dimT <- length(Data$Time) 
   if( dimT!=dim(Data$Y)[2]) {
-    print("Data$TIME and Data$Y doesn't match") ; return(FALSE) }
+    print("Data$Time and Data$Y doesn't match") ; return(FALSE) }
   if(ModelHasInput) {
     if(dimT!=dim(Data$U)[2]) {
-      print("Data$TIME and Data$U doesn't match") ; return(FALSE) }
+      print("Data$Time and Data$U doesn't match") ; return(FALSE) }
     } # ModelHasInput
 
   # dimX
@@ -108,8 +108,8 @@ ModelCheck <- function(Model , Data , Par) {
   
   # Dose
   if( "Dose" %in% names(Model) ) {
-    if( any(!(Model$Dose$Time %in% Data$TIME))) {
-      print("Dose times doesn't coincide with Data$TIME") ; return(FALSE) }
+    if( any(!(Model$Dose$Time %in% Data$Time))) {
+      print("Dose times doesn't coincide with Data$Time") ; return(FALSE) }
       
     if( any( Model$Dose$State > dimX) ) {
       print("Dose states are larger than number of states") ; return(FALSE) }

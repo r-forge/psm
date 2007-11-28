@@ -9,7 +9,7 @@ function(phi, Model, Data) {
 
   
 
-  TIME  <- Data[["TIME"]]
+  Time  <- Data[["Time"]]
   Y     <- Data[["Y"]]
   
   # Check for INPUT and set it
@@ -30,19 +30,19 @@ function(phi, Model, Data) {
     Uk <- NA
   } 
 
-  tmpM  <- Model$Matrices(phi=phi , U=Uk)
+  tmpM  <- Model$Matrices(phi=phi)
   matA  <- tmpM$matA
   matB  <- tmpM$matB
   matC  <- tmpM$matC
   matD  <- tmpM$matD 
   
                                         # Output prediction covariance
-  S   <- Model$S(Time=TIME[k] , phi=phi ,U=Uk )
-  X0  <- Model$X0(Time=TIME[1] , phi=phi ,U=Uk)
-  SIG <- Model$SIG(Time=TIME[1], phi=phi ,U=Uk)
+  S   <- Model$S(Time=Time[k] , phi=phi ,U=Uk )
+  X0  <- Model$X0(Time=Time[1] , phi=phi ,U=Uk)
+  SIG <- Model$SIG(Time=Time[1], phi=phi ,U=Uk)
 
 
-  dimN  <- length(TIME)     # TIME is vector -> use length
+  dimN  <- length(Time)     # Time is vector -> use length
   dimY  <- nrow(Y)          # Dimensionality of observations
   dimU  <- ifelse(ModelHasInput,nrow(U),0)
   dimX  <- nrow(X0)
@@ -58,7 +58,7 @@ function(phi, Model, Data) {
   for( i in 1:dimN) {
     
     tau <- (dimN+1)-i
-    ts <- ifelse( i<dimN , TIME[tau]-TIME[tau-1] , TIME[2]-TIME[1])
+    ts <- ifelse( i<dimN , Time[tau]-Time[tau-1] , Time[2]-Time[1])
     
     Adis <- mexp(matA*ts)
  
@@ -87,7 +87,7 @@ function(phi, Model, Data) {
     
   } # Loop over DimN
   
-  return( list(TIME=TIME, Xs=Xs, Ps=Ps,Xf=Obj$Xf, Pf=Obj$Pf, Xp=Obj$Xp, Pp=Obj$Pp,
+  return( list(Time=Time, Xs=Xs, Ps=Ps,Xf=Obj$Xf, Pf=Obj$Pf, Xp=Obj$Xp, Pp=Obj$Pp,
                Yp=Obj$Yp, R=Obj$R))
 
 }
