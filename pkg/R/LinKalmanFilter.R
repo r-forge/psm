@@ -43,7 +43,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
   if(is.null(Data[["U"]])) { #check if U exists.
     ModelHasInput <- FALSE
   }
-  else if ( sum(is.na(Data[["U"]])) >=1 ) { #check if it contains any NA
+  else if ( any(is.na(Data[["U"]])) ) { #check if it contains any NA
     ModelHasInput <- FALSE
   }
   else {
@@ -139,7 +139,6 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
                   E%*%matC%*%Xp[,k,drop=F]} }
 
         # Output prediction covariance    
-        # S     <- Model$S(Time=Time[k] , phi=phi ,U=Uk )
         S     <- Model$S(phi=phi)
         R[ObsIndex,ObsIndex,k]  <- E%*%matC%*%Pp[,,k]%*%t.default(matC)%*%t.default(E) + E%*%S%*%t.default(E)
 
@@ -183,7 +182,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
 
         # State prediction
         tau   <- Time[k+1]-Time[k]
-        #SIG   <- Model$SIG(Time=Time[k], phi=phi ,U=Uk)
+
         # Try to optimize
         tmp   <- tau* rbind( cbind(-matA , SIG%*%t.default(SIG)) ,
                   cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
@@ -254,11 +253,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
           return(as.vector(negLogLike)) }
 }
 
-`C3` <-
-function(a) {
-  dim(a) <- dim(a)[1:2]
-  a
-}
+
 
 
 
