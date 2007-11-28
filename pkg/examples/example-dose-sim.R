@@ -1,8 +1,4 @@
 
-detach(package:PSM)
-library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
-
-
 k1 = 0.05; k2 = 0.05; ke = 0.07;
 Model.SimDose <- list(
                       Matrices = function(phi, U) {
@@ -29,17 +25,38 @@ Model.SimDose <- list(
                       ModelPar = function(THETA){
                         list(theta=list(ke=THETA[1], S=THETA[2]),
                              OMEGA=diag(c(1)) )
-                      }
+                      },
+                      Dose = list(
+                        Time = c(30,150),
+                        State = c(1, 1),
+                        Amount = c(1000,1500)
+                        )
                       )
 
 # Create Simulation Timeline 
-SimDose.Subj <- 2
+SimDose.Subj <- 1
 SimDose.Time <- vector(mode="list",length=NoOfSubjects)
 for (i in 1:NoOfSubjects) 
   SimDose.Time[[i]] <- seq(from=15,by=15,length=30)
 
 SimDose.Time
 
-SimDose.THETA <-  c(0.07 , 100 , 1)
 
-Sim.Data <- PSM.simulate(Model.SimDose, SimDose.THETA, dt=.1 , Tlist=SimDose.Time ,individuals=SimDose.Subj)
+detach(package:PSM)
+library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
+
+#                   ke   S  OMEGA
+SimDose.THETA <-  c(0.03 , 0 , 0)
+Model.SimDose$Dose$Time = c(30,180)
+Model.SimDose$Dose$Amount = c(1500,1500)
+SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.THETA, dt=.1 , Tlist=SimDose.Time ,individuals=SimDose.Subj)
+
+
+par(mfcol=c(2,2))
+for(id in 1:SimDose.Subj) {
+  for(i in 1:2) {
+    plot(SimDose.Data[[id]]$TIME , SimDose.Data[[id]]$X[i,],type="l",
+         ylab=paste('state',i), xlab=paste('individual',id))
+    rug(SimDose.Data[[id]]$TIME)
+  }
+}
