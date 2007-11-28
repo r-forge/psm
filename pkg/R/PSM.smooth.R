@@ -9,8 +9,8 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   
   OMEGA <- Model$ModelPar(THETA)$OMEGA
   theta <- Model$ModelPar(THETA)$theta
-  dimS <- length(Pop.Data)
-  dimY <- dim(Pop.Data[[1]]$Y)[1]
+  dimS <- length(Data)
+  dimY <- dim(Data[[1]]$Y)[1]
   lkf = vector(mode="list",length=dimS)
   
   for(i in 1:dimS) {
