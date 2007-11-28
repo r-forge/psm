@@ -1,6 +1,7 @@
 `PSM.smooth` <-
 function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
 
+  FullOutput <- FALSE
   if( is.null(etaList)) {
     apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,longOutput=T)
     etaList <- apl$etaList
@@ -54,7 +55,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
       Di <- list(Y = YY, Time = TT, U = UU)
     }
     if(!is.null(OMEGA)) {
-      phi <- Model$h(apl$etaList[,i],theta)
+      phi <- Model$h(etaList[,i],theta)
     } else {
       phi <- theta
     }
