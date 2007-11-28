@@ -1,20 +1,20 @@
 
 k1 = 0.05; k2 = 0.05; ke = 0.07;
 Model.SimDose <- list(
-                      Matrices = function(phi, U) {
+                      Matrices = function(phi) {
                         kei <- phi[["kei"]]
                         matA <- matrix( c(-(k1+kei) ,  k2 ,   
                                                  k1 , -k2 ) ,nrow=2,byrow=T)
                         matC <- matrix(c(1,0),nrow=1)
                         list(matA=matA,matC=matC)
                       },
-                      X0 = function(Time, phi, U) {   ############## remove Time, U
+                      X0 = function(phi) {
                         matrix(0,nrow=2)
                       },
-                      SIG = function(Time,phi, U) {   ############## remove Time, U
+                      SIG = function(phi) { 
                         diag( c(0,0) )
                       },
-                      S = function(Time , phi = phi, U ) {   ############## remove Time, U
+                      S = function(phi) {
                         matrix(phi[["S"]])
                       },
                       h = function(eta,theta) {
@@ -55,8 +55,9 @@ SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.THETA, dt=.1 , Tlist=SimDose
 par(mfcol=c(2,2))
 for(id in 1:SimDose.Subj) {
   for(i in 1:2) {
-    plot(SimDose.Data[[id]]$TIME , SimDose.Data[[id]]$X[i,],type="l",
+    plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
          ylab=paste('state',i), xlab=paste('individual',id))
-    rug(SimDose.Data[[id]]$TIME)
+    rug(SimDose.Data[[id]]$Time)
   }
 }
+

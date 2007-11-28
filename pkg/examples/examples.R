@@ -28,7 +28,7 @@ ModelCheck
 k1 = 0.053; k2 = 0.051; ke = 0.062;
 
 Model.Sim <- list(
-               Matrices = function(phi, U) {
+               Matrices = function(phi) {
                  a1  <- phi[["a1"]]
                  a2  <- phi[["a2"]]
                  B  <- phi[["B"]]
@@ -44,16 +44,16 @@ Model.Sim <- list(
                  matC <- matrix(c(1,0,0,0),nrow=1)
                  matD <- matrix(c(0,0),nrow=1)
                  return(list(matA=matA,matB=matB,matC=matC,matD=matD))},
-               X0 = function(Time=NA,phi=NA,U=NA) {
+               X0 = function(phi) {
                  C0 <- phi[["C0"]]
                  tmp    <- C0
                  tmp[2] <- C0*k1/k2
                  tmp[3] <- C0*ke
                  tmp[4] <- 0
                  return(matrix(tmp,ncol=1) )} ,
-               SIG = function(Time=NA,phi=NA,U=NA) {
+               SIG = function(phi) {
                  return( diag( c(0,0,phi[["SIG33"]],0)) ) } ,
-               S = function(Time=NA,phi=NA,U=NA) {
+               S = function(phi) {
                  return( matrix(phi[["S"]])) } ,
                h = function(eta,theta) {
                  phi <- theta

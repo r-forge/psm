@@ -73,9 +73,10 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
       Ustart <- NA
     }
     
-
+    ModelHasDose <- "Dose" %in% names(Model)
+    
     # Create Matrices
-    tmpM  <- Model$Matrices(phi=phi , U=Ustart)
+    tmpM  <- Model$Matrices(phi=phi)
     matA  <- tmpM$matA
     matB  <- tmpM$matB
     matC  <- tmpM$matC
@@ -83,8 +84,8 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
 
 
     # Initial States
-    InitialState <- Model$X0(Time=t[1] ,phi=phi ,U=Ustart)
-    SIG <- Model$SIG(Time=t[1], phi=phi ,U=Ustart)    ########## Remove time, U
+    InitialState <- Model$X0(phi=phi)
+    SIG <- Model$SIG(phi=phi)  
 
     # Dimensions
     dimX <- nrow(InitialState)
@@ -115,9 +116,9 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
 
       # observation
       if(ModelHasInput) {
-        Y[,k] <- matC %*% X[,k,drop=F] + matD%*%Uk + sqrtm(Model$S(Time=t[k] , phi=phi ,U=Uk )) %*% eObs[,k]
+        Y[,k] <- matC %*% X[,k,drop=F] + matD%*%Uk + sqrtm(Model$S(phi=phi)) %*% eObs[,k]
       } else 
-      Y[,k] <- matC %*% X[,k,drop=F] + sqrtm(Model$S(Time=t[k] , phi=phi ,U=Uk )) %*% eObs[,k]
+      Y[,k] <- matC %*% X[,k,drop=F] + sqrtm(Model$S(phi=phi)) %*% eObs[,k]
 
       # Add dose after measurement is taken at Time[k]
       if(ModelHasDose) {
