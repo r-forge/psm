@@ -1,4 +1,4 @@
-
+rm(list=ls())
 k1 = 0.05; k2 = 0.05; ke = 0.07;
 Model.SimDose <- list(
                       Matrices = function(phi) {
@@ -20,11 +20,10 @@ Model.SimDose <- list(
                       h = function(eta,theta) {
                         phi <- theta
                         phi[["kei"]] <- theta[["ke"]]*exp(eta[1])
-                        phi
-                      },
+                        phi                      },
                       ModelPar = function(THETA){
                         list(theta=list(ke=THETA[1], S=THETA[2]),
-                             OMEGA=diag(c(1)) )
+                             OMEGA=matrix(THETA[3]) )
                       },
                       Dose = list(
                         Time = c(30,150),
@@ -34,26 +33,32 @@ Model.SimDose <- list(
                       )
 
 # Create Simulation Timeline 
-SimDose.Subj <- 1
-SimDose.Time <- vector(mode="list",length=NoOfSubjects)
-for (i in 1:NoOfSubjects) 
+SimDose.Subj <- 2
+SimDose.Time <- vector(mode="list",length=SimDose.Subj)
+for (i in 1:SimDose.Subj) 
   SimDose.Time[[i]] <- seq(from=15,by=15,length=30)
 
 SimDose.Time
 
 
+#############
+# Simulation
+#############
+
 detach(package:PSM)
 library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 
 #                   ke   S  OMEGA
-SimDose.THETA <-  c(0.03 , 0 , 0)
+SimDose.THETA <-  c(0.03 , 10 , 0)
 Model.SimDose$Dose$Time = c(30,180)
 Model.SimDose$Dose$Amount = c(1500,1500)
 SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.THETA, dt=.1 , Tlist=SimDose.Time ,individuals=SimDose.Subj)
 
 
-par(mfcol=c(2,2))
+par(mfcol=c(3,SimDose.Subj))
 for(id in 1:SimDose.Subj) {
+  plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
+         ylab="Observations", xlab=paste('individual',id))
   for(i in 1:2) {
     plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
          ylab=paste('state',i), xlab=paste('individual',id))
@@ -61,3 +66,21 @@ for(id in 1:SimDose.Subj) {
   }
 }
 
+
+
+###########
+# Smoothing
+###########
+#source("~/PSM/PSM/R/PSM.smooth.R")
+out <- PSM.smooth(Model = Model.SimDose, Data = SimDose.Data, THETA = SimDose.THETA, subsample = 10, etaList=matrix(c(0,0),nrow=1))
+
+par(mfcol=c(3,SimDose.Subj))
+for(id in 1:SimDose.Subj) {
+  plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
+         ylab="Observations", xlab=paste('individual',id))
+  for(i in 1:2) {
+    plot(out$smooth[[id]]$Time , out$smooth[[id]]$Xs[i,],type="l",
+         ylab=paste('smooth state',i), xlab=paste('individual',id))
+    rug(SimDose.Data[[id]]$Time)
+  }
+}
