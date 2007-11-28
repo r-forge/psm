@@ -96,9 +96,9 @@ Sim.Data
 par(mfrow=c(2,2))
 for(id in 1:NoOfSubjects) {
   for(i in 1:4) {
-    plot(Sim.Data[[id]]$TIME , Sim.Data[[id]]$X[i,],type="l",
+    plot(Sim.Data[[id]]$Time , Sim.Data[[id]]$X[i,],type="l",
          ylab=paste('state',i), xlab=paste('individual',id))
-    rug(Sim.Data[[id]]$TIME)
+    rug(Sim.Data[[id]]$Time)
   }
 }
 
@@ -110,7 +110,7 @@ for(id in 1:NoOfSubjects) {
 # Transform Simulation Data -> Estimation Data
 Pop.Data <- vector( mode="list" , length=NoOfSubjects)
 for(i in 1:NoOfSubjects) {
-  Pop.Data[[i]] <- list(TIME=Sim.Data[[i]]$TIME,
+  Pop.Data[[i]] <- list(Time=Sim.Data[[i]]$Time,
                 Y=matrix( Sim.Data[[i]]$Y , 1 , length(Sim.Data[[i]]$Y)),
                 U=NULL)
 }
@@ -177,11 +177,11 @@ Data.Sm <- PSM.smooth( Model=Model.Est , Data=Pop.Data, THETA=THETA, subsample=5
 ID <- NoOfSubjects
 CMT <- 3
 Data <- Data.Sm$smooth[[ID]]
-plot( Data$TIME, Data$Xs[CMT,] , type="n", ylim=c(0,250),
+plot( Data$Time, Data$Xs[CMT,] , type="n", ylim=c(0,250),
      xlab="Min",ylab="pmol/min",main="Insulin Secretion Rate")
-polygon( c(Data$TIME,rev(Data$TIME)) ,
+polygon( c(Data$Time,rev(Data$Time)) ,
         c(Data$Xs[CMT,]+sqrt(abs(Data$Ps[CMT,CMT,])) ,
           rev(Data$Xs[CMT,]-sqrt(abs(Data$Ps[CMT,CMT,])))),col=4,density=50)
-lines( Data$TIME, Data$Xs[CMT,], type="l",lwd=2)
-rug(Data$TIME)
+lines( Data$Time, Data$Xs[CMT,], type="l",lwd=2)
+rug(Data$Time)
 
