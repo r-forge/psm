@@ -72,6 +72,9 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
     } else {
       Ustart <- NA
     }
+
+    # Check for DOSE 
+    ModelHasDose <- "Dose" %in% names(Model)
     
 
     # Create Matrices
