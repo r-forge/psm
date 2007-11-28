@@ -83,7 +83,8 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
 
 
     # Initial States
-    InitialState <- Model$X0(Time=t[1] , phi=phi ,U=Ustart)
+    InitialState <- Model$X0(Time=t[1] ,phi=phi ,U=Ustart)
+    SIG <- Model$SIG(Time=t[1], phi=phi ,U=Ustart)    ########## Remove time, U
 
     # Dimensions
     dimX <- nrow(InitialState)
@@ -111,18 +112,26 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
  
       if(ModelHasInput) 
         Uk <- U[,k,drop=F]
- 
-    # observation
+
+      # observation
       if(ModelHasInput) {
         Y[,k] <- matC %*% X[,k,drop=F] + matD%*%Uk + sqrtm(Model$S(Time=t[k] , phi=phi ,U=Uk )) %*% eObs[,k]
       } else 
       Y[,k] <- matC %*% X[,k,drop=F] + sqrtm(Model$S(Time=t[k] , phi=phi ,U=Uk )) %*% eObs[,k]
+
+      # Add dose after measurement is taken at Time[k]
+      if(ModelHasDose) {
+        idxD = which(t[k]==Model$Dose$Time)
+        if(length(idxD)==1) {
+          X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+        }
+      }
       
+ 
     # Abort state pred if finished
       if (k == n) break
 
     # State prediction
-      SIG <- Model$SIG(Time=t[k], phi=phi ,U=Uk)
       tmp <- dt * rbind(cbind(-matA , SIG%*%t.default(SIG)) ,
                         cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
       tmp <- mexp(tmp)
