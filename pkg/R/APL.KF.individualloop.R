@@ -51,7 +51,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   # Hessian approximation (19)
   h_Li <- matrix(0,dimEta,dimEta)
   for (q in 1:dimN) 
-    h_Li = h_Li + t(C3(eGrad[,,q,drop=F]))%*%solve(o$R[,,q])%*%C3(eGrad[,,q,drop=F])
+    h_Li = h_Li + t(CutThirdDim(eGrad[,,q,drop=F]))%*%solve(o$R[,,q])%*%CutThirdDim(eGrad[,,q,drop=F])
   h_Li <- - h_Li - solve(OMEGA);
 
   # RETURN neg. log. likelihood contribution
