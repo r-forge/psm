@@ -65,9 +65,10 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   }
 
   if(FullOutput) {
-    list(negLogL = apl$negLogLike,etaList = apl$etaList,smooth = lkf)
-  } else {
-    list(smooth = lkf)
-  }
+    lkf[[i]]$eta <- etaList[,i]
+    lkf[[i]]$negLogL <- apl$negLogLike
+  } 
+
+  lkf
 }
 
