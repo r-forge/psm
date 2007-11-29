@@ -9,9 +9,9 @@
   
   This package provides functions for estimation and simulation of
   multivariate linear mixed-effects models using stochastic
-  differential equations. The setup allows for multidimentional input and
-  specification of dosage regimen and is able to give smoothed estimates of
-  model states.
+  differential equations. The setup allows for multidimensional input,
+  specification of dosage regimen and is able to return smoothed
+  estimates of model states.
 }
 
 \details{

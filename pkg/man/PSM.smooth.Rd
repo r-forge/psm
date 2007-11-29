@@ -1,13 +1,14 @@
 \name{PSM.smooth}
 \alias{PSM.smooth}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Estimation of model states based on estimated population parameters.}
+\title{Smoothing of model states based on estimated population parameters.}
 \description{
   Gives estimates of model states and random effects \eqn{\eta}. The
   function is intended to be used based on population parameters found
   using \code{\link{PSM.estimate}} or to check initial values before
-  parameter estimation. 
+  parameter estimation.
 }
+
 \usage{
 PSM.smooth(Model, Data, THETA, subsample = 0, etaList=NULL, trace = 0)
 }
@@ -23,12 +24,12 @@ PSM.smooth(Model, Data, THETA, subsample = 0, etaList=NULL, trace = 0)
     Vector of population parameters used for the state estimation.
   }
   \item{subsample}{
-    Number of points to to estimate state in between
-    observation. The extra points are linearly spaced.
+    Number of points to estimate states in between
+    measurements. The extra points are linearly spaced.
   }
   \item{etaList}{
     Matrix where each column contains an etimate of
-    \eqn{\eta_i}. \code{etaList} as the same format as in the output of 
+    \eqn{\eta_i}. \code{etaList} has the same format as the output of 
     \code{\link{PSM.estimate}}. If ommitted, the function will evalutate
     the population likehood function to find estimates of \eqn{\eta_i}{eta}
     for all individuals.
@@ -41,15 +42,16 @@ PSM.smooth(Model, Data, THETA, subsample = 0, etaList=NULL, trace = 0)
   * See \code{\link{PSM.estimate}} for further detail.
 }
 \details{
-  The function produces three types of estimates. 
+  The function produces three types of estimates.
 
   \describe{
-    \item{Predicted}{Only past observations are used for the state
+    \item{Predicted}{Only past measurements are used for the state
       estimate at time t. }
-    \item{Filtered}{ Only past and the current observation are used for
+    
+    \item{Filtered}{ Only past and the current measurements are used for
       the state estimate at time t.}
     
-    \item{Smoothed}{ All observation (both past and future) are used to
+    \item{Smoothed}{ All measurements (both past and future) are used to
       form the state estimate at time t. This is usually the prefered type
       of state estimate.}
   }

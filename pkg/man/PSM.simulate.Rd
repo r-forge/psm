@@ -1,32 +1,74 @@
 \name{PSM.simulate}
 \alias{PSM.simulate}
 %- Also NEED an '\alias' for EACH other topic documented here.
+
 \title{Create simulation data for multiple individuals}
 \description{
   Simulates data for multiple individuals in a mixed effects model based
-  on stochastic differential equations.
+  on stochastic differential equations using an euler scheme.
 }
 \usage{
-PSM.simulate(Model, THETA, dt, Ulist = NA, Tlist, individuals = 1) 
+PSM.simulate(Model, Data, THETA, dt, individuals = 1) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{Model}{ ~~Describe \code{Model} here~~ }
-  \item{THETA}{ ~~Describe \code{THETA} here~~ }
-  \item{dt}{ ~~Describe \code{dt} here~~ }
-  \item{Ulist}{ ~~Describe \code{Ulist} here~~ }
-  \item{Tlist}{ ~~Describe \code{Tlist} here~~ }
-  \item{individuals}{ ~~Describe \code{individuals} here~~ }
+  \item{Model}{
+    Model list *
+  }
+  \item{Data}{
+    List with elements described below. No \code{Data$Y} is needed as it
+    is generated through the simulation.
+    \describe{
+      \item{\code{Time}}{
+	Time vector
+      }
+      \item{\code{U}}{
+	Input list for the Model
+      }
+      \item{\code{covar}}{
+	Covariates list 
+      }
+    }
+  }
+  \item{THETA}{
+    Vector of population parameters
+  }
+  \item{dt}{
+    Time Step in the Euler scheme
+  }
+  \item{individuals}{
+    No of individuals simulated
+  }
 }
 \details{
-  If necessary, more details than the description above
+  
+  The \eqn{eta_i}{eta} is drawn from the multivariate normal
+  distribution \eqn{N(0,\Omega)}{N(0,OMEGA)}. The simulation is an euler
+  based method but for every time interval dt the model is predicted and
+  the states affected by system noise (\eqn{\sigma}{SIG}).
+  
+  The measurements are added an normal error term belonging to \eqn{N(0,S)}.
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
-  ...
+
+  The simulated outcome of the model is returned in a list, where each
+  element is the data for an individual.
+  
+  \item{X}{
+    Simulated states
+  }
+  \item{Y}{
+    Simulated measurements
+  }
+  \item{Time}{
+    Time points for measurements
+  }
+  \item{U}{
+    Input vector used in simulation
+  }
+  \item{eta}{
+    The random effects used in the simulation
+  }
 }
 
 \references{ Please refer to the help page for \code{\link{PSM}}. }

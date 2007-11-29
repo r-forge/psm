@@ -3,9 +3,9 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Estimate population parameters}
 \description{
-  Estiamtes population parameters in a mixed effects model based on
-  stochastic differential equations by maximizing the likelihood
-  function. 
+  Estimates population parameters in a mixed effects model based on
+  stochastic differential equations by use of maximum likelihood and the
+  Kalman filter.
 }
 \usage{
 PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
@@ -18,13 +18,15 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
     \describe{
       \item{\code{Matrices = function(phi)}}{
 	Defines the matrices \eqn{A}, \eqn{B}, \eqn{C} and \eqn{D} in
-	the model equation. Returns a list of matrices named
+	the model equation. Must return a list of matrices named
 	\code{matA}, \code{matB}, \code{matC} and \code{matD}.
-	If there is no input, \code{matB} and \code{matD} may be omitted.
+	If there is no input, \code{matB} and \code{matD} may be omitted
+	by setting them to \code{NULL}.
       }
-      \item{\code{X0 = function(phi)}}{
-	Defines the model state at \code{TIME[0]} before update. Returns
-	a column matrix.
+      \item{\code{X0 = function(Time, phi, U)}}{
+	Defines the model state at \code{Time[0]} before
+	update. \code{Time[0]} and \code{U[,1]} can be used in the
+	evaluation of X0. Must return a column matrix.
       }
       \item{\code{SIG = function(phi)}}{
 	Defines the matrix \eqn{\sigma}{SIG} for the diffusion
@@ -34,9 +36,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
 	Defines a covariance matrix for the observation noise. Returns a
 	square matrix. 
       }
-      \item{\code{h = function(eta,theta)}}{
-	Second stage model. Defines how random effects affects the
-	total model. Returns a list \code{phi} of individual parameters. 
+      \item{\code{h = function(eta,theta,covar)}}{
+	Second stage model. Defines how random effects (\code{eta}) and
+	covariates (\code{covar}) affects the population parameters.
+	Must return a list \code{phi} of individual parameters. 
       }
       \item{\code{ModelPar = function(THETA)}}{
 	Defines the population parameters to be optimized. Returns a
@@ -56,11 +59,12 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
 	\code{Dose} is missing or \code{NULL}, no dose is assumed. 
 	\describe{
 	  \item{\code{Time}}{ A vector of timepoints for the dosing. Each must
-	    coinside with a measurement time, but the measurement
-	    may be missing (\code{NA}). Dose is considered added to the system
+	    coinside with a measurement time. Remember to insert a
+	    missing measurement in \code{Data$Y} if a corresponding
+	    timepoint is not present. Dose is considered added to the system
 	    just after the measurement.}
 	  \item{\code{State}}{ A vector with indexes of the state for dosing.}
-	  \item{\code{Amount}}{: A vector of amounts to be added.}
+	  \item{\code{Amount}}{ A vector of amounts to be added.}
 	}
       }
     }
@@ -70,12 +74,12 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
     containing: 
 
     \describe{
-      \item{\code{TIME}}{A vector of timepoints for measurements}
+      \item{\code{Time}}{A vector of timepoints for measurements}
 
       \item{\code{Y}}{A matrix of multivariate observations for each timepoint, where
-	each column is a multivariate observation. Y may contain \code{NA} for missing
+	each column is a multivariate measurement. Y may contain \code{NA} for missing
 	observations and a column may consist of both some or only
-	\code{NA}s. The latter is usefull if a dose is given when no measurement
+	\code{NA}s. The latter is useful if a dose is given when no measurement
 	is taken. }
 
       \item{\code{U}}{A matrix of multivariate input to the model for each
@@ -123,12 +127,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
   The second stage model describing inter-individual variations is
   defined as:
 
-  \deqn{\phi_i = h(\eta_i,\theta)}{phi = h(eta,theta)}
+  \deqn{\phi_i = h(\eta_i,\theta,covariates_i)}{phi = h(eta,theta,covariates)}
 
-  where \eqn{\eta_i \sim N(0,\Omega)}{eta ~ N(0,OMEGA)} and
-  \eqn{\theta} are the fixed effect parameters.
-  
-  (Matrix dimensions)
+  where \eqn{\eta_i \sim N(0,\Omega)}{eta ~ N(0,OMEGA)}, \eqn{\theta}
+  are the fixed effect parameters and covariates are for individual i.
   
 }
 \value{
@@ -146,9 +148,9 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
 
 \author{ Stig B. Mortensen and Søren Klim}
 
-\note{
-  (Further notes, possibly other sections using section{Warning }{....})
-}
+%\note{
+%  (Further notes, possibly other sections using section{Warning }{....})
+%}
 
 \seealso{
   \code{\link{PSM}}, \code{\link{PSM.smooth}},

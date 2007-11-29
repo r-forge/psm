@@ -14,19 +14,19 @@ ModelCheck(Model, Data, Par)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{\code{Model}}{
-    See description \link{PSM.estimate}
+    Model list*
   }
   \item{\code{Data}}{
-    Single subject data - ie. only one element of the Data for
-    PSM.estimate
-    
-    See description \link{PSM.estimate}
+    Single subject data - ie. only one element of the \code{Data} for
+    \code{PSM.estimate}
   }
   \item{\code{Par}}{
-    \code{Par$Init} - optionally \code{Par$LB} and \code{Par$UB}.
-    
-    See description \link{PSM.estimate}
+    List of parameters for the Model*.
+    \code{Par$Init} is used to test Model functions.
+    If present \code{Par$LB} and \code{Par$UB} are tested for validity.
   }
+
+  * See description \link{PSM.estimate}
 }
 
 \details{
@@ -36,9 +36,9 @@ ModelCheck(Model, Data, Par)
   \itemize{
     \item Presence of correctly named functions in the Model
     \item Ability to evaluate the functions in the Model
-    \item Dimensions of the Objects vs. Data objects
+    \item Dimensions of the Model objects vs. Data objects
     \item Positive semidefinit properties of S and SIG
-    \item If present Parameter bounds
+    \item Optionally Parameter bounds
     
   }  
 }
@@ -51,9 +51,9 @@ ModelCheck(Model, Data, Par)
 
 \author{ Stig B. Mortensen and Søren Klim}
 
-\note{
-  (Further notes, possibly other sections using section{Warning }{....})
-}
+%\note{
+%  (Further notes, possibly other sections using section{Warning }{....})
+%}
 
 \seealso{
   \code{\link{PSM}}
