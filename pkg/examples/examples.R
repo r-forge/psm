@@ -18,8 +18,6 @@ if (Developing) {
     library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 }
 
-PSM.simulate
-ModelCheck
 
 #######################
 # Model Intervention Model

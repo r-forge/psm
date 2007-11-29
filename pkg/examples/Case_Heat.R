@@ -33,11 +33,11 @@ HeatModel <- list(
                     tmp    <- phi[["X01"]]
                     tmp[2] <- phi[["X02"]]
                     return(matrix(tmp,ncol=1) )} ,
-                  SIG = function(Time=NA,phi=NA,U=NA) {
+                  SIG = function(phi=NA) {
                     return( diag( c(phi[["SIG11"]],phi[["SIG22"]])))} ,
-                  S = function(Time=NA,phi=NA,U=NA) {
+                  S = function(phi=NA) {
                     return( matrix(phi[["S"]])) } ,
-                  h = function(eta,theta) {
+                  h = function(eta,theta,covar=NULL) {
                     phi <- theta
                     return(phi) } ,
                   ModelPar = function(THETA){
@@ -45,7 +45,8 @@ HeatModel <- list(
                                   H1=THETA[3],H2=THETA[4],H3=THETA[5],
                                   SIG11=THETA[6], SIG22=THETA[7], S=THETA[8],
                                   X01=THETA[9], X02=THETA[10]),
-                                OMEGA=NULL))}
+                                OMEGA=NULL))},
+                  Dose=NULL
                   )
 
 names(HeatModel)
@@ -58,6 +59,7 @@ par1 <- list(LB   = c(   0,    0,   0,   0,   0,     0,    0,    0,   10,   20),
              Init = c( 100,   50,   1,   2,  .5,   .01,  .01,  .01,   15,   25),
              UB   = c( 200,  100,   2,   5,   1,     1,    1,    1,   20,   30)
              )
+
 par1$Init <-        c( 100 ,  50,   1,   2,  .5,  .001, .001, .001,   13,   25)
 par1$UB <- par1$LB <- NULL
 
@@ -80,9 +82,9 @@ Ob1 <- LinKalmanFilter( phi=CTSMphi , Model=HeatModel , Data=Pop.Data[[1]] , ech
 # Minimizers
 # -------------------------------------------------------------
                                         # Test Run of initial parameters
-phi <- par1$Init
-names(phi) <- c("G1","G2","H1","H2","H3","SIG11","SIG22","S","X01","X02")
-
+phi <- par1
+names(phi$Init) <- c("G1","G2","H1","H2","H3","SIG11","SIG22","S","X01","X02")
+phi$Init
 
 # Perform minimization with 2 different optimizers
 Min1 <- PSM.estimate(Model=HeatModel,Data=Pop.Data,Par=par1,CI=TRUE,trace=2,optimizer="nlm")
@@ -96,8 +98,6 @@ cat( "optim: " , Min2$sec, "\t ", Min2$opt$value, "\n")
 # -------------------------------------------------------------
 # Smoother 
 # -------------------------------------------------------------
-
-
 
 SmoothObj <- PSM.smooth(Model=HeatModel, Data=Pop.Data, THETA=CTSMphi, subsample=7,trace=1)
 
