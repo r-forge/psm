@@ -38,7 +38,7 @@ function(phi, Model, Data) {
   
                                         # Output prediction covariance
   S   <- Model$S(phi=phi)
-  X0  <- Model$X0(phi=phi)
+  X0  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
   SIG <- Model$SIG(phi=phi)
 
 

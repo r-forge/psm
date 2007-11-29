@@ -8,7 +8,7 @@ Model.SimDose <- list(
                         matC <- matrix(c(1,0),nrow=1)
                         list(matA=matA,matC=matC)
                       },
-                      X0 = function(phi) {
+                      X0 = function(Time=Na,phi,U=Na) {
                         matrix(0,nrow=2)
                       },
                       SIG = function(phi) { 

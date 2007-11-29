@@ -44,7 +44,7 @@ Model.Sim <- list(
                  matC <- matrix(c(1,0,0,0),nrow=1)
                  matD <- matrix(c(0,0),nrow=1)
                  return(list(matA=matA,matB=matB,matC=matC,matD=matD))},
-               X0 = function(phi) {
+               X0 = function(Time=NA,phi,U=NA) {
                  C0 <- phi[["C0"]]
                  tmp    <- C0
                  tmp[2] <- C0*k1/k2

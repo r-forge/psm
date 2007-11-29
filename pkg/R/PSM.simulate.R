@@ -84,7 +84,7 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
 
 
     # Initial States
-    InitialState <- Model$X0(phi=phi)
+    InitialState <- Model$X0(Time=t[1], phi=phi, U = Ustart)
     SIG <- Model$SIG(phi=phi)  
 
     # Dimensions

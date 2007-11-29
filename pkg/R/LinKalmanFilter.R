@@ -65,7 +65,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     matD  <- tmp$matD 
   
     # Calculate Init state and initial SIG
-    InitialState  <- Model$X0(phi=phi)
+    InitialState  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
     SIG           <- Model$SIG(phi=phi)
 
 
