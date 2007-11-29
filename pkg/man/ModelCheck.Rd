@@ -13,14 +13,14 @@ ModelCheck(Model, Data, Par)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{\code{Model}}{
+  \item{Model}{
     Model list*
   }
-  \item{\code{Data}}{
+  \item{Data}{
     Single subject data - ie. only one element of the \code{Data} for
     \code{PSM.estimate}
   }
-  \item{\code{Par}}{
+  \item{Par}{
     List of parameters for the Model*.
     \code{Par$Init} is used to test Model functions.
     If present \code{Par$LB} and \code{Par$UB} are tested for validity.
@@ -59,11 +59,11 @@ ModelCheck(Model, Data, Par)
   \code{\link{PSM}}
 } 
 
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-}
+%\examples{
+%##---- Should be DIRECTLY executable !! ----
+%##-- ==>  Define data, use random,
+%##--	or do  help(data=index)  for the standard data sets.
+%}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
