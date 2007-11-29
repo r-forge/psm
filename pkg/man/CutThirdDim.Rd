@@ -1,5 +1,5 @@
-\name{C3}
-\alias{C3}
+\name{CutThirdDim}
+\alias{CutThirdDim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ <INTERNAL> Remove third dimension of dim-attribute. }
 \description{
@@ -7,7 +7,7 @@
   dim-attribute for an array and thus creating a matrix.
 }
 \usage{
-C3(a)
+CutThirdDim(a)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,7 +24,7 @@ tmp  <- array(1:4,dim=c(2,2,1))
 tmp2 <- matrix(2:5,nrow=2,ncol=2)
 err  <-try(tmp\%*\%tmp2,silent=T)
 err[1]  
-C3(tmp)\%*\%tmp2
+CutThirdDim3(tmp)\%*\%tmp2
 print("No error!")
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

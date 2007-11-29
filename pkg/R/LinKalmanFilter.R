@@ -149,12 +149,12 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
 
           # Updating
           e       <- Y[ObsIndex,k,drop=F]-Yp[ObsIndex,k,drop=F]
-          KFg     <- C3(KfGain[,ObsIndex,k,drop=F])
+          KFg     <- CutThirdDim(KfGain[,ObsIndex,k,drop=F])
           Xf[,k]  <- Xp[,k,drop=F] + KFg%*%e
           Pf[,,k] <- Pp[,,k] - KFg %*% R[ObsIndex,ObsIndex,k] %*% t.default(KFg)
   
           # Add contribution to negLogLike: CTSM page 3. (1.14)
-          tmpR        <-  C3(R[ObsIndex,ObsIndex,k,drop=F])
+          tmpR        <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=F])
           tmp        <-  determinant.matrix(tmpR)
      
           negLogLike  <- negLogLike + .5*( log(tmp$sign*exp(tmp$modulus)) + t.default(e)%*%solve.default(tmpR)%*%e)

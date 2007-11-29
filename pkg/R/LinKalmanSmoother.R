@@ -68,7 +68,7 @@ function(phi, Model, Data) {
       LAMBDA <- t.default(Fk) %*% LAMBDA %*% Fk
       
     } else {
-      KpGain <- Adis %*% C3( Obj$KfGain[,,tau,drop=F] )
+      KpGain <- Adis %*% CutThirdDim( Obj$KfGain[,,tau,drop=F] )
       Fk <- Adis - KpGain %*% matC
       lambda <- t.default(Fk)%*%lambda +
         t.default(matC) %*% solve(Obj$R[,,tau]) %*% (Y[,tau,drop=F]-Obj$Yp[,tau,drop=F])
@@ -79,7 +79,7 @@ function(phi, Model, Data) {
     
     
     # Create Smooth State
-    Xs[,tau] <- Obj$Xp[,tau,drop=F] + C3(Obj$Pp[,,tau,drop=F]) %*% lambda
+    Xs[,tau] <- Obj$Xp[,tau,drop=F] + CutThirdDim(Obj$Pp[,,tau,drop=F]) %*% lambda
    
     # Create Smoothed covariance
     Ps[,,tau] <- Obj$Pp[,,tau] - Obj$Pp[,,tau] %*% LAMBDA %*% Obj$Pp[,,tau]
