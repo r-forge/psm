@@ -55,7 +55,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
       Di <- list(Y = YY, Time = TT, U = UU)
     }
     if(!is.null(OMEGA)) {
-      phi <- Model$h(etaList[,i],theta)
+      phi <- Model$h(etaList[,i],theta=theta,covar=Data[[i]]$covar)
     } else {
       phi <- theta
     }

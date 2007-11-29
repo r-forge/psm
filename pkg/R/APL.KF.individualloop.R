@@ -25,7 +25,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   }
   optimStat_i <- c(out$convergence, out$value, out$counts[1])
   
-  phi <- Model$h(eta=out$par,theta=theta)
+  phi <- Model$h(eta=out$par,theta=theta,covar=Data$covar)
   o <- LinKalmanFilter(phi=phi, Model=Model, Data=Data, output=T)
   
   # Calculate stepsize in central diffenrence gradient
@@ -37,11 +37,11 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
     d[p] <- stepSize
     
     # Forward difference
-    phi.f <- Model$h(out$par+d,theta)
+    phi.f <- Model$h(out$par+d,theta,covar=Data$covar)
     eF <- Data$Y - LinKalmanFilter(phi=phi.f, Model=Model, Data=Data, output=T)$Yp
 
     # Backward difference
-    phi.b <- Model$h(out$par-d,theta)
+    phi.b <- Model$h(out$par-d,theta,covar=Data$covar)
     eB <- Data$Y - LinKalmanFilter(phi=phi.b, Model=Model, Data=Data, output=T)$Yp;
 
     #Insert the calculated gradient.

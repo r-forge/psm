@@ -1,5 +1,5 @@
 `PSM.simulate` <- 
-function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
+function(Model, Data, THETA, dt, individuals=1) {
   # LinSimulation
   # FUNCTION FOR SIMULATION OF LINEAR MIXED EFFECTS MODEL USING SDE'S.
   #--------
@@ -18,8 +18,22 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
   # List containing Xlist, Ylist, Tlist, Ulist & eta
 
 
-  Result <-  vector(mode="list",length=individuals)
-  # Xlist <- Ylist <- vector(mode="list",length=individuals)
+  Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=individuals)
+
+  for (i in 1:individuals) {
+    Tlist[[i]] <- Data[[i]]$Time
+    Ulist[[i]] <- Data[[i]]$U
+    covarlist[[i]] <- Data[[i]]$covar
+  }
+
+  if(is.null(Data[[1]]$U)) { #No input present
+    Ulist <- NULL
+  }
+
+
+
+  
+  
   OMEGA <- Model$ModelPar(THETA)$OMEGA
   theta <- Model$ModelPar(THETA)$theta
 
@@ -34,7 +48,7 @@ function(Model,THETA,dt,Ulist=NULL,Tlist,individuals=1) {
   for (i in 1:individuals) {
     print(paste("Simulating individual: ",i))
     if(!is.null(OMEGA)) {
-      phi <- Model$h(eta[,i],theta)
+      phi <- Model$h(eta=eta[,i],theta=theta,covar=covarlist[[i]])
     }else {
       phi <- theta
     }

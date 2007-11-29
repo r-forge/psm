@@ -17,7 +17,7 @@ Model.SimDose <- list(
                       S = function(phi) {
                         matrix(phi[["S"]])
                       },
-                      h = function(eta,theta) {
+                      h = function(eta,theta,covar) {
                         phi <- theta
                         phi[["kei"]] <- theta[["ke"]]*exp(eta[1])
                         phi                      },
@@ -34,11 +34,11 @@ Model.SimDose <- list(
 
 # Create Simulation Timeline 
 SimDose.Subj <- 2
-SimDose.Time <- vector(mode="list",length=SimDose.Subj)
+SimDose.Data <- vector(mode="list",length=SimDose.Subj)
 for (i in 1:SimDose.Subj) 
-  SimDose.Time[[i]] <- seq(from=15,by=15,length=30)
+  SimDose.Data[[i]]$Time <- seq(from=15,by=15,length=30)
 
-SimDose.Time
+
 
 
 #############
@@ -52,7 +52,7 @@ library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 SimDose.THETA <-  c(0.03 , 10 , 0)
 Model.SimDose$Dose$Time = c(30,180)
 Model.SimDose$Dose$Amount = c(1500,1500)
-SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.THETA, dt=.1 , Tlist=SimDose.Time ,individuals=SimDose.Subj)
+SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=SimDose.Subj)
 
 
 par(mfcol=c(3,SimDose.Subj))

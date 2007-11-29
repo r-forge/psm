@@ -1,8 +1,8 @@
 `IndividualLL.KF` <-
 function (eta,theta,OMEGA,Model,Data){
 ### NOTES -  requires: o$negLogLike, o$Yp, h(eta,theta)
-
-  phi <- Model$h(eta,theta)
+  
+  phi <- Model$h(eta,theta,covar=Data$covar)
 
   # run the KF one time, to evaluate negative log-likelihood
   negLogLike <- LinKalmanFilter( phi=phi, Model=Model , Data=Data )

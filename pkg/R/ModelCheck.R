@@ -55,7 +55,7 @@ ModelCheck <- function(Model , Data , Par) {
   # Calculate parameter phi
   Par <- Model$ModelPar(THETA=Par$Init)
   dimEta <- nrow(Par$OMEGA)
-  phi <- Model$h(eta=rep(0,dimEta) , theta=Par$theta )
+  phi <- Model$h(eta=rep(0,dimEta) , theta=Par$theta ,covar=Data$covar)
 
   # Matrices
   tmp   <- Model$Matrices(phi=phi)

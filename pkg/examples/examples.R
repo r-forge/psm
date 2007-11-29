@@ -55,7 +55,7 @@ Model.Sim <- list(
                  return( diag( c(0,0,phi[["SIG33"]],0)) ) } ,
                S = function(phi) {
                  return( matrix(phi[["S"]])) } ,
-               h = function(eta,theta) {
+               h = function(eta,theta,covar) {
                  phi <- theta
                  phi[["B"]] <- theta[["B"]]*exp(eta[1])
                  phi[["K"]] <- theta[["K"]]*exp(eta[2])
@@ -72,15 +72,15 @@ Model.Sim <- list(
 
 # Create Simulation Timeline and Simulation Input
 NoOfSubjects <- 2
-Sim.Time <- Sim.U <- vector(mode="list",length=0)
+Sim.Data <- vector(mode="list",length=NoOfSubjects)
 for (i in 1:NoOfSubjects) {
-  Sim.Time[[i]] <- c( 0,15,30,45,60,75,90,120,150,180,210,240,270,300,330,360,420,480,600,615,630,645,660,675,690,720,750,780,810,840,960,1140,1320,1410,1440)
-  Sim.U[[i]] <- matrix(c( rep(1,35) , 
-                    as.numeric( Sim.Time[[i]] %in% c(0,15,240,600,615)) ),byrow=T,nrow=2)
+  Sim.Data[[i]]$Time <- c( 0,15,30,45,60,75,90,120,150,180,210,240,270,300,330,360,420,480,600,615,630,645,660,675,690,720,750,780,810,840,960,1140,1320,1410,1440)
+  Sim.Data[[i]]$U <- matrix(c( rep(1,35) , 
+                    as.numeric( Sim.Data[[i]]$Time %in% c(0,15,240,600,615)) ),byrow=T,nrow=2)
 }
 
-Sim.Time
-Sim.U
+Sim.Data
+
 
 
                                         # Create Simulation THETA parameter
@@ -88,7 +88,7 @@ Sim.U
 (Sim.THETA <-  c(0.02798 , 0.01048 , 6.9861 , 427.63 , 1.7434))
 # (Sim.THETA <-  c(0.02798 , 0.01048 , 0 , 427.63 , 1.7434))
 
-Sim.Data <- PSM.simulate(Model.Sim, Sim.THETA, dt=.1 , Ulist=Sim.U ,Tlist=Sim.Time ,individuals=NoOfSubjects)
+Sim.Data <- PSM.simulate(Model.Sim, Sim.Data, Sim.THETA, dt=.1 ,individuals=NoOfSubjects)
 
 Sim.Data
 
@@ -134,11 +134,11 @@ Model.Est <- list(
               tmp[2] <- C0*k1/k2
               tmp[3] <- C0*ke
                     return(matrix(tmp,ncol=1) )} ,
-            SIG = function(Time=NA,phi=NA,U=NA) {
+            SIG = function(phi) {
                       return( diag( c(1e-3,1e-3,phi[["SIG33"]])) ) } ,
-            S = function(Time=NA,phi=NA,U=NA) {
+            S = function(phi) {
                       return( matrix(phi[["S"]])) } ,
-            h = function(eta,theta) {
+            h = function(eta,theta,covar) {
               phi <- theta
               phi[["C0"]] <- theta[["C0"]]*exp(eta[1])
               return(phi) } ,
