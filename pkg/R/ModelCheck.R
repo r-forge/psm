@@ -20,13 +20,22 @@ ModelCheck <- function(Model , Data , Par) {
   }
 
   # Model contains the correct object
-  if( any(!(names(Model) %in% c("Matrices","X0","SIG","S","h","ModelPar"))) ) {
+  if( any(!( c("Matrices","X0","SIG","S","h","ModelPar","Dose")   %in% names(Model))) ) {
     print("Model doesn't contain the correct objects") ; return(FALSE) }
   # Model objects are functions
-  if ( any(!(unlist(lapply(Model , function(x) {is.function(x)})))) ) {
-     print("Model objects are not all functions") ; return(FALSE) }
 
-  # Check bounds on Par
+  for (name in c("Matrices","X0","SIG","S","h","ModelPar")) 
+    if(!is.function(Model[[name]]))
+      print(past("Model object",name,"is not a function"))
+
+       
+#  if ( any(!(unlist(lapply(Model , function(x) {is.function(x)})))) ) {
+#     print("Model objects are not all functions") ; return(FALSE) }
+
+  # Check  Par
+  if( !("Init" %in% names(Par)) ) {
+    print("Init missing in Par") ; return(FALSE)
+  }
   if( "LB" %in% names(Par) ) {
     #The parameter has bounds
     if( any( Par$LB > Par$Init) ) {
@@ -34,6 +43,13 @@ ModelCheck <- function(Model , Data , Par) {
     if( any( Par$UB < Par$Init) ) {
       print("Parameter UB is lower than Init") ; return(FALSE) }
   }
+
+  # Check data
+  if( any(!( c("Y","Time")  %in% names(Data))) ) {
+    print("Data does not contain either Y og Time.")
+    print("NOTE input to ModelCheck should be data for a single subject (eg. Data[[1]]).")
+    return(FALSE) }
+
 
   
   # Calculate parameter phi
@@ -50,14 +66,15 @@ ModelCheck <- function(Model , Data , Par) {
 
   
   X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
-  SIG <-  Model$SIG( Time=Data$Time[1], phi=phi,U=Uk)
-  S <- Model$S( Time=Data$Time[1], phi=phi, U=Uk)
+  SIG <-  Model$SIG(  phi=phi)
+  S <- Model$S(  phi=phi )
 
   # Test for positive semidefinit
   if( any( eigen(SIG)$values <0 ) ) {
     print("Model$SIG is not positiv semidefinit") ; return(FALSE) }
   if( any( eigen(S)$values <0 ) ) {
     print("Model$S is not positiv semidefinit") ; return(FALSE) }
+
   
   
   # dimT
