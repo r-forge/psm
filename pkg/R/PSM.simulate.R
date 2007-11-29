@@ -210,7 +210,7 @@ function(Model, Data, THETA, dt, individuals=1) {
     idx <- which(where %*% rep(T,len) == 1)
 
     Result[[i]] <- list(X=matrix(X[,idx],nrow=dimX),Y=matrix(Y[,idx],nrow=dimY),
-                        Time=SampleTime,U=Ulist[[i]],eta=eta)
+                        Time=SampleTime,U=Ulist[[i]],eta=eta[,i])
 
   } #end individual loop
   
@@ -218,13 +218,6 @@ function(Model, Data, THETA, dt, individuals=1) {
   return(Result)
 }
 
-
-
-#matrix square root
-sqrtm <- function(A) {
-  e <- eigen(A)
-  e$vectors %*% diag(sqrt(e$values),nrow = length(e$values)) %*% t(e$vectors)
-}
 
 
 
