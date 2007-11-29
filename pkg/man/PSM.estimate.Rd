@@ -38,7 +38,7 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
       }
       \item{\code{h = function(eta,theta,covar)}}{
 	Second stage model. Defines how random effects (\code{eta}) and
-	covariates (\code{covar}) affects the population parameters.
+	covariates (\code{covar}) affects the fixed effects parameters (\code{theta}).
 	Must return a list \code{phi} of individual parameters. 
       }
       \item{\code{ModelPar = function(THETA)}}{
@@ -127,10 +127,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
   The second stage model describing inter-individual variations is
   defined as:
 
-  \deqn{\phi_i = h(\eta_i,\theta,covariates_i)}{phi = h(eta,theta,covariates)}
+  \deqn{\phi_i = h(\eta_i,\theta,Z_i)}{phi = h(eta,theta,Z)}
 
   where \eqn{\eta_i \sim N(0,\Omega)}{eta ~ N(0,OMEGA)}, \eqn{\theta}
-  are the fixed effect parameters and covariates are for individual i.
+  are the fixed effect parameters and \eqn{Z_i}{Z} are covariates for individual i.
   
 }
 \value{
