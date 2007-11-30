@@ -1,19 +1,17 @@
 `PSM.estimate` <-
 function(Model,Data,Par,CI=F,trace=0,optimizer="optim") {
-  # INPUT
-  #   Model      - List of functions defining the model
-  #   Data       - List of data for each individual
-  #   Par        - List of initial values and bounds for parameters to be optimized (Init, LB, UB)
-  #   CI         - Boolean for 95% confidence intervals for parameters
-  #   trace      - Show progression, higher number gives more detail (0,1,2,3)
-  #   optimizer  - Choose between "optim" and "nlm"
-  # OUTPUT
-  #   NegLogL    - Negative log-likelihood value at optimum
-  #   THETA      - Maximum likelihood estimates (MLE)
-  #   CI         - 95% confidence intervals for MLE
-  #   out.optim  - Output from optim
-  #   seconds    - Time in seconds for estimation
 
+  ok <- TRUE
+  dimS <- length(Data)
+  for(i in 1:dimS) {
+    ok <- ModelCheck(Model,Data[[i]],Par)
+    if(!ok) {
+      print(paste("Error occured using data for individual",i))
+      break
+    }
+  }
+  if(!ok) stop(paste("Input did not pass model check."))
+    
   T0 <- proc.time()[3]
 
   if(!is.null(Par$LB)) {

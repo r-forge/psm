@@ -1,22 +1,16 @@
 `PSM.simulate` <- 
 function(Model, Data, THETA, dt, individuals=1) {
-  # LinSimulation
-  # FUNCTION FOR SIMULATION OF LINEAR MIXED EFFECTS MODEL USING SDE'S.
-  #--------
-  #INPUT
-  # Model - Model list
-  # THETA - Model parameters
-  # dt    - time step in discretization
-  # Ulist - list of input for each individual, each element may be
-  #           NA: no input assumed (for any individual)
-  #           dim(U[[i]])=(?,1): constant input assumed
-  #           dim(U[[i]])=(?,n): where n=[t(end)-t(start)]/dt+1
-  # Tlist - List of sample times for each individual
-  # individuals - Number of individuals to simulate
-  #--------
-  #OUTPUT
-  # List containing Xlist, Ylist, Tlist, Ulist & eta
 
+  ok <- TRUE
+  dimS <- length(Data)
+  for(i in 1:dimS) {
+    ok <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
+    if(!ok) {
+      print(paste("Error occured using data for individual",i))
+      break
+    }
+  }
+  if(!ok) stop(paste("Input did not pass model check."))
 
   Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=individuals)
 

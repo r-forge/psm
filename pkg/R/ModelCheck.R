@@ -1,4 +1,4 @@
-ModelCheck <- function(Model , Data , Par) {
+ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   # Check the dimensions of the Model and Data
   #
   # Data is data for a single subject
@@ -20,13 +20,14 @@ ModelCheck <- function(Model , Data , Par) {
   }
 
   # Model contains the correct object
-  if( any(!( c("Matrices","X0","SIG","S","h","ModelPar","Dose")   %in% names(Model))) ) {
+  if( any(!( c("Matrices","X0","SIG","S","h","ModelPar")   %in% names(Model))) ) {
     print("Model doesn't contain the correct objects") ; return(FALSE) }
+
   # Model objects are functions
 
   for (name in c("Matrices","X0","SIG","S","h","ModelPar")) 
-    if(!is.function(Model[[name]]))
-      print(past("Model object",name,"is not a function"))
+    if(!is.function(Model[[name]])) {
+      print(paste("Model object",name,"is not a function")); return(FALSE) }
 
        
 #  if ( any(!(unlist(lapply(Model , function(x) {is.function(x)})))) ) {
@@ -45,11 +46,18 @@ ModelCheck <- function(Model , Data , Par) {
   }
 
   # Check data
-  if( any(!( c("Y","Time")  %in% names(Data))) ) {
-    print("Data does not contain either Y og Time.")
-    print("NOTE input to ModelCheck should be data for a single subject (eg. Data[[1]]).")
-    return(FALSE) }
-
+  if( any(!( "Time"  %in% names(Data))) ) {
+    print("Individual data does not contain Time.") ; return(FALSE) }
+  if(DataHasY) {
+    if( any(!( "Y"  %in% names(Data))) ) {
+      print("Individual data does not contain Y.") ; return(FALSE) }
+    if( any(is.nan(Data$Y)) ) {
+      print("Data$Y contains NaN. Use NA instead.");return(FALSE) }
+  }
+  if( any(c(is.nan(Data$Time),is.na(Data$Time))) ){
+    print("Data$Time contains NA or NaN.");return(FALSE) }
+  if (ModelHasInput && any(c(is.nan(Data$U),is.na(Data$U))) ){
+    print("Data$U contains NA or NaN.");return(FALSE) }
 
   
   # Calculate parameter phi
@@ -70,20 +78,26 @@ ModelCheck <- function(Model , Data , Par) {
   S <- Model$S(  phi=phi )
 
   # Test for positive semidefinit
+  if(dim(SIG)[1]!=dim(SIG)[2] || dim(SIG)[1]==0) {
+    print("Model$SIG is not a square matrix") ; return(FALSE) }
+  if(dim(S)[1]!=dim(S)[2] || dim(S)[1]==0) {
+    print("Model$S is not a square matrix") ; return(FALSE) }
+      
   if( any( eigen(SIG)$values <0 ) ) {
     print("Model$SIG is not positiv semidefinit") ; return(FALSE) }
   if( any( eigen(S)$values <0 ) ) {
     print("Model$S is not positiv semidefinit") ; return(FALSE) }
 
   
-  
   # dimT
-  dimT <- length(Data$Time) 
-  if( dimT!=dim(Data$Y)[2]) {
-    print("Data$Time and Data$Y doesn't match") ; return(FALSE) }
+  dimT <- length(Data$Time)
+  if(DataHasY) {
+    if( dimT!=dim(Data$Y)[2]) {
+      print("Data$Time and Data$Y does not have same length") ; return(FALSE) }
+  }
   if(ModelHasInput) {
     if(dimT!=dim(Data$U)[2]) {
-      print("Data$Time and Data$U doesn't match") ; return(FALSE) }
+      print("Data$Time and Data$U does not have same length") ; return(FALSE) }
     } # ModelHasInput
 
   # dimX
@@ -103,15 +117,17 @@ ModelCheck <- function(Model , Data , Par) {
     } # ModelHasInput
 
   # dimY
-  dimY <- nrow(matC)
-  if (dimY != dim(Data$Y)[1] ){
-    print("C and Data$Y doesn't match") ; return(FALSE) }
-  if( dimY != nrow(S) | dimY != ncol(S) ) {
-    print("S has incorrect size") ; return(FALSE) }
+  if(DataHasY) {
+    dimY <- nrow(matC)
+    if (dimY != dim(Data$Y)[1] ){
+      print("C and Data$Y doesn't match") ; return(FALSE) }
+    if( dimY != nrow(S) | dimY != ncol(S) ) {
+      print("S has incorrect size") ; return(FALSE) }
+  }
 
-  if(ModelHasInput) {
+  if(ModelHasInput && DataHasY) {
     if (dimY != nrow(matD) ){
-      print("C and D doesn't match") ; return(FALSE) }
+      print("Y and D doesn't match") ; return(FALSE) }
   }
   
   # dimU
@@ -125,11 +141,15 @@ ModelCheck <- function(Model , Data , Par) {
   
   # Dose
   if( "Dose" %in% names(Model) ) {
-    if( any(!(Model$Dose$Time %in% Data$Time))) {
+    MD <- Model$Dose
+    if( any(!(MD$Time %in% Data$Time))) {
       print("Dose times doesn't coincide with Data$Time") ; return(FALSE) }
       
-    if( any( Model$Dose$State > dimX) ) {
+    if( any( MD$State > dimX) ) {
       print("Dose states are larger than number of states") ; return(FALSE) }
+
+    if( !all( (c(length(MD$State),length(MD$Amount))- length(MD$Time))==0  ) ) {
+      print("Dose: Elements Time, State and Amount not of same length") ; return(FALSE)}
   }
 
   return(TRUE)

@@ -1,6 +1,17 @@
 `PSM.smooth` <-
 function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
 
+  ok <- TRUE
+  dimS <- length(Data)
+  for(i in 1:dimS) {
+    ok <- ModelCheck(Model,Data[[i]],list(Init=THETA))
+    if(!ok) {
+      print(paste("Error occured using data for individual",i))
+      break
+    }
+  }
+  if(!ok) stop(paste("Input did not pass model check."))
+  
   FullOutput <- FALSE
   if( is.null(etaList)) {
     apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,longOutput=T)
