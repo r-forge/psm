@@ -86,9 +86,12 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     tmp <-  rbind( cbind(-matA , SIG%*%t.default(SIG)) ,
                   cbind( matrix(rep(0,2*dimX),nrow=dimX,ncol=dimX) , t.default(matA) ))*tau
 #print(tmp)
+  
     # Use Matrix package to compute Matrix exponential
     Pint  <- mexp(tmp)
 
+
+  
     PHI0   <- t.default(Pint[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])
     P0    <- PS*PHI0 %*% Pint[1:dimX,(dimX+1):(2*dimX),drop=F]
 
@@ -119,6 +122,14 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     DIAGDIMY  <- diag(1,dimY)
     DIAGDIMX  <- diag(1,dimX)
     DIAGRANKA <- diag(1,rankA)
+    DIAGDIMXRANKA <- diag(1,dimX-rankA)
+    SIGSIGT <- SIG%*%t.default(SIG)
+  ZERODIMXDIMX <- matrix(0,nrow=dimX,ncol=dimX)
+
+  matA.T <- t.default(matA)
+  matC.T <- t.default(matC)
+  matA.Inv <- solve.default(matA)
+  
 
     # Loop over timepoints
     for(k in 1:dimT) {
@@ -140,12 +151,12 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
 
         # Output prediction covariance    
         S     <- Model$S(phi=phi)
-        R[ObsIndex,ObsIndex,k]  <- E%*%matC%*%Pp[,,k]%*%t.default(matC)%*%t.default(E) + E%*%S%*%t.default(E)
+        R[ObsIndex,ObsIndex,k]  <- E%*%matC%*%Pp[,,k]%*% matC.T %*%t.default(E) + E%*%S%*%t.default(E)
 
   
         if(length(ObsIndex)>0) { #there must be at least one obs for updating.
           # Kalman gain
-          KfGain[,ObsIndex,k] <- Pp[,,k]%*%t.default(matC) %*% t.default(E) %*% solve.default(R[ObsIndex,ObsIndex,k])
+          KfGain[,ObsIndex,k] <- Pp[,,k]%*% matC.T %*% t.default(E) %*% solve.default(R[ObsIndex,ObsIndex,k])
 
           # Updating
           e       <- Y[ObsIndex,k,drop=F]-Yp[ObsIndex,k,drop=F]
@@ -184,8 +195,8 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         tau   <- Time[k+1]-Time[k]
 
         # Try to optimize
-        tmp   <- tau* rbind( cbind(-matA , SIG%*%t.default(SIG)) ,
-                  cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
+        tmp   <- tau* rbind( cbind(-matA , SIGSIGT ) ,
+                  cbind( ZERODIMXDIMX , matA.T  ))
         
         tmp   <- mexp(tmp)
 
@@ -200,7 +211,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         if( !singA ) {
             # Special case #3: Non-singular A, zero order hold on inputs.
             Xp[,k+1] <- { if( ModelHasInput) {
-                              PHI%*%Xf[,k,drop=F]+ solve.default(matA)%*%(PHI-DIAGDIMX)%*%matB%*%Uk
+                              PHI%*%Xf[,k,drop=F]+ matA.Inv %*%(PHI-DIAGDIMX)%*%matB%*%Uk
                               } else {
                               PHI%*%Xf[,k,drop=F] } }
         } else {
@@ -224,16 +235,17 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
                   ATilde2   <- ATilde[1:rankA,(rankA+1):dimX,drop=F]
                   ATilde1Inv <- solve.default(ATilde1)
 
-                  IntExpAtildeS <- matrix(NA,dimX,dimX)
+                  IntExpAtildeS <- ZERODIMXDIMX
                   # Insert upper left part of matrix [1:rankA 1:rankA]
                   IntExpAtildeS[1:rankA , 1:rankA] <- ATilde1Inv %*% (PHITilde1-DIAGRANKA)
                   # Lower left part
-                  IntExpAtildeS[(rankA+1):dimX , 1:rankA]   <- 0
+                  # IntExpAtildeS[(rankA+1):dimX , 1:rankA]   <- 0
                   # Upper Right
                   IntExpAtildeS[1:rankA,(rankA+1):dimX] <- ATilde1Inv %*%
                       (IntExpAtildeS[1:rankA,1:rankA]-DIAGRANKA*tau)%*%ATilde2
                   # Lower right
-                  IntExpAtildeS[(rankA+1):dimX,(rankA+1):dimX] <- diag(1,dimX-rankA)*tau
+                  # Changed 2007-12-03 SKLI IntExpAtildeS[(rankA+1):dimX,(rankA+1):dimX] <- diag(1,dimX-rankA)*tau
+                  IntExpAtildeS[(rankA+1):dimX,(rankA+1):dimX] <- DIAGDIMXRANKA*tau
 
                   # Insert State prediction CTSM  (1.60)
                   Xp[,k+1] <- PHI %*% Xf[,k]+ Ua %*% IntExpAtildeS %*% t.default(Ua) %*% matB %*% Uk

@@ -77,6 +77,10 @@ CTSMphi <- c( 1.3134E+01,2.5330E+01,1.0394E+02,9.6509E-01,2.0215E+00,4.9320E+01,
 names(CTSMphi) <- c("X01","X02","G1","H1","H2","G2","H3","SIG11","SIG22","S")
 Ob1 <- LinKalmanFilter( phi=CTSMphi , Model=HeatModel , Data=Pop.Data[[1]] , echo=T, outputInternals=TRUE)
 
+# Validation plot versus Data
+D <- Pop.Data[[1]]
+plot(D$Time , D$Y)
+points( D$Time , Ob1$Yp, pch="+")
 
 # -------------------------------------------------------------
 # Minimizers
@@ -87,7 +91,10 @@ names(phi$Init) <- c("G1","G2","H1","H2","H3","SIG11","SIG22","S","X01","X02")
 phi$Init
 
 # Perform minimization with 2 different optimizers
+Rprof()
 Min1 <- PSM.estimate(Model=HeatModel,Data=Pop.Data,Par=par1,CI=TRUE,trace=2,optimizer="nlm")
+Rprof(NULL)
+summaryRprof()
 
 Min2 <- PSM.estimate(Model=HeatModel,Data=Pop.Data,Par=par1,CI=TRUE,trace=2,optimizer="optim")
 
@@ -99,17 +106,36 @@ cat( "optim: " , Min2$sec, "\t ", Min2$opt$value, "\n")
 # Smoother 
 # -------------------------------------------------------------
 
-SmoothObj <- PSM.smooth(Model=HeatModel, Data=Pop.Data, THETA=CTSMphi, subsample=7,trace=1)
+SmoothObj <- PSM.smooth(Model=HeatModel, Data=Pop.Data, THETA=CTSMphi, subsample=0,trace=1)
 
-names(SmoothObj)
-names(SmoothObj$smooth[[1]])
+
+D <- SmoothObj[[1]]
+names(D)
 
 Idx <- 200:500
-D <- SmoothObj$smooth[[1]]
 plot( D$Time[Idx], D$Xs[1,Idx] , type="n" )
 for(i in 1:2) polygon( c(D$Time[Idx],rev(D$Time[Idx])) , c(D$Xs[i,Idx],rev(D$Xs[i,Idx]))+sqrt( abs(c(D$Ps[i,i,Idx], - rev(D$Ps[i,i,Idx])))),col=4)
 for(i in 1:2) lines( D$Time[Idx], D$Xs[i,Idx], type="l",lwd=2)
 
 
-plot( D$Time, D$Xs[1,] , type="l" )
-lines( D$Time, D$Xs[2,] , type="l" )
+
+# Load the predicted Data from CTSM
+CTSM.Val.Data <- read.table("CTSM_Heat_Xp.csv",sep=";", col.names=c("Time","Xp1","Xp2","SDX1","SDX2","Y1","SDY1"))
+
+names(D)
+
+
+# Measurements Validation
+plot(Pop.Data[[1]]$Time, Pop.Data[[1]]$Y  )
+lines( CTSM.Val.Data$Time, CTSM.Val.Data$Y1, col="red")
+Idx <- !is.na(D$Yp)
+lines( D$Time[Idx] , D$Yp[Idx] , col="blue")
+
+# State validation
+plot(D$Time[-(1:10)], D$Xp[1,-(1:10)],type="l",col="red")
+lines(D$Time[-(1:10)], D$Xp[2,-(1:10)],type="l",col="red")
+
+plot(CTSM.Val.Data$Time , CTSM.Val.Data$Xp2,type="l",col="blue",ylim=range(CTSM.Val.Data[,c("Xp1","Xp2")]))
+lines(CTSM.Val.Data$Time , CTSM.Val.Data$Xp1,type="l",col="blue")
+
+
