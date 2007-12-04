@@ -3,6 +3,7 @@ Type: Package
 Title: Mixed-Effects modelling using Stochastic Differential Equations.
 Version: 0.1
 Date: 2007-11-23
+Encoding: latin1
 Author: Stig Mortensen <sbm@imm.dtu.dk> and Søren Klim <skl@imm.dtu.dk>
 Maintainer: Søren Klim <skl@imm.dtu.dk>
 Depends: 
