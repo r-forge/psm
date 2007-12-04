@@ -119,17 +119,23 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     negLogLike <- 0
 
     # Variables in the for loop
-    DIAGDIMY  <- diag(1,dimY)
-    DIAGDIMX  <- diag(1,dimX)
-    DIAGRANKA <- diag(1,rankA)
-    DIAGDIMXRANKA <- diag(1,dimX-rankA)
-    SIGSIGT <- SIG%*%t.default(SIG)
+  DIAGDIMY  <- diag(1,dimY)
+  DIAGDIMX  <- diag(1,dimX)
+  DIAGRANKA <- diag(1,rankA)
+  DIAGDIMXRANKA <- diag(1,dimX-rankA)
+  SIGSIGT <- SIG%*%t.default(SIG)
   ZERODIMXDIMX <- matrix(0,nrow=dimX,ncol=dimX)
-
   matA.T <- t.default(matA)
   matC.T <- t.default(matC)
-  matA.Inv <- solve.default(matA)
-  
+  if(singA){                                        # matA singular
+    Ua <- svd(matA)$u
+    Ua.T <- t.default(Ua)    
+  } else {
+    matA.Inv <- solve.default(matA)
+  }
+
+  matASIGSIGTzerosmatAT <-  rbind( cbind(-matA , SIGSIGT ) ,
+                  cbind( ZERODIMXDIMX , matA.T  ))
 
     # Loop over timepoints
     for(k in 1:dimT) {
@@ -174,10 +180,15 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
           Pf[,,k] <- Pp[,,k]
         }
 
+        
         if(ModelHasDose) {
-          idxD = which(Time[k]==Model$Dose$Time)
-          if(length(idxD)==1) {
-            Xf[Model$Dose$State[idxD],k] <- Xf[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+          # Check if dosing is occuring at this timepoint.
+          if( any(Time[k]==Model$Dose$Time)) {
+            idxD = which(Time[k]==Model$Dose$Time)
+            # Multiple dosing a timepoint[k]
+            for(cmt in 1:length(idxD)) {
+              Xf[Model$Dose$State[idxD[cmt]],k] <- Xf[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
+            }
           }
         }
         
@@ -194,11 +205,8 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         # State prediction
         tau   <- Time[k+1]-Time[k]
 
-        # Try to optimize
-        tmp   <- tau* rbind( cbind(-matA , SIGSIGT ) ,
-                  cbind( ZERODIMXDIMX , matA.T  ))
-        
-        tmp   <- mexp(tmp)
+        # Use large time invariant matrix
+        tmp   <- mexp(tau * matASIGSIGTzerosmatAT)
 
         # CTSM (1.48)
         PHI   <- t.default(tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])
@@ -223,14 +231,13 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
               else  {
                   # matA is singular and has INPUT
                   # CTSM Mathguide Special Case no.1 page 10
-                  Ua <- svd(matA)$u
-
-                  PHITilde      <- t.default(Ua) %*% PHI %*% Ua
+               
+                  PHITilde      <- Ua.T %*% PHI %*% Ua
                   PHITilde1     <- PHITilde[1:rankA,1:rankA,drop=F]
                   # PHITilde2     <- PHITilde[1:rankA,(rankA+1):dimX,drop=F]
                   # PHITilde1Inv  <- solve(PHITilde1)
 
-                  ATilde    <- t.default(Ua) %*% matA %*% Ua
+                  ATilde    <- Ua.T %*% matA %*% Ua
                   ATilde1   <- ATilde[1:rankA,1:rankA,drop=F]
                   ATilde2   <- ATilde[1:rankA,(rankA+1):dimX,drop=F]
                   ATilde1Inv <- solve.default(ATilde1)
@@ -248,7 +255,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
                   IntExpAtildeS[(rankA+1):dimX,(rankA+1):dimX] <- DIAGDIMXRANKA*tau
 
                   # Insert State prediction CTSM  (1.60)
-                  Xp[,k+1] <- PHI %*% Xf[,k]+ Ua %*% IntExpAtildeS %*% t.default(Ua) %*% matB %*% Uk
+                  Xp[,k+1] <- PHI %*% Xf[,k]+ Ua %*% IntExpAtildeS %*% Ua.T %*% matB %*% Uk
 
                   } # end else
             }    # end else

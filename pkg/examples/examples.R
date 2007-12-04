@@ -1,22 +1,13 @@
+# This example file demonstrates the process of 
+# Simulation, estimation and smoothing
+# The general model used is the C-peptide model from
+# Cauter et. al.
+
+
 rm(list=ls())
 
 detach(package:PSM)
-
-Developing <- FALSE
-if (Developing) {
-  #Development Block - Loads all R files in Development folder
-  library(mexp ,lib.loc="~/PSM/Rpackages/gridterm")
-  path <- "/home/skl/PSM/Rpackages/Development/PSM/R/"
-  #path <- "/home/sbm/PSM/PSM/R/"
-  files <- list.files(path)
-  for (i in 1:length(files)) {
-      source(paste( path , files[i],sep="")  )           
-  }
-} else {
-                                        #detach(package:mexp)
-                                        # library(mexp,lib.loc="~/PSM/Rpackages/gridterm")
-    library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
-}
+library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 
 
 #######################
@@ -156,13 +147,13 @@ par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
              UB   = c( 3000, 150^2,  15,  .50))
 
 
-ModelCheck(Model=Model.Est , Data=Pop.Data[[1]] , Par=par1$Init)
+ModelCheck(Model=Model.Est , Data=Pop.Data[[1]] , Par=par1)
 
 obj1 <- PSM.estimate(Model=Model.Est, Data=Pop.Data, Par=par1,CI=T,trace=1)
 
 obj1
 
-THETA <- obj1$THETA
+(THETA <- obj1$THETA)
 # THETA <- c(1.885498e+03, 2.584864e+03, 9.862890e+00, 8.981350e-03)
 
 # -------------------------------------------------------------
@@ -174,12 +165,13 @@ Data.Sm <- PSM.smooth( Model=Model.Est , Data=Pop.Data, THETA=THETA, subsample=5
 
 ID <- NoOfSubjects
 CMT <- 3
-Data <- Data.Sm$smooth[[ID]]
+Data <- Data.Sm[[ID]]
 plot( Data$Time, Data$Xs[CMT,] , type="n", ylim=c(0,250),
      xlab="Min",ylab="pmol/min",main="Insulin Secretion Rate")
 polygon( c(Data$Time,rev(Data$Time)) ,
         c(Data$Xs[CMT,]+sqrt(abs(Data$Ps[CMT,CMT,])) ,
           rev(Data$Xs[CMT,]-sqrt(abs(Data$Ps[CMT,CMT,])))),col=4,density=50)
 lines( Data$Time, Data$Xs[CMT,], type="l",lwd=2)
+points( Sim.Data[[ID]]$Time, Sim.Data[[ID]]$X[3,] , col="red")
 rug(Data$Time)
 

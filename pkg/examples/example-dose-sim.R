@@ -1,5 +1,10 @@
+# This example demonstrates the simulation of a bolus 
+# in a 2-compartment system.
+
 rm(list=ls())
+
 k1 = 0.05; k2 = 0.05; ke = 0.07;
+
 Model.SimDose <- list(
                       Matrices = function(phi) {
                         kei <- phi[["kei"]]
@@ -26,9 +31,9 @@ Model.SimDose <- list(
                              OMEGA=matrix(THETA[3]) )
                       },
                       Dose = list(
-                        Time = c(30,150),
+                        Time = c(30,180),
                         State = c(1, 1),
-                        Amount = c(1000,1500)
+                        Amount = c(1500,1500)
                         )
                       )
 
@@ -49,19 +54,21 @@ detach(package:PSM)
 library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 
 #                   ke   S  OMEGA
-SimDose.THETA <-  c(0.03 , 10 , 0)
-Model.SimDose$Dose$Time = c(30,180)
-Model.SimDose$Dose$Amount = c(1500,1500)
+SimDose.THETA <-  c(0.03 , 10 , 1)
+
 SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=SimDose.Subj)
 
+# View the Simulated datastructure
+names(SimDose.Data[[1]])
 
+# Plot of the simulations
 par(mfcol=c(3,SimDose.Subj))
 for(id in 1:SimDose.Subj) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
          ylab="Observations", xlab=paste('individual',id))
   for(i in 1:2) {
     plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
-         ylab=paste('state',i), xlab=paste('individual',id))
+         ylab=paste('state',i), xlab=paste('individual',id,', eta:',round(SimDose.Data[[id]]$eta,3)))
     rug(SimDose.Data[[id]]$Time)
   }
 }
@@ -74,12 +81,16 @@ for(id in 1:SimDose.Subj) {
 #source("~/PSM/PSM/R/PSM.smooth.R")
 out <- PSM.smooth(Model = Model.SimDose, Data = SimDose.Data, THETA = SimDose.THETA, subsample = 10, etaList=matrix(c(0,0),nrow=1))
 
+# View the data structure
+names(out[[1]])
+
+#Plot of the smoothed estimates
 par(mfcol=c(3,SimDose.Subj))
 for(id in 1:SimDose.Subj) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
          ylab="Observations", xlab=paste('individual',id))
   for(i in 1:2) {
-    plot(out$smooth[[id]]$Time , out$smooth[[id]]$Xs[i,],type="l",
+    plot(out[[id]]$Time , out[[id]]$Xs[i,],type="l",
          ylab=paste('smooth state',i), xlab=paste('individual',id))
     rug(SimDose.Data[[id]]$Time)
   }

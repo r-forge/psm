@@ -79,8 +79,8 @@ Ob1 <- LinKalmanFilter( phi=CTSMphi , Model=HeatModel , Data=Pop.Data[[1]] , ech
 
 # Validation plot versus Data
 D <- Pop.Data[[1]]
-plot(D$Time , D$Y)
-points( D$Time , Ob1$Yp, pch="+")
+plot(D$Time , D$Y,col="red")
+points( D$Time , Ob1$Yp, pch="+",col="blue")
 
 # -------------------------------------------------------------
 # Minimizers
@@ -91,10 +91,10 @@ names(phi$Init) <- c("G1","G2","H1","H2","H3","SIG11","SIG22","S","X01","X02")
 phi$Init
 
 # Perform minimization with 2 different optimizers
-Rprof()
+#Rprof()
 Min1 <- PSM.estimate(Model=HeatModel,Data=Pop.Data,Par=par1,CI=TRUE,trace=2,optimizer="nlm")
-Rprof(NULL)
-summaryRprof()
+#Rprof(NULL)
+#summaryRprof()
 
 Min2 <- PSM.estimate(Model=HeatModel,Data=Pop.Data,Par=par1,CI=TRUE,trace=2,optimizer="optim")
 
