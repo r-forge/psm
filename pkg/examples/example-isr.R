@@ -12,7 +12,7 @@ tmpData <- read.table("~/PSM/isr/CPEP",sep="\t", col.names=paste('ID',1:13))
 Cpep <- vector(mode="list")
 for(i in 1:12)
   Cpep[[i]] <-
-  list(Time= read.table("T")$V1, Y=matrix(tmpData[[i]],nrow=1))
+  list(Time= read.table("~/PSM/isr/T")$V1, Y=matrix(tmpData[[i]],nrow=1))
 
 
 
@@ -50,7 +50,7 @@ Model1 <- list(
                }
                )
 
-# fra matlab fminsearch i Main_KF_plotAPL.m
+# From Matlab version of PSM
 # THETA = (912.50196725972,   8574.60240381849,   6.06399638066, 0.16988998197)
 par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
              Init = c( 1000, 100^2,  10,  .25),
@@ -191,4 +191,5 @@ for(i in 1:4) {
   if(i==1) points(Cpep2[[i]]$Time,2Cpep[[j]]$Y)
   rug(Cpep[[1]]$Time)
 }
+
 
