@@ -9,7 +9,7 @@
 }
 
 \usage{
-ModelCheck(Model, Data, Par)
+ModelCheck(Model, Data, Par,DataHasY=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -25,7 +25,9 @@ ModelCheck(Model, Data, Par)
     \code{Par$Init} is used to test Model functions.
     If present \code{Par$LB} and \code{Par$UB} are tested for validity.
   }
-
+  \item{DataHasY}{
+    Include checks for Y. Useful when checking simulation models.
+  }
   * See description \link{PSM.estimate}
 }
 

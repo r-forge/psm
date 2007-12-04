@@ -10,7 +10,7 @@
 }
 
 \usage{
-PSM.smooth(Model, Data, THETA, subsample = 0, etaList=NULL, trace = 0)
+PSM.smooth(Model, Data, THETA, subsample = 0, trace = 0, etaList = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,17 +27,17 @@ PSM.smooth(Model, Data, THETA, subsample = 0, etaList=NULL, trace = 0)
     Number of points to estimate states in between
     measurements. The extra points are linearly spaced.
   }
+  \item{trace}{
+    Non-negative integer. If positive, tracing
+    information on the progress of the optimization is produced. Higher
+    values produces more tracing information.
+  }
   \item{etaList}{
     Matrix where each column contains an etimate of
     \eqn{\eta_i}. \code{etaList} has the same format as the output of 
     \code{\link{PSM.estimate}}. If ommitted, the function will evalutate
     the population likehood function to find estimates of \eqn{\eta_i}{eta}
     for all individuals.
-  }
-  \item{trace}{
-    Non-negative integer. If positive, tracing
-    information on the progress of the optimization is produced. Higher
-    values produces more tracing information.
   }
   * See \code{\link{PSM.estimate}} for further detail.
 }
