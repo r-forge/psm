@@ -1,0 +1,94 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,graphics}
+% \VignetteIndexEntry{Model definition and description}
+% \VignetteDepends{PSM}
+
+\newcommand{\bs}{\boldsymbol}
+\begin{document}
+
+<<foo,include=FALSE,echo=FALSE>>=
+options(keep.source = TRUE, width = 60)
+foo <- packageDescription("PSM",lib.loc="/home/sbm/PSM/Rpackages/gridterm")
+@
+
+\title{Population Stochastic Modelling: \\
+Model definition, description and examples} 
+
+\author{Stig Mortensen and Søren Klim}
+\maketitle
+
+\begin{center}
+Version \Sexpr{foo$Version}
+
+\end{center}
+
+\section{Introduction}
+
+\Sexpr{foo$Description}
+
+\section{Model definition}
+
+The mixed-effects model is used to describe data with the following
+general structure 
+
+\begin{equation}
+\bs y_{ij}, \quad i = 1, ..., N, \quad j = 1, ..., n_i
+\end{equation}
+
+where $\bs y_{ij}$ is a vector of measurements at time $t_{ij}$ for
+individual $i$, $N$ is the number of individuals and $n_i$ is the
+number of measurements for individual $i$. In a mixed-effects model
+the variation is split into intra-individual variation and
+inter-individual variation, which is modelled by a first 
+and second stage model. 
+
+States ...
+
+\subsubsection*{First stage model}
+
+The first stage model a stochastic state space model defined as
+follows  
+
+\begin{eqnarray}
+d\bs x_t & = & ( \bs A(\bs\phi_i) \bs x_t + \bs B(\bs\phi_i) \bs u_t)dt +\bs\sigma_\omega(\bs\phi_i)d\bs\omega_t \label{sssm1}\\
+\bs y_{ij} & = & \bs C(\bs\phi_i) \bs x_{ij} + \bs D(\bs\phi_i) \bs u_{ij}+\bs e_{ij}
+\label{sssm2}
+\end{eqnarray}
+
+...
+
+where  $\bs \omega_t$ is a standard Wiener process defined by
+$\bs\omega_{t_2} - \bs\omega_{t_1} \in  N(\bs 0,|t_2-t_1|\bs I)$. The entire
+part $\bs\sigma_\omega(\bs u_t,t,\bs\phi_i)d\bs\omega_t$ is called the
+diffusion term and describes the stochastic part of the system and
+$\bs f(\bs x_t,\bs u_t,t,\bs\phi_i)dt$ is called the drift term and
+describes the deterministic part. Together the drift and diffusion
+terms define the stochastic dynamics of the system.
+
+\subsubsection*{Second stage model}
+
+The second stage model describes the
+variation of the individual 
+parameters $\bs\phi_i$ between individuals and is defined as
+
+\begin{equation}
+\bs \phi_i = g(\bs \theta, \bs \eta_i, \bs Z_i) 
+\label{eqInd}
+\end{equation}
+
+where $\bs \eta_i$ is the multivariate random effect parameter for the
+$i$th individual, which is assumed Gaussian distributed with mean
+zero and covariance $\bs \Omega$: $\bs \eta_i \in N(\bs 0,\bs
+\Omega)$.  The fixed effect parameter of the NLME model is $\bs
+\theta$.
+
+
+
+
+
+\subsection{Nonmem likelihood function}
+
+The Nonmem likelihood function is equal to ... bla bla ... .
+
+
+\end{document}
