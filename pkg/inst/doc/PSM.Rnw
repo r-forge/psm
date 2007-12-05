@@ -8,23 +8,49 @@
 
 <<foo,include=FALSE,echo=FALSE>>=
 options(keep.source = TRUE, width = 60)
-foo <- packageDescription("PSM",lib.loc="/home/sbm/PSM/Rpackages/gridterm")
+package.In.Default.Lib.Loc <- 
+  suppressWarnings(!is.na(packageDescription("PSM")))[1]
+if(package.In.Default.Lib.Loc) {
+  foo <- packageDescription("PSM")
+} else {
+  foo <- packageDescription("PSM",lib.loc="~/PSM/Rpackages/gridterm")
+}
 @
 
 \title{Population Stochastic Modelling: \\
 Model definition, description and examples} 
 
-\author{Stig Mortensen and Søren Klim}
+\author{Stig Mortensen and S\o ren Klim}
 \maketitle
 
 \begin{center}
-Version \Sexpr{foo$Version}
-
+\begin{tabular}{ll}
+Package:& \Sexpr{foo[['Package']]}, version \Sexpr{foo[['Version']]}\\
+License:& \Sexpr{foo[['License']]}\\
+Built:  & \Sexpr{foo[['Built']]} \\
+\end{tabular}
 \end{center}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+
 
 \section{Introduction}
 
-\Sexpr{foo$Description}
+\Sexpr{foo[['Description']]}
+
+\subsection*{A work in progress}
+
+The current version of PSM includes only linear models, but it is
+planned also to include support for non-linear models at a later
+stage. Moreover it is the plan to move some of the most essential
+parts of the implentation to Fortran to give significantly
+improvements in the parameter estimation times. This version is almost
+created in \emph{R}, and estimation times are thus in no way
+comparrable state-of-the-art software for similar types of models.
+
+
 
 \section{Model definition}
 
@@ -35,19 +61,23 @@ general structure
 \bs y_{ij}, \quad i = 1, ..., N, \quad j = 1, ..., n_i
 \end{equation}
 
-where $\bs y_{ij}$ is a vector of measurements at time $t_{ij}$ for
+\noindent where $\bs y_{ij}$ is a vector of measurements at time $t_{ij}$ for
 individual $i$, $N$ is the number of individuals and $n_i$ is the
 number of measurements for individual $i$. In a mixed-effects model
 the variation is split into intra-individual variation and
 inter-individual variation, which is modelled by a first 
-and second stage model. 
-
-States ...
+and second stage model. For further detail regarding the model
+definition please refer to \cite{mortensen07, overgaard05, {kristensen03}}.
 
 \subsubsection*{First stage model}
 
-The first stage model a stochastic state space model defined as
-follows  
+The first stage model for a mixed effects model can be
+written in the form of a state space model. A state space model
+consists of two parts, namely a set of continuous state equations
+defining the dynamics of the system and a set of discrete measurement
+equations, which defines a functional relationship between the states
+of the system and the obtained measurements. In the linear form the
+state space equations are written as 
 
 \begin{eqnarray}
 d\bs x_t & = & ( \bs A(\bs\phi_i) \bs x_t + \bs B(\bs\phi_i) \bs u_t)dt +\bs\sigma_\omega(\bs\phi_i)d\bs\omega_t \label{sssm1}\\
@@ -55,20 +85,31 @@ d\bs x_t & = & ( \bs A(\bs\phi_i) \bs x_t + \bs B(\bs\phi_i) \bs u_t)dt +\bs\sig
 \label{sssm2}
 \end{eqnarray}
 
-...
+\noindent where $t$ is the
+continuous time variable, the states of the model and the optional
+inputs  at time $t$ are denoted $\bs x_t$ and $\bs u_t$
+respectively and $\bs \omega_t$ is a standard Wiener process such that
+$\bs\omega_{t_2} - \bs\omega_{t_1} \in  N(\bs 0,|t_2-t_1|\bs I)$. Both
+the state, measurement and input can be 
+multi-dimensional, and are in such cases thus represented by a vector
+at time $t_{ij}$. The individual model parameters are denoted
+$\bs\phi_i$. Measurements are assumed observed with a Gaussian white
+noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
+\Sigma(\bs  u_{ij},t_{ij},\bs\phi_i))$.  
 
-where  $\bs \omega_t$ is a standard Wiener process defined by
-$\bs\omega_{t_2} - \bs\omega_{t_1} \in  N(\bs 0,|t_2-t_1|\bs I)$. The entire
-part $\bs\sigma_\omega(\bs u_t,t,\bs\phi_i)d\bs\omega_t$ is called the
-diffusion term and describes the stochastic part of the system and
-$\bs f(\bs x_t,\bs u_t,t,\bs\phi_i)dt$ is called the drift term and
-describes the deterministic part. Together the drift and diffusion
-terms define the stochastic dynamics of the system.
+The concept of states is essential to the understanding of the
+model setup. The state vector describe the state of the entire system
+and are  generally not directly observable or at best only 
+observable through measurement noise. The actual relation between
+measurements and states is defined in the measurement equation
+\eqref{sssm2}. A state can represent many different aspects 
+of the system of interest, e.g. concentrations or amounts in 
+compartments, a volume, a parameter with unknown time varying behavior
+or an input to the system, that we wish to estimate. 
 
 \subsubsection*{Second stage model}
 
-The second stage model describes the
-variation of the individual 
+The second stage model describes the variation of the individual 
 parameters $\bs\phi_i$ between individuals and is defined as
 
 \begin{equation}
@@ -76,19 +117,98 @@ parameters $\bs\phi_i$ between individuals and is defined as
 \label{eqInd}
 \end{equation}
 
-where $\bs \eta_i$ is the multivariate random effect parameter for the
+\noindent where $\bs \eta_i$ is the multivariate random effect
+parameter for the 
 $i$th individual, which is assumed Gaussian distributed with mean
-zero and covariance $\bs \Omega$: $\bs \eta_i \in N(\bs 0,\bs
-\Omega)$.  The fixed effect parameter of the NLME model is $\bs
-\theta$.
+zero and covariance $\bs \Omega$, i.e.  $\bs \eta_i \in N(\bs 0,\bs
+\Omega)$.  The fixed effect parameter of the model is $\bs
+\theta$ and $\bs Z_i$ is a vector of co-variates for the $i$th individual.
 
 
 
+\section{Parameter estimation}
+
+The full set of parameters to be estimated for the final mixed effects
+model based on SDEs are the matrices $\bs\Sigma$, $\bs\sigma_\omega$,
+$\bs\Omega$ and the fixed effect parameters in the vector
+$\bs\theta$. The three matrices are usually fixed to some degree so that
+only the diagonals or other partial structure remains to be estimated.
+
+Parameter estimation is done using maximum likelihood. The exact
+population likelihood function cannot be evaluated analytically and
+thus a second-order Taylor expansion is made of the individual a
+posteriori log-likelihood function around the value of $\hat{\bs
+\eta}_i$ that maximizes it. The objective function for PSM is thereby
+given as 
+
+\begin{eqnarray}
+  - \log L(\bs \theta, \bs \Sigma, \bs\sigma_\omega, \bs \Omega )
+  &\approx& \sum_{i=1}^N \left (    \frac{1}{2} \log \left|
+  \frac{-\bs\Delta  l_i}{2\pi}\right | - l_i
+  \right ) \label{PSMobj}
+\end{eqnarray}
+
+\noindent where $l_i$ is the a posteriori log-likelihood function for
+the $i$th individual. The approximation of the 
+2nd derivative $\bs\Delta l_i$ is done using the First-Order
+Conditional Estimation (FOCE) method, in the same way as it is
+normally done in mixed effects models based on ordinary differential
+equations (ODEs). 
+
+\subsubsection*{Comparison to NONMEM}
+
+The Nonmem software is a widely used tool for mixed effects modelling
+based on ODEs \cite{nonmem}. NONMEM also performs maximum likelihood
+estimation using the FOCE approximation and for many it might thus be
+of interest to know how the two objective functions are related. 
+
+The objective function in Nonmem ($l_{NM}$) is advertised as $-2\log L$ but
+in fact it lacks a constant equal to the likelihood of the data. The PSM
+objective function ($l_{PSM}$) is  $-\log L$ as seen in
+Eq. \eqref{PSMobj} and the relation thereby becomes $l_{NM} = 2\cdot
+l_{PSM} - \log(2\pi) \cdot \sum n_i $. The relation has been testet
+for a number of models \cite{mortensen07}. 
 
 
-\subsection{Nonmem likelihood function}
 
-The Nonmem likelihood function is equal to ... bla bla ... .
+\section{Examples}
 
+Simulation and estimation of model for 
+
+\begin{itemize}
+\item insulin secreation rates
+\item dosing in a two-compartment model
+\item heat transfor in buildings
+\end{itemize}
+
+
+
+\small
+
+\begin{thebibliography}{99}
+  \addcontentsline{toc}{section}{\refname}
+  \bibitem{mortensen07}
+    Mortensen SB, Klim S, Dammann B, Kristensen NR, Madsen H,
+    Overgaard RV (2007) A Matlab framework for estimation of nlme
+    models using stochastic differential equations: applications for
+    estimation of insulin secretion rates. J of Parmacokinet
+    Pharmacodyn 34:623-642
+    
+  \bibitem{overgaard05}
+    Overgaard RV, Jonsson N, Torn\o e CW, Madsen H (2005) Non-linear
+    mixed-effects models with stochastic differential equations:
+    implementation of an estimation algorithm. J of Parmacokinet
+    Pharmacodyn 32(1):85-107
+  
+  \bibitem{kristensen03}
+    Kristensen NR, Madsen H (2003) Continous time stochastic
+    modelling: CTSM 2.3 mathematics guide, Technical University of
+    Denmark 
+    
+  \bibitem{nonmem}
+    Beal SL, Sheiner LB (2004) NONMEM\textregistered Users Guide. University of
+    California, NONMEM Project Group.
+    
+\end{thebibliography}
 
 \end{document}
