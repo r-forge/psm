@@ -147,9 +147,12 @@ par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
              UB   = c( 3000, 150^2,  15,  .50))
 
 
-ModelCheck(Model=Model.Est , Data=Pop.Data[[1]] , Par=par1)
 
-obj1 <- PSM.estimate(Model=Model.Est, Data=Pop.Data, Par=par1,CI=T,trace=1)
+obj1 <- PSM.estimate(Model=Model.Est, Data=Pop.Data, Par=par1,CI=T,trace=2)
+
+obj2 <- PSM.estimate(Model=Model.Est, Data=Pop.Data, Par=par1,CI=T,trace=2,optimizer="nlm")
+
+obj3 <- PSM.estimate(Model=Model.Est, Data=Pop.Data, Par=par1,CI=T,trace=2,optimizer="blaa")
 
 obj1
 

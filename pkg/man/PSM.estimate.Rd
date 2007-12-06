@@ -8,7 +8,7 @@
   Kalman filter.
 }
 \usage{
-PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
+PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllist=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -111,6 +111,17 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
   }
   \item{optimizer}{ May be either \code{"optim"} or
     \code{"nlm"}. Chooses between the native optimizers in R.}
+
+  \item{controllist}{ Controllist for the optimizer. Default in package
+    is:
+    \describe{
+      \item{maxit}{100}
+      \item{abstol}{1e-5}
+      \item{trace}{Set to trace as in argument}
+      \item{REPORT}{1}
+      }
+  }
+  
 }
 
 \details{

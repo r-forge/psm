@@ -1,5 +1,5 @@
 `PSM.estimate` <-
-function(Model,Data,Par,CI=F,trace=0,optimizer="optim") {
+function(Model,Data,Par,CI=F,trace=0,optimizer="optim", controllist=NULL) {
 
   ok <- TRUE
   dimS <- length(Data)
@@ -16,13 +16,16 @@ function(Model,Data,Par,CI=F,trace=0,optimizer="optim") {
 
   if(!is.null(Par$LB)) {
     Par$Init <- logit(Par$Init,Par$LB,Par$UB) }
-  
-  controllist <- list(maxit=100, abstol=1e-5 )
-  # put parameters on similar scale if bounds are missing
-  if(is.null(Par$LB)) controllist$parscale <- abs(Par$Init)+1e-3
-  controllist$trace <- trace  #higher number -> more detail
-  controllist$REPORT <- 1 #report for every X iteration
 
+  # controllist
+  if( is.null(controllist)) {
+    # The user did not supply a controllist for the optimizer
+    controllist <- list(maxit=100, abstol=1e-5, trace=trace, REPORT=1 )
+    # put parameters on similar scale if bounds are missing
+    if(is.null(Par$LB))
+      controllist$parscale <- abs(Par$Init)+1e-3
+  }
+  
   if(trace>1)  cat( "Using Optimizer:", optimizer , "\n")
 
   if(optimizer=="optim") {
@@ -44,6 +47,7 @@ function(Model,Data,Par,CI=F,trace=0,optimizer="optim") {
                  Model=Model, Pop.Data=Data, LB=Par$LB,
                  UB=Par$UB, GUIFlag=trace)
     } else {
+      cat( "Optimizer not recognized -> Using Optimizer: nlm \n")
       out <- nlm(f=APL.KF, p=Par$Init, hessian=CI, print.level=trace,
                  Model=Model, Pop.Data=Data, LB=Par$LB,
                  UB=Par$UB, GUIFlag=trace)
