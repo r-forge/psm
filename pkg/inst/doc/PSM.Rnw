@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath,amssymb,graphics}
-% \VignetteIndexEntry{Model definition and description}
+% \VignetteIndexEntry{Population Stochastic Modelling: Model definition, description and examples}
 % \VignetteDepends{PSM}
 
 \newcommand{\bs}{\boldsymbol}
@@ -95,13 +95,12 @@ multi-dimensional, and are in such cases thus represented by a vector
 at time $t_{ij}$. The individual model parameters are denoted
 $\bs\phi_i$. Measurements are assumed observed with a Gaussian white
 noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
-\Sigma(\bs  u_{ij},t_{ij},\bs\phi_i))$.  
+\Sigma(\bs\phi_i))$.  
 
 The concept of states is essential to the understanding of the
-model setup. The state vector describe the state of the entire system
-and are  generally not directly observable or at best only 
-observable through measurement noise. The actual relation between
-measurements and states is defined in the measurement equation
+model setup. The state vector describes the state of the entire system
+and is only observable through measurement noise. The actual relation
+between measurements and states is defined in the measurement equation
 \eqref{sssm2}. A state can represent many different aspects 
 of the system of interest, e.g. concentrations or amounts in 
 compartments, a volume, a parameter with unknown time varying behavior
@@ -128,11 +127,21 @@ zero and covariance $\bs \Omega$, i.e.  $\bs \eta_i \in N(\bs 0,\bs
 
 \section{Parameter estimation}
 
-The full set of parameters to be estimated for the final mixed effects
+The full set of model parameters to be estimated for the final mixed effects
 model based on SDEs are the matrices $\bs\Sigma$, $\bs\sigma_\omega$,
 $\bs\Omega$ and the fixed effect parameters in the vector
 $\bs\theta$. The three matrices are usually fixed to some degree so that
-only the diagonals or other partial structure remains to be estimated.
+only the diagonals or other partial structure remains to be
+estimated. 
+
+In PSM the function \verb|ModelPar| defines which part of the model
+parameters should estimated. These parameters are denoted $\bs\Theta$ (in
+PSM: \verb|THETA|) such that  
+
+\begin{equation}
+\texttt{ModelPar}:  ~~ \bs\Theta \rightarrow (\bs\theta, \bs\Sigma, \bs\sigma_\omega,
+\bs\Omega) .
+\end{equation}
 
 Parameter estimation is done using maximum likelihood. The exact
 population likelihood function cannot be evaluated analytically and
@@ -142,7 +151,7 @@ posteriori log-likelihood function around the value of $\hat{\bs
 given as 
 
 \begin{eqnarray}
-  - \log L(\bs \theta, \bs \Sigma, \bs\sigma_\omega, \bs \Omega )
+  - \log L(\bs \Theta)
   &\approx& \sum_{i=1}^N \left (    \frac{1}{2} \log \left|
   \frac{-\bs\Delta  l_i}{2\pi}\right | - l_i
   \right ) \label{PSMobj}
