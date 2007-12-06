@@ -88,7 +88,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
 #print(tmp)
   
     # Use Matrix package to compute Matrix exponential
-    Pint  <- mexp(tmp)
+    Pint  <- matexp(tmp)
 
 
   
@@ -206,7 +206,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
         tau   <- Time[k+1]-Time[k]
 
         # Use large time invariant matrix
-        tmp   <- mexp(tau * matASIGSIGTzerosmatAT)
+        tmp   <- matexp(tau * matASIGSIGTzerosmatAT)
 
         # CTSM (1.48)
         PHI   <- t.default(tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])

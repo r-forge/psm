@@ -143,7 +143,7 @@ function(Model, Data, THETA, dt, individuals=1) {
     # State prediction
       tmp <- dt * rbind(cbind(-matA , SIG%*%t.default(SIG)) ,
                         cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
-      tmp <- mexp(tmp)
+      tmp <- matexp(tmp)
       PHI <- t.default( tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])
       IntExpASIG <- PHI %*% tmp[1:dimX,(dimX+1):(dimX*2),drop=F]
 

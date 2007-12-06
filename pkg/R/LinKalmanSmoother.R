@@ -60,7 +60,7 @@ function(phi, Model, Data) {
     tau <- (dimN+1)-i
     ts <- ifelse( i<dimN , Time[tau]-Time[tau-1] , Time[2]-Time[1])
     
-    Adis <- mexp(matA*ts)
+    Adis <- matexp(matA*ts)
  
     if( is.na(Y[,tau,drop=F])) {
       Fk <- Adis
