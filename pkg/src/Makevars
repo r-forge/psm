@@ -1,0 +1,1 @@
+PKG_LIBS=-L/appl/R/R-2.4.0/lib64/R/lib -lRlapack
