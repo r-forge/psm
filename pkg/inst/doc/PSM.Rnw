@@ -15,6 +15,7 @@ if(package.In.Default.Lib.Loc) {
 } else {
   foo <- packageDescription("PSM",lib.loc="~/PSM/Rpackages/gridterm")
 }
+foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
 @
 
 \title{Population Stochastic Modelling: \\
