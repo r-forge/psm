@@ -61,9 +61,13 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
 
   
   # Calculate parameter phi
-  Par <- Model$ModelPar(THETA=Par$Init)
-  dimEta <- nrow(Par$OMEGA)
-  phi <- Model$h(eta=rep(0,dimEta) , theta=Par$theta ,covar=Data$covar)
+  Parlist <- Model$ModelPar(THETA=Par$Init)
+  if(!is.null(Parlist$OMEGA)) {
+    dimEta <- nrow(Parlist$OMEGA)
+    phi <- Model$h(eta=rep(0,dimEta) , theta=Parlist$theta ,covar=Data$covar)
+  } else {
+    phi <- Parlist$theta
+  }
 
   # Matrices
   tmp   <- Model$Matrices(phi=phi)
