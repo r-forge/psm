@@ -111,8 +111,8 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim")
   }
   \item{optimizer}{ May be either \code{"optim"} or
     \code{"nlm"}. Chooses between the native optimizers in R.}
-  }
 }
+
 \details{
   The first stage model describing intra-individual variations is
   defined as: 

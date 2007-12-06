@@ -13,7 +13,7 @@ CutThirdDim(a)
 \arguments{
   \item{a}{ An array with length(dim(a))>=2}
 }
-}
+
 \value{
   Returns a matrix.
 }

@@ -13,7 +13,7 @@ sqrtm(A)
 \arguments{
   \item{A}{ A matrix }
 }
-}
+
 \value{
   Returns the square root of the input matrix.
 }
