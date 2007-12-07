@@ -180,6 +180,7 @@ par2$UB <- par2$Init*7
 fit2 <- PSM.estimate(Model=Model2,Data=Cpep2,Par=par2,CI=T,trace=1)
 fit2[1:3]
                                         # Runtime:  566:1.2 > $NegLogL [1] 2950.34
+                                        # Runtime:  235:4.6 > $NegLogL [1] 2950.357 (2. sæt par) $THETA [1] 2.605852e-02 9.804498e-03 4.815092e+00 3.973301e+02 1.655686e+00
 
 smooth2 <- PSM.smooth(Model=Model2,Data=Cpep2,THETA=fit2$THETA,sub=10)
 
@@ -188,7 +189,7 @@ for(j in 2:3)
 for(i in 1:4) {
   plot(smooth2[[j]]$Time,smooth2[[j]]$Xs[i,],type="l",
        ylab=paste('state',i), xlab=paste('individual',j))
-  if(i==1) points(Cpep2[[i]]$Time,2Cpep[[j]]$Y)
+  if(i==1) points(Cpep2[[j]]$Time,Cpep2[[j]]$Y)
   rug(Cpep[[1]]$Time)
 }
 
