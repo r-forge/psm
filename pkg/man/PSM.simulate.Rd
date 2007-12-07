@@ -13,7 +13,7 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{Model}{
-    Model list *
+    Model list.*
   }
   \item{Data}{
     List with elements described below. No \code{Data$Y} is needed as it
@@ -39,6 +39,7 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   \item{individuals}{
     No of individuals simulated
   }
+  * See description in \link{PSM.estimate}.
 }
 \details{
   
@@ -69,6 +70,11 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   \item{eta}{
     The random effects used in the simulation
   }
+}
+
+\note{
+  For further details please also read the package vignette pdf-document
+  by writing vignette("PSM",package="PSM") in R.
 }
 
 \references{ Please refer to the help page for \code{\link{PSM}}. }

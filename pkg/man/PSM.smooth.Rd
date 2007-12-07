@@ -39,7 +39,7 @@ PSM.smooth(Model, Data, THETA, subsample = 0, trace = 0, etaList = NULL)
     the population likehood function to find estimates of \eqn{\eta_i}{eta}
     for all individuals.
   }
-  * See \code{\link{PSM.estimate}} for further detail.
+  * See description in \link{PSM.estimate}.
 }
 \details{
   The function produces three types of estimates.
@@ -80,6 +80,11 @@ PSM.smooth(Model, Data, THETA, subsample = 0, trace = 0, etaList = NULL)
 	variances}      
     }
   }
+}
+
+\note{
+  For further details please also read the package vignette pdf-document
+  by writing vignette("PSM",package="PSM") in R.
 }
 
 \references{Please refer to the help page for \code{\link{PSM}}. }

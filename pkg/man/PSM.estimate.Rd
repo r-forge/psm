@@ -155,13 +155,14 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllis
   
 }
 
+\note{
+  For further details please also read the package vignette pdf-document
+  by writing vignette("PSM",package="PSM") in R.
+}
+
 \references{ Please refer to the help page for \code{\link{PSM}}. }
 
 \author{ Stig B. Mortensen and Søren Klim}
-
-%\note{
-%  (Further notes, possibly other sections using section{Warning }{....})
-%}
 
 \seealso{
   \code{\link{PSM}}, \code{\link{PSM.smooth}},

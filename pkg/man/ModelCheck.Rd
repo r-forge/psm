@@ -14,21 +14,21 @@ ModelCheck(Model, Data, Par,DataHasY=TRUE)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{Model}{
-    Model list*
+    Model list.*
   }
   \item{Data}{
     Single subject data - ie. only one element of the \code{Data} for
     \code{PSM.estimate}
   }
   \item{Par}{
-    List of parameters for the Model*.
+    List of parameters for the Model.*
     \code{Par$Init} is used to test Model functions.
     If present \code{Par$LB} and \code{Par$UB} are tested for validity.
   }
   \item{DataHasY}{
     Include checks for Y. Useful when checking simulation models.
   }
-  * See description \link{PSM.estimate}
+  * See description in \link{PSM.estimate}.
 }
 
 \details{
@@ -49,13 +49,14 @@ ModelCheck(Model, Data, Par,DataHasY=TRUE)
   Boolean indicating whether the Model passed the requirements
 }
 
+\note{
+  For further details please also read the package vignette pdf-document
+  by writing vignette("PSM",package="PSM") in R.
+}
+
 \references{ Please refer to the help page for \code{\link{PSM}}. }
 
 \author{ Stig B. Mortensen and Søren Klim}
-
-%\note{
-%  (Further notes, possibly other sections using section{Warning }{....})
-%}
 
 \seealso{
   \code{\link{PSM}}
