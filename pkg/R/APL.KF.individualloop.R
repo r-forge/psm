@@ -7,16 +7,24 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   dimN <- tmp[2]
   eGrad <- array(0,dim = c(dimY,dimEta,dimN))
   
-  controllist <- list(trace=0,maxit=500,reltol=1e-7,ndeps=rep(1e-4,dimEta))
+  controllist <- list(trace=0,maxit=500)
   
   if(GUIFlag>2) {
     controllist$trace <- 1  #higher number -> more detail
     controllist$REPORT <- 1 #report for every X iteration
   }
-  
-  out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF , gr = IndividualLL.KF.gr,
-               method = "BFGS", control = controllist, hessian = FALSE, 
-               theta=theta, OMEGA=OMEGA, Model=Model, Data=Data)
+  if(0) { #unconstrained
+    controllist$reltol <- 1e-7
+    out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF , gr = IndividualLL.KF.gr,
+                 method = "BFGS", control = controllist, hessian = FALSE, 
+                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data)
+  } else { #constrained
+    controllist$factr <- 1e8
+    out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF, gr = IndividualLL.KF.gr,
+                 method = "L-BFGS-B", lower = -4*sqrt(diag(OMEGA)),upper = 4*sqrt(diag(OMEGA)),
+                 control = controllist, hessian = FALSE, 
+                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data)
+  }
   
   
   # Print optimization stats
