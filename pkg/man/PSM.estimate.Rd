@@ -115,10 +115,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllis
   \item{controllist}{ Controllist for the optimizer. Default in package
     is:
     \describe{
-      \item{maxit}{100}
-      \item{abstol}{1e-5}
-      \item{trace}{Set to trace as in argument}
-      \item{REPORT}{1}
+      \item{\code{maxit}}{100}
+      \item{\code{abstol}}{1e-5}
+      \item{\code{trace}}{Set to trace as in argument}
+      \item{\code{REPORT}}{1}
       }
   }
   
