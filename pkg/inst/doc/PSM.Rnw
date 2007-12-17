@@ -6,14 +6,16 @@
 \newcommand{\bs}{\boldsymbol}
 \begin{document}
 
-<<foo,include=FALSE,echo=FALSE>>=
+<<PackageDescription,include=FALSE,echo=FALSE>>=
 options(keep.source = TRUE, width = 60)
 package.In.Default.Lib.Loc <- 
   suppressWarnings(!is.na(packageDescription("PSM")))[1]
 if(package.In.Default.Lib.Loc) {
   foo <- packageDescription("PSM")
+  library("PSM")
 } else {
   foo <- packageDescription("PSM",lib.loc="~/PSM/Rpackages/gridterm")
+  library("PSM",lib.loc="~/PSM/Rpackages/gridterm")
 }
 foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
 @
@@ -96,7 +98,7 @@ multi-dimensional, and are in such cases thus represented by a vector
 at time $t_{ij}$. The individual model parameters are denoted
 $\bs\phi_i$. Measurements are assumed observed with a Gaussian white
 noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
-\Sigma(\bs\phi_i))$.  
+S(\bs\phi_i))$.  
 
 The concept of states is essential to the understanding of the
 model setup. The state vector describes the state of the entire system
@@ -180,21 +182,220 @@ l_{PSM} - \log(2\pi) \cdot \sum n_i $. The relation has been testet
 for a number of models \cite{mortensen07}. 
 
 
-
+\newpage
 \section{Examples}
 
-Simulation and estimation of model for 
+This document is written using Sweave, and thus all R-code shown in
+the examples below can be extracted
+into an R-script file by writing \verb|Stangle("PSM.Rnw")| in R. The .Rnw
+file is located in /doc in the PSM installation folder. To save
+time in the processing of the document all computer intensive
+operations are skipped by setting a flag \verb|Redo = FALSE| and
+instead the outcome are loaded from an .Rdata file. If the flag is
+changed to \verb|TRUE| in the extracted R-script then all calculation
+are re-done. 
 
-\begin{itemize}
-\item insulin secreation rates
-\item dosing in a two-compartment model
-\item heat transfor in buildings
-\end{itemize}
+\subsection*{Dosing in two-compartment model}
+
+This example illustrates how a standard two-compartment model with a
+random diffusion between the compartments can be set up. An overview
+of the model is shown in Figure \ref{fig:modeldose}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/comp2dose}
+  \caption{Model layout}
+  \label{fig:modeldose}
+\end{figure}
+
+The model is used to simulate data based on two doses of $1500mg$
+given after 30 and 180 minutes. In state space formulation the model
+is described as 
+
+\begin{eqnarray}
+  dA_1 &=& [-(CL~V_1^i + CL_d V_1^i)A_1 + CL_dV_2A_2]dt + \sigma_1d\omega \\
+  dA_2 &=& [ CL_dV_1^iA_1 - CL_dV_2A_2]dt - \sigma_1d\omega\\
+  Y &=& A_1/V_1 + e
+\end{eqnarray}
+
+\noindent or in matrix notation 
+
+\begin{eqnarray}
+  d\bs A_t &=& \left[ \begin{array}{cc}
+      -(CL~V_1^i + CL_d V_1^i) & CL_dV_2  \\
+    CL_dV_1^i & - CL_dV_2 \end{array} \right]\bs A_tdt + \left[ 
+  \begin{array}{cc} \sigma_1 & 0 \\ -\sigma_1 & 0 \end{array}
+\right]d\bs\omega\\ 
+  Y_{ij} &=& [ \begin{array}{cc} 1/V_1 & 0 \end{array}]\bs A_{ij} + e_{ij}
+\end{eqnarray}
+
+\noindent where $\bs A_t = [ A_1 ~ A_2]^T$ are the amount in each compartment and thus
+$A_1/V_1^i$ is the measured concentration. It is seens that the
+elimination will follow a normal two-compartment model, but with a
+small random diffusion between the compartments. The mass is preserved
+since the diffusion terms are equal with opposite signs.
+
+For simplicity the individual variation is modelled as
+
+\begin{equation}
+V_1^i =  V_1\exp(\eta_1)
+\end{equation}
+
+The parameters of the model is $V_1= 5L$, $V_2 = 10L$, $CL_d =  0.005
+L/min$, $CL = 0.002 L/min$, $\sigma_1 = 10$, $S = 20 mg^2/L^2$ and
+$\Omega = 0.5$.
+
+The model can be defined in R as shown below.
+
+<<ModelDefinition>>=
+Model.SimDose <- list(
+                      Matrices = function(phi) {
+                        V1i <- phi[["V1i"]]
+                        matA <- matrix(c(-(CL+CLd)*V1i ,  CLd*V2 ,   
+                                           CLd*V1i , -CLd*V2 ) ,nrow=2,byrow=T)
+                        matC <- matrix(c(1/V1i,0),nrow=1)
+                        list(matA=matA,matC=matC)
+                      },
+                      X0 = function(Time=Na,phi,U=Na) {
+                        matrix(0,nrow=2)
+                      },
+                      SIG = function(phi) { 
+                        sig1 <- phi[["sig1"]]
+                        matrix(c( sig1,0,
+                                 -sig1,0), nrow=2, byrow=T)
+                      },
+                      S = function(phi) {
+                        matrix(phi[["S"]])
+                      },
+                      h = function(eta,theta,covar) {
+                        phi <- theta
+                        phi[["V1i"]] <- V1*exp(eta[1])
+                        phi                      },
+                      ModelPar = function(THETA){
+                        list(theta=list(sig1=THETA[1], S=THETA[2]),
+                             OMEGA=matrix(THETA[3]) )
+                      },
+                      Dose = list(
+                        Time = c(30,180),
+                        State = c(1, 1),
+                        Amount = c(1500,1500)
+                        )
+                      )
+V1 <- 5
+V2 <- 10
+CLd <- 0.005
+CL <- 0.002
+SimDose.THETA <-  c(10 , 20 , .5)
+@ 
+
+Only three parameters in the model will be estimated, as it can be
+seen from the \verb|ModelPar| function above. The parameters to be estimated
+are $\bs\Theta$ = (\verb|sig1|, \verb|S|, \verb|OMEGA|).
+
+For this example two individuals will be simulated. They will both be
+sampled every $10min$ for $400min$ which is described as below.
+
+<<SamplingScheme>>=
+SimDose.Data <- vector(mode="list",length=2)
+for (i in 1:2) 
+  SimDose.Data[[i]]$Time <- seq(from=10,by=10,to=400)
+
+@ 
+
+Everything is now setup and the simulation can be performed.
+
+<<SimulateData>>=
+Redo = FALSE
+if(Redo) {
+  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=2)
+} else 
+  load("simdose.RData")
+@ 
+
+The simulated data are shown in Figure \ref{fig:fig1}. The first row
+shows the observations for the two individuals and the next two show
+state 1 and 2 which we wish to estimate.
+
+\begin{figure}[htb]
+\begin{center}
+%<<label=figure1,fig=TRUE,echo=FALSE,height=3.5,width=5>>=
+<<label=figure1,fig=TRUE,echo=FALSE>>=
+par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
+for(id in 1:2) {
+  plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
+         ylab="Observations", main=paste('individual',id,', eta:',round(SimDose.Data[[id]]$eta,3)))
+  for(i in 1:2) {
+    plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
+         ylab=paste('state',i))
+    rug(SimDose.Data[[id]]$Time)
+  }
+}
+@
+\end{center}
+\caption{Simulated data and states.}
+\label{fig:fig1}
+\end{figure}
+
+As initial guess for the parameters in $\bs\Theta$ the true parameters
+are used and the bounds are $\pm$ a factor 50.
+
+<<EstimateParameters>>=
+parA <- list(LB=SimDose.THETA/50, Init=SimDose.THETA , UB=SimDose.THETA*50 )
+if(Redo) fitA <- PSM.estimate(Model.SimDose,SimDose.Data,parA,CI=T)
+fitA[1:3]
+
+@ 
+
+It is seen that the estimated parameters are reasonably close to the
+true values of $\bs\Theta = (10, 20, 0.5)$ and the 95\% conficdence
+intervals include the true values. In particular the first parameter
+$\sigma_1$ is significant which shows that deviations from a normal
+ODE two-compartment model are significant. This could also be tested
+
+Based on the estimated parameters it is possible to obtain an estimate
+of the model states by using \verb|PSM.smooth|. The
+estimates are shown in Figure \ref{fig:fig2}. The structure of the
+output from the smoothing function is also shown using the
+\verb|names| command.
+
+<<EstimateStates>>=
+#if(Redo) 
+  out <- PSM.smooth(Model.SimDose, SimDose.Data, fitA$THETA, subsample = 20)
+# View the data structure
+names(out[[1]])
+@ 
+
+By comparing the smoothed estimates of the states to the
+true simulated states, it can be seen that they are very close. This
+shows that the system noise and observation noise has been separeted
+properly in the reconstruction.
+
+\begin{figure}[htb]
+\begin{center}
+<<label=figure2,fig=TRUE,echo=FALSE>>=
+par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
+for(id in 1:2) {
+  plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
+         ylab="Observations", main=paste('individual',id))
+  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)))
+  for(i in 1:2) {
+    plot(out[[id]]$Time , out[[id]]$Xs[i,],type="l",
+         ylab=paste('smooth state',i))
+    lines(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],lty=2,col=4)
+    rug(SimDose.Data[[id]]$Time)
+    legend(400, y = max(out[[id]]$Xs[i,]), legend=c('simulation','smooth est'),lty=c(2,1),col=c(4,1),
+           xjust=1,yjust=1,bty="n",cex=1,y.intersp=.7)
+  }
+}
+@
+\end{center}
+\caption{Smoothed estimate of states.}
+\label{fig:fig2}
+\end{figure}
 
 
 
 \small
-
 \begin{thebibliography}{99}
   \addcontentsline{toc}{section}{\refname}
   \bibitem{mortensen07}
