@@ -6,7 +6,7 @@
 !-----------------------------------------------------------------------!
 
 !-----------------------------------------------------------------------!
-      SUBROUTINE DGPADM( IDEG,M,T,H,IFLAG )
+      SUBROUTINE MATEXPFORTRANSUB( IDEG,M,T,H,IFLAG )
 
       IMPLICIT NONE
       INTEGER IDEG, M, LWSP, IEXPH, NS, IFLAG, IPIV(M)

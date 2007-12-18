@@ -8,13 +8,13 @@ matexp <- function(a, dt=1, order=8) {
       stop("order must be a positive integer number")
     # Internals
     # SUBROUTINE DGPADM( IDEG,M,T,H,IFLAG )
-    Fobj <- .Fortran("DGPADM",
+    Fobj <- .Fortran("matexpfortransub",
                      as.integer(order), #IDEG  1
                      as.integer(da[1]), #M     2
                      as.double(dt),     #T     3
                      as.double(a),      #H     4
                      as.integer(0),     #IFLAG 5
-                     PACKAGE=matexp)
+                     PACKAGE="PSM")
     if(Fobj[[5]] < 0)
       stop("Unable to determine matrix exponential")
     return( matrix(Fobj[[4]], nrow=da[1]))
