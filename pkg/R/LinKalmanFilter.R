@@ -1,5 +1,5 @@
 `LinKalmanFilter` <-
-function( phi , Model , Data , echo=F, outputInternals=FALSE) {
+function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 # Linear Continous Kalman Filter for a State Space formulation
 #     Input: 
 #     Model           type: list
@@ -67,7 +67,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     # Calculate Init state and initial SIG
     InitialState  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
     SIG           <- Model$SIG(phi=phi)
-
+  S     <- Model$S(phi=phi)
 
     dimT  <- length(Time)     # Time is vector -> use length
     dimY  <- nrow(Y)          # Dimensionality of observations
@@ -77,7 +77,83 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
     # Is A singular ???
     rankA <- qr(matA)$rank
     singA <- (rankA<dimX)
+
+  # Use compiled Fortran Code
+  if(fast) {
+
+    #Currently only nonsingular A
+    if(singA) {
+      stop("Singular A not currently available in compiled code")
+    }
+
+    # Missing observations change NA ->BIG M
+    Y[is.na(Y)] <- 1E300
+
+    # Pseudo input - Fortran code assumes input
+    if(!ModelHasInput) {
+      dimU <- 1
+      U <- array( 0 , c(dimU,dimT))
+      matB <- array(0 , c(dimX,dimU))
+      matD <- array(0 , c(dimY,dimU))      
+    }
     
+    # Fortran Internals - Initialize
+    LL <-  -1.0
+    INFO <- -1
+    YP <- array(-1 , c(dimY,dimT))
+    XF <- array(-1 , c(dimX,dimT))
+    XP <- array(-1 , c(dimX,dimT))
+    PF <- array(-1 , c(dimX,dimX,dimT))
+    PP <- array(-1 , c(dimX,dimX,dimT))
+    YP <- array(-1 , c(dimY,dimT))
+    R <- array( -1 , c(dimY,dimY,dimT))
+    KGAIN <- array(-1 , c(dimX,dimY,dimT))
+
+    # Run compiled code
+    FOBJ <-  .Fortran("LTI_KALMAN_FULLA_WITHINPUT",
+                      LL   =as.double(LL),
+                      INFO =as.integer(INFO),
+                      A    =as.double(matA),
+                      B    =as.double(matB),
+                      C    =as.double(matC),
+                      D    =as.double(matD),
+                      Time =as.double(Time),
+                      Y    =as.double(Y),
+                      U    =as.double(U),
+                      SIG  =as.double(SIG),
+                      S    =as.double(S),
+                      X0   =as.double(InitialState),
+                      dimT =as.integer(dimT) ,
+                      dimY =as.integer(dimY),
+                      dimU =as.integer(dimU),
+                      dimX =as.integer(dimX),
+                      Xf   =as.double(XF),
+                      Xp   =as.double(XP),
+                      Pf   =as.double(PF),
+                      Pp   =as.double(PP),
+                      Yp   =as.double(YP),
+                      R    =as.double(R),
+                      Kgain=as.double(KGAIN),
+                      PACKAGE="PSM")
+    
+    
+    if(echo) cat("\t -LL: " ,  round(FOBJ$LL,3) , "\n")
+    if(outputInternals) {
+      return( list( negLogLike=FOBJ$LL,
+                   Xp=array(FOBJ$Xp,c(dimX,dimT)),
+                   Xf=array(FOBJ$Xf,c(dimX,dimT)),
+                   Yp=array(FOBJ$Yp,c(dimY,dimT)),
+                   KfGain=array(FOBJ$Kgain,c(dimX,dimY,dimT)),
+                   Pf=array(FOBJ$Pf,c(dimX,dimX,dimT)),
+                   Pp=array(FOBJ$Pp,c(dimX,dimX,dimT)),
+                   R =array(FOBJ$R,c(dimY,dimY,dimT))
+                   )
+             )
+    }
+    
+  }
+
+  
     # P0 CTSM MathGuide page 19 (1.118) and page 8 (1.49)
     PS  <- 1.0;
     tau <- Time[2] - Time[1]
@@ -156,7 +232,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE) {
                   E%*%matC%*%Xp[,k,drop=F]} }
 
         # Output prediction covariance    
-        S     <- Model$S(phi=phi)
+        #S     <- Model$S(phi=phi)
         R[ObsIndex,ObsIndex,k]  <- E%*%matC%*%Pp[,,k]%*% matC.T %*%t.default(E) + E%*%S%*%t.default(E)
 
   
