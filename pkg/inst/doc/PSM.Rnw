@@ -34,7 +34,7 @@ Built:  & \Sexpr{foo[['Built']]} \\
 \end{tabular}
 \end{center}
 
-\setcounter{tocdepth}{1}
+%\setcounter{tocdepth}{1}
 \tableofcontents
 
 
@@ -99,6 +99,14 @@ at time $t_{ij}$. The individual model parameters are denoted
 $\bs\phi_i$. Measurements are assumed observed with a Gaussian white
 noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
 S(\bs\phi_i))$.  
+
+The initial state of the model is given as a function of $t_1$,
+$\bs\phi_i$, and $u_{i1}$ and defines the model state at time $t_1$
+before update based on the first observation. The initial state can thus
+be included in the parameter estimation as nescessary. The covariance
+matrix of the initial state  is
+set to the integral of the Wiener process and the dynamics of the system over 
+the first sample interval $t_2-t_1$ as also done in \cite{kristensen03}.
 
 The concept of states is essential to the understanding of the
 model setup. The state vector describes the state of the entire system
@@ -185,17 +193,32 @@ for a number of models \cite{mortensen07}.
 \newpage
 \section{Examples}
 
-This document is written using Sweave, and thus all R-code shown in
-the examples below can be extracted
-into an R-script file by writing \verb|Stangle("PSM.Rnw")| in R. The .Rnw
-file is located in /doc in the PSM installation folder. To save
-time in the processing of the document all computer intensive
-operations are skipped by setting a flag \verb|Redo = FALSE| and
-instead the outcome are loaded from an .Rdata file. If the flag is
-changed to \verb|TRUE| in the extracted R-script then all calculation
-are re-done. 
+\begin{tabular}{llr}
+\ref{dose2comp} & Dosing in two-compartment model . . . . . . . . .& \pageref{dose2comp} \\
+\ref{isr} & Extraction of insulin secretion rate . . . . . . . . .& \pageref{isr} \\
+\end{tabular}
 
-\subsection*{Dosing in two-compartment model}
+\vspace{5mm}
+
+\noindent This document is written using Sweave, and thus all R-code shown in
+the examples below can be extracted into an R-script file by writing
+\verb|Stangle("PSM.Rnw")| in R to allow for
+further experimentaion with the code. The PSM.Rnw
+file is located in /doc in the PSM installation folder. 
+
+To save time in the processing of the document all computer intensive
+operations are skipped by setting a flag \verb|Redo = FALSE| and
+instead the outcome is loaded from a saved .Rdata file. Changing
+the flag to \verb|TRUE| in PSM.Rnw and writing
+\verb|Sweave("PSM.Rnw")| in R will generate a new document with
+analysis based on new simulated data sets.
+
+<<Redo.flag>>=
+Redo = FALSE
+@ 
+
+\subsection{Dosing in two-compartment model}
+\label{dose2comp}
 
 This example illustrates how a standard two-compartment model with a
 random diffusion between the compartments can be set up. An overview
@@ -215,7 +238,7 @@ is described as
 \begin{eqnarray}
   dA_1 &=& [-(CL~V_1^i + CL_d V_1^i)A_1 + CL_dV_2A_2]dt + \sigma_1d\omega \\
   dA_2 &=& [ CL_dV_1^iA_1 - CL_dV_2A_2]dt - \sigma_1d\omega\\
-  Y &=& A_1/V_1 + e
+  Y &=& A_1/V_1^i + e
 \end{eqnarray}
 
 \noindent or in matrix notation 
@@ -226,7 +249,7 @@ is described as
     CL_dV_1^i & - CL_dV_2 \end{array} \right]\bs A_tdt + \left[ 
   \begin{array}{cc} \sigma_1 & 0 \\ -\sigma_1 & 0 \end{array}
 \right]d\bs\omega\\ 
-  Y_{ij} &=& [ \begin{array}{cc} 1/V_1 & 0 \end{array}]\bs A_{ij} + e_{ij}
+  Y_{ij} &=& [ \begin{array}{cc} 1/V_1^i & 0 \end{array}]\bs A_{ij} + e_{ij}
 \end{eqnarray}
 
 \noindent where $\bs A_t = [ A_1 ~ A_2]^T$ are the amount in each compartment and thus
@@ -247,7 +270,7 @@ $\Omega = 0.5$.
 
 The model can be defined in R as shown below.
 
-<<ModelDefinition>>=
+<<Dose.ModelDefinition>>=
 Model.SimDose <- list(
                       Matrices = function(phi) {
                         V1i <- phi[["V1i"]]
@@ -304,8 +327,7 @@ for (i in 1:2)
 
 Everything is now setup and the simulation can be performed.
 
-<<SimulateData>>=
-Redo = FALSE
+<<Dose.SimulateData>>=
 if(Redo) {
   SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=2)
 } else 
@@ -323,10 +345,11 @@ state 1 and 2 which we wish to estimate.
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:2) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
-         ylab="Observations", main=paste('individual',id,', eta:',round(SimDose.Data[[id]]$eta,3)))
+         ylab="Observations", main=paste('Individual ',id,', eta=',
+                                round(SimDose.Data[[id]]$eta,3),sep=""))
   for(i in 1:2) {
-    plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
-         ylab=paste('state',i))
+    plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
+         ylab=paste('State',i))
     rug(SimDose.Data[[id]]$Time)
   }
 }
@@ -339,7 +362,7 @@ for(id in 1:2) {
 As initial guess for the parameters in $\bs\Theta$ the true parameters
 are used and the bounds are $\pm$ a factor 50.
 
-<<EstimateParameters>>=
+<<Dose.EstimateParameters>>=
 parA <- list(LB=SimDose.THETA/50, Init=SimDose.THETA , UB=SimDose.THETA*50 )
 if(Redo) fitA <- PSM.estimate(Model.SimDose,SimDose.Data,parA,CI=T)
 fitA[1:3]
@@ -358,8 +381,8 @@ estimates are shown in Figure \ref{fig:fig2}. The structure of the
 output from the smoothing function is also shown using the
 \verb|names| command.
 
-<<EstimateStates>>=
-#if(Redo) 
+<<Dose.EstimateStates>>=
+if(Redo) 
   out <- PSM.smooth(Model.SimDose, SimDose.Data, fitA$THETA, subsample = 20)
 # View the data structure
 names(out[[1]])
@@ -376,15 +399,18 @@ properly in the reconstruction.
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:2) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
-         ylab="Observations", main=paste('individual',id))
-  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)))
+         ylab="Observations", main=paste('Individual',id))
+  legend(400, y = max(SimDose.Data[[id]]$Y), legend=c('Smooth est.'),
+         lty=c('71A1'),col='blue', xjust=1,yjust=1,bty="n")
+  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)),lty='71A1',col='blue')
   for(i in 1:2) {
-    plot(out[[id]]$Time , out[[id]]$Xs[i,],type="l",
-         ylab=paste('smooth state',i))
-    lines(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],lty=2,col=4)
+    plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
+         ylab=paste('State',i))
+    lines(out[[id]]$Time , out[[id]]$Xs[i,],lty='71A1',col="blue")
     rug(SimDose.Data[[id]]$Time)
-    legend(400, y = max(out[[id]]$Xs[i,]), legend=c('simulation','smooth est'),lty=c(2,1),col=c(4,1),
-           xjust=1,yjust=1,bty="n",cex=1,y.intersp=.7)
+    legend(400, y = max(out[[id]]$Xs[i,]), legend=c('Simulation','Smooth est.'),
+           lty=c('solid','71A1'),col=c("black","blue"),xjust=1,
+           yjust=1,bty="n",y.intersp=.8)
   }
 }
 @
@@ -394,6 +420,265 @@ for(id in 1:2) {
 \end{figure}
 
 
+\subsection{Extraction of insulin secretion rate}
+\label{isr}
+
+Insulin secretion rates (ISR) can be estimated based on measurements of the
+concentration of C-peptide in the blood, since insulin an C-peptide
+are secreted in equi-molar amounts. This example will first
+illustrate a way to simulate C-peptide data based on a model for the ISR,
+and then how ISR can be estimated again using a more simple model. The
+models used are described in further detail in \cite{klim06}.
+
+The simulated measurements of C-peptide will span over 24H, during
+which the patients will recieve three meals at 8 a.m., 12 a.m. and 6
+p.m. These meals will give rise to an increase in insulin secretion,
+which will be modelled and estimated.
+
+The simulation model for the C-peptide measurements is based on the
+commonly used two compartment model for C-peptide as shown in Figure
+\ref{fig:modelisr}. The kinetic parameters are set equal to the Van
+Cauter estimates \cite{vancauter92}. 
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=0.65\textwidth]{images/isrmodel}
+  \caption{Model layout}
+  \label{fig:modelisr}
+\end{figure}
+
+The first two states of the simulation model is concentraion in compartment 1 and
+2. The third $ISR$ is the secretion which is modelled as a structural part based
+on the three meal time plus a constant baseline $B$ and random noise
+through a Wiener process. The fourth state $Q$ is used to model
+ISR, where $Q$ is controlled by an input which is equal to 1 for
+$30min$ af meal times. The model can be defined as
+
+\begin{eqnarray}
+  dC_1 &=& a \\
+  dC_2 &=& b \\
+  dISR  &=& c \\
+  dQ    &=& d 
+\end{eqnarray}
+
+The model is definded in PSM as:
+
+
+
+<<ISR.ModelDefinition>>=
+k1 = 0.053; k2 = 0.051; ke = 0.062;
+Model.SimISR <- list(
+               Matrices = function(phi) {
+                 a1  <- phi[["a1"]]
+                 a2  <- phi[["a2"]]
+                 B  <- phi[["B"]]
+                 K  <- phi[["K"]]
+                 matA <- matrix( c(-(k1+ke) ,  k2 ,   1 ,   0,
+                                         k1 , -k2 ,   0 ,   0,
+                                          0 ,   0 , -a1 ,  a1,
+                                          0 ,   0 ,   0 , -a2),nrow=4,byrow=T)
+                 matB <- matrix( c(0           , 0      ,
+                                   0           , 0      ,
+                                   B           , 0      ,
+                                   0           , a2*K     ),byrow=T,nrow=4)
+                 matC <- matrix(c(1,0,0,0),nrow=1)
+                 matD <- matrix(c(0,0),nrow=1)
+                 return(list(matA=matA,matB=matB,matC=matC,matD=matD))},
+               X0 = function(Time=NA,phi,U=NA) {
+                 C0 <- phi[["C0"]]
+                 tmp    <- C0
+                 tmp[2] <- C0*k1/k2
+                 tmp[3] <- C0*ke
+                 tmp[4] <- 0
+                 return(matrix(tmp,ncol=1) )} ,
+               SIG = function(phi) {
+                 return( diag( c(0,0,phi[["SIG33"]],0)) ) } ,
+               S = function(phi) {
+                 return( matrix(phi[["S"]])) } ,
+               h = function(eta,theta,covar) {
+                 phi <- theta
+                 phi[["B"]] <- theta[["B"]]*exp(eta[1])
+                 phi[["K"]] <- theta[["K"]]*exp(eta[2])
+                 phi[["C0"]] <- theta[["C0"]]*exp(eta[3])
+                 return(phi) } ,
+               ModelPar = function(THETA){
+                 return(list(theta=list(C0=900,S=8500,
+                               a1=THETA[1],a2=THETA[2],SIG33=THETA[3],
+                               K = THETA[4], B = THETA[5]),
+                             OMEGA=diag(c(.2,.2,.2))))}
+               )
+@ 
+
+For this example two individuals will be simulated. They will both be
+sampled at predefined time points during 24H. This defined as below. 
+
+<<ISR.SimulateData>>=
+Sim.Data <- vector(mode="list",length=2)
+for (i in 1:2) {
+  Sim.Data[[i]]$Time <- c( 0,15,30,45,60,75,90,120,150,180,210,240,270,300,330,
+                          360,420,480,600,615,630,645,660,675,690,720,750,780,810,
+                          840,960,1140,1320,1410,1440)
+  Sim.Data[[i]]$U <- matrix(c( rep(1,35) , 
+                              as.numeric( Sim.Data[[i]]$Time %in% c(0,15,240,600,615)) )
+                            ,byrow=T,nrow=2)
+}
+@ 
+
+Everything is now setup and the simulation can be
+performed. PARAMETERVAERDIER... HVORFRA ETC.
+
+<<ISR.SimulateData>>=
+Sim.THETA <-  c(0.02798 , 0.01048 , 4 , 427.63 , 1.7434)
+if(Redo) {
+  Sim.Data <- PSM.simulate(Model.SimISR, Sim.Data, Sim.THETA, dt=.1 ,individuals=2) 
+} else 
+  load("simisr.RData")
+@ 
+
+The simulated data are shown in Figure \ref{fig:fig3}.
+
+\begin{figure}[htb]
+\begin{center}
+<<label=figure3,fig=TRUE,echo=FALSE>>=
+par(mfcol=c(4,2),mar = c(2, 4, 2, 2)+.1)
+for(id in 1:2) {
+  for(i in 1:4) {
+    plot(Sim.Data[[id]]$longTime , Sim.Data[[id]]$longX[i,],type="l", ylab=paste('State',i))
+    rug(Sim.Data[[id]]$Time)
+    if(i==1) {
+      title(main=paste('Individual ',id,', eta=(',paste(round(Sim.Data[[id]]$eta,3),
+              collapse=","),')',sep=""))
+      points(Sim.Data[[id]]$Time, Sim.Data[[id]]$Y)
+      legend(1440, y = max(Sim.Data[[id]]$X[i,]), legend=c('Obs.'),
+           pch=21,xjust=1, yjust=1)
+    }
+  }
+}
+@
+\end{center}
+\caption{Simulated data and states.}
+\label{fig:fig3}
+\end{figure}
+
+
+SOMETHING ABOUT ETAS.
+
+ESTIMATION MODEL - (could be simplified by removing U from data.)
+  
+
+
+<<ISR.EstimationModel>>=
+Model.Est <- list(
+            Matrices=function(phi) { list(
+              matA=matrix(c(-(k1+ke),  k2, 1,
+                             k1     , -k2, 0,
+                             0      ,   0, 0  ),ncol=3,byrow=T),
+              matB=NA,
+              matC=matrix(c(1,0,0),nrow=1),
+              matD=NA )  },
+            X0 = function(Time=NA,phi=NA,U=NA) {
+              C0 <- phi[["C0"]]
+              tmp    <- C0
+              tmp[2] <- C0*k1/k2
+              tmp[3] <- C0*ke
+                    return(matrix(tmp,ncol=1) )} ,
+            SIG = function(phi) {
+                      return( diag( c(1e-3,1e-3,phi[["SIG33"]])) ) } ,
+            S = function(phi) {
+                      return( matrix(phi[["S"]])) } ,
+            h = function(eta,theta,covar) {
+              phi <- theta
+              phi[["C0"]] <- theta[["C0"]]*exp(eta[1])
+              return(phi) } ,
+            ModelPar = function(THETA){
+              return(list(theta=list(C0=THETA[1],S=THETA[2],SIG33=THETA[3]),
+                          OMEGA=matrix(THETA[4])))}
+            )
+@ 
+
+Remove U from data
+
+<<ISR.RemoveInputFromData>>=
+Pop.Data <- Sim.Data
+for (i in 1:2)
+  Pop.Data[[i]]$U <- NULL
+@ 
+
+Do the estimation - choose model, data...!
+
+<<ISR.ParameterEstimation>>=
+par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
+             Init = c( 1000, 100^2,  10,  .25),
+             UB   = c( 3000, 150^2,  15,  .50))
+if(Redo) obj1 <- PSM.estimate(Model.Est, Pop.Data, par1,CI=T,trace=1)
+obj1[1:3]
+@ 
+
+Look at CI. Do smoothing. Estimation time (aalso dose model).
+
+<<ISR.EstimateStates>>=
+if(Redo)
+  Data.Sm <- PSM.smooth( Model.Est , Pop.Data, obj1$THETA, subsample=10)
+@ 
+
+
+Smooth states. Figure \ref{fig:fig4}
+
+\begin{figure}[htb]
+\begin{center}
+<<label=figure4,fig=TRUE,echo=FALSE>>=
+par(mfcol=c(4,2),mar = c(2, 4, 2, 2)+.1)
+for(id in 1:2) {
+  for(i in 1:4) {
+    plot(Sim.Data[[id]]$longTime , Sim.Data[[id]]$longX[i,],type="l",
+         ylab=paste('State',i), xlab=paste('Individual',id))
+    if(i<=3) lines(Data.Sm[[id]]$Time, Data.Sm[[id]]$Xs[i,],col="blue",lty='71A1')
+    rug(Sim.Data[[id]]$Time)
+    legend(1440, y = max(Sim.Data[[id]]$X[i,]), legend=c('Simul.','Sm. est.'),
+       lty=c('solid','71A1'),col=c("black","blue"),xjust=1,
+       yjust=1,bty="n",y.intersp=.8)
+    if(i==1)  {
+      title(main=paste('Individual',id))
+      points(Sim.Data[[id]]$Time, Sim.Data[[id]]$Y)
+    }
+  }
+}
+@
+\end{center}
+\caption{Smoothed estimate of states.}
+\label{fig:fig4}
+\end{figure}
+
+Plot ISR with bounds for an individual. Figure \ref{fig:fig5}.
+\begin{figure}[htb]
+\begin{center}
+<<label=figure5,fig=TRUE,echo=FALSE,height=3.5,width=6>>=
+par(mfcol=c(2,1),mar = c(3,3, 0, 2)+.1)
+for(ID in 1:2) {
+  CMT <- 3
+  Data <- Data.Sm[[ID]]
+  polyCI = c(Data$Xs[CMT,]+sqrt(abs(Data$Ps[CMT,CMT,])),
+    rev(Data$Xs[CMT,]-sqrt(abs(Data$Ps[CMT,CMT,]))))
+  ymax=max(polyCI)
+  plot.new()
+  plot.window(xlim=range(Data$Time),ylim=c(0,ymax))
+  axis(1);axis(2);box()
+  title(xlab="minutes",ylab="pmol/min",line=2)
+  polygon( c(Data$Time,rev(Data$Time)) ,polyCI,col=rgb(.9,.9,1),border=NA)
+  polygon( c(Data$Time,rev(Data$Time)) ,polyCI,col=rgb(.6,.6,1),density=0)
+  lines( Data$Time, Data$Xs[CMT,], type="l",lwd=2,col="blue")
+  lines( Sim.Data[[ID]]$longTime, Sim.Data[[ID]]$longX[3,],lwd=.5)
+  #points( Sim.Data[[ID]]$Time, Sim.Data[[ID]]$X[3,],pch=20,col=1,cex=.7)
+  legend(1440, y = max(polyCI), legend=c('Simulation','Smooth est.'),
+         col=c("black","blue"),xjust=1,
+         yjust=1,bty="n",y.intersp=.8,lwd=c(1,2),pch=c(NA,NA))
+}
+@
+\end{center}
+\caption{Smoothed estimate of insulin secretion rate $\pm$1SD for
+  individual 1 and 2 compared with the true simulated ISR.}
+\label{fig:fig5}
+\end{figure}
 
 \small
 \begin{thebibliography}{99}
@@ -414,11 +699,23 @@ for(id in 1:2) {
   \bibitem{kristensen03}
     Kristensen NR, Madsen H (2003) Continous time stochastic
     modelling: CTSM 2.3 mathematics guide, Technical University of
-    Denmark 
+    Denmark \\
     
   \bibitem{nonmem}
     Beal SL, Sheiner LB (2004) NONMEM\textregistered Users Guide. University of
     California, NONMEM Project Group.
+    
+  \bibitem{klim06}
+    Klim S, Mortensen SB (2006) Stochastic PK/PD Modelling. M.Sc. thesis,
+    Informatics and Mathematical Modelling, Technical University of
+    Denmark. \\ 
+    \footnotesize{http://www2.imm.dtu.dk/pubdb/views/edoc\_download.php/4533/pdf/imm4533.pdf}
+  \bibitem{vancauter92}
+    Van Cauter E, Mestrez F, Sturis J, Polonsky KS (1992) Estimation of
+    insulin secretion rates from C-peptide levels. Comparison of
+    individual and standard kinetic parameters for C-peptide
+    clearance. Diabetes, 41(3), pp. 368-77.
+  
     
 \end{thebibliography}
 
