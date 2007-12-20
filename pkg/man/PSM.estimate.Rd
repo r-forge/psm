@@ -169,11 +169,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllis
   \code{\link{PSM.simulate}}
 } 
 
-%\examples{
-%##---- Should be DIRECTLY executable !! ----
-%##-- ==>  Define data, use random,
-%##--	or do  help(data=index)  for the standard data sets.
-%}
+\examples{
+cat("\nExamples are included in the package vignette.\n")
+vignette("PSM",package="PSM")
+}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -8,7 +8,7 @@
   on stochastic differential equations using an euler scheme.
 }
 \usage{
-PSM.simulate(Model, Data, THETA, dt, individuals = 1) 
+PSM.simulate(Model, Data, THETA, dt, individuals = 1, longX=TRUE) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,6 +39,9 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   \item{individuals}{
     No of individuals simulated
   }
+  \item{longX}{
+    Toggles output of the entire simulated outcome of the states
+  }
   * See description in \link{PSM.estimate}.
 }
 \details{
@@ -56,7 +59,7 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   element is the data for an individual.
   
   \item{X}{
-    Simulated states
+    Simulated states sampled at time points for measurements
   }
   \item{Y}{
     Simulated measurements
@@ -69,6 +72,12 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   }
   \item{eta}{
     The random effects used in the simulation
+  }
+  \item{longX}{
+    Entire outcome of simulated states
+  }
+  \item{longTime}{
+    Time points for \code{longX}.
   }
 }
 
@@ -85,11 +94,10 @@ PSM.simulate(Model, Data, THETA, dt, individuals = 1)
   \code{\link{PSM.smooth}}
 }
 
-%\examples{
-%##---- Should be DIRECTLY executable !! ----
-%##-- ==>  Define data, use random,
-%##--	or do  help(data=index)  for the standard data sets.
-%}
+\examples{
+cat("\nExamples are included in the package vignette.\n")
+vignette("PSM",package="PSM")
+}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

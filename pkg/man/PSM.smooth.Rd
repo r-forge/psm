@@ -94,8 +94,10 @@ PSM.smooth(Model, Data, THETA, subsample = 0, trace = 0, etaList = NULL)
 \seealso{   \code{\link{PSM}}, \code{\link{PSM.estimate}},
   \code{\link{PSM.simulate}}
 }
-%\examples{
-%}
+\examples{
+cat("\nExamples are included in the package vignette.\n")
+vignette("PSM",package="PSM")
+}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{htest}        %Statistical Inference
