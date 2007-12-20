@@ -24,8 +24,8 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllis
 	by setting them to \code{NULL}.
       }
       \item{\code{X0 = function(Time, phi, U)}}{
-	Defines the model state at \code{Time[0]} before
-	update. \code{Time[0]} and \code{U[,1]} can be used in the
+	Defines the model state at \code{Time[1]} before
+	update. \code{Time[1]} and \code{U[,1]} can be used in the
 	evaluation of X0. Must return a column matrix.
       }
       \item{\code{SIG = function(phi)}}{
