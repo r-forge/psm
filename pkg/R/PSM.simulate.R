@@ -1,5 +1,5 @@
 `PSM.simulate` <- 
-function(Model, Data, THETA, dt, individuals=1) {
+function(Model, Data, THETA, dt, individuals=1, longX=TRUE) {
 
   ok <- TRUE
   dimS <- length(Data)
@@ -184,7 +184,7 @@ function(Model, Data, THETA, dt, individuals=1) {
             IntExpAtildeS[(rankA+1):dimX , 1:rankA]   <- 0
                   # Upper Right
             IntExpAtildeS[1:rankA,(rankA+1):dimX] <- ATilde1Inv %*%
-              (IntExpAtildeS[1:rankA,1:rankA]-DIAGRANKA*tau)%*%ATilde2
+              (IntExpAtildeS[1:rankA,1:rankA]-DIAGRANKA*dt)%*%ATilde2
                   # Lower right
             IntExpAtildeS[(rankA+1):dimX,(rankA+1):dimX] <- diag(1,dimX-rankA)*dt
 
@@ -205,10 +205,13 @@ function(Model, Data, THETA, dt, individuals=1) {
 
     Result[[i]] <- list(X=matrix(X[,idx],nrow=dimX),Y=matrix(Y[,idx],nrow=dimY),
                         Time=SampleTime,U=Ulist[[i]],eta=eta[,i])
+    if(longX) {
+      Result[[i]]$longX <- X
+      Result[[i]]$longTime <- t
+    }
 
   } #end individual loop
   
-  # list(Xlist=Xlist,Ylist=Ylist,Tlist=SampleTlist,Ulist=Ulist,eta=eta)
   return(Result)
 }
 
