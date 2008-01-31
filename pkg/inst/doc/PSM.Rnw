@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath,amssymb,graphics}
+\usepackage{color}
 % \VignetteIndexEntry{Population Stochastic Modelling: Model definition, description and examples}
 % \VignetteDepends{PSM}
 
@@ -23,11 +24,13 @@ foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
 \title{Population Stochastic Modelling: \\
 Model definition, description and examples} 
 
+\date{February 15, 2008}
+
 \author{Stig Mortensen and S\o ren Klim}
 \maketitle
 
 \begin{center}
-\begin{tabular}{ll}
+\begin{tabular}{lp{6cm}}
 Package:& \Sexpr{foo[['Package']]}, version \Sexpr{foo[['Version']]}\\
 License:& \Sexpr{foo[['License']]}\\
 Built:  & \Sexpr{foo[['Built']]} \\
@@ -47,17 +50,19 @@ Built:  & \Sexpr{foo[['Built']]} \\
 
 The current version of PSM includes only linear models, but it is
 planned also to include support for non-linear models at a later
-stage. Moreover it is the plan to move some of the most essential
-parts of the implentation to Fortran to give significantly
-improvements in the parameter estimation times. This version is almost
-created in \emph{R}, and estimation times are thus in no way
-comparrable state-of-the-art software for similar types of models.
+stage. Some of the most essential parts of the implentation, namely
+the Kalman filter, is run using compiled code written in Fortran,
+which gives significant improvements in the parameter estimation times
+in R. However, otherwise this version is almost entirely created in
+\emph{R}, and estimation times are thus in no way comparrable
+state-of-the-art software for similar types of models based on
+ordinary differential equations.
 
 
 
 \section{Model definition}
 
-The mixed-effects model is used to describe data with the following
+A mixed-effects model is used to describe data with the following
 general structure 
 
 \begin{equation}
@@ -70,7 +75,7 @@ number of measurements for individual $i$. In a mixed-effects model
 the variation is split into intra-individual variation and
 inter-individual variation, which is modelled by a first 
 and second stage model. For further detail regarding the model
-definition please refer to \cite{mortensen07, overgaard05, {kristensen03}}.
+definition please refer to \cite{mortensen07, overgaard05, kristensen03}.
 
 \subsubsection*{First stage model}
 
@@ -200,22 +205,25 @@ for a number of models \cite{mortensen07}.
 
 \vspace{5mm}
 
-\noindent This document is written using Sweave, and thus all R-code shown in
-the examples below can be extracted into an R-script file by writing
-\verb|Stangle("PSM.Rnw")| in R to allow for
-further experimentaion with the code. The PSM.Rnw
-file is located in /doc in the PSM installation folder. 
+\noindent This document is written using
+Sweave\footnote{http://www.ci.tuwien.ac.at/$\sim$leisch/Sweave/}, and thus
+all R-code shown in the examples can be extracted into an R-script
+file by writing \verb|Stangle("PSM.Rnw")| in R. This allows for easy
+access to further experimentaion with the code behind the examples.
+The PSM.Rnw file is located in /doc in the PSM installation folder.
 
 To save time in the processing of the document all computer intensive
 operations are skipped by setting a flag \verb|Redo = FALSE| and
-instead the outcome is loaded from a saved .Rdata file. Changing
-the flag to \verb|TRUE| in PSM.Rnw and writing
-\verb|Sweave("PSM.Rnw")| in R will generate a new document with
-analysis based on new simulated data sets.
+instead the outcome is loaded from a saved .Rdata file. Changing the
+flag to \verb|TRUE| in PSM.Rnw and writing \verb|Sweave("PSM.Rnw")| in
+R will generate a new version of the document with analysis and plots
+based on the new simulated data sets.
 
 <<Redo.flag>>=
 Redo = FALSE
 @ 
+
+\newpage
 
 \subsection{Dosing in two-compartment model}
 \label{dose2comp}
@@ -393,7 +401,7 @@ true simulated states, it can be seen that they are very close. This
 shows that the system noise and observation noise has been separeted
 properly in the reconstruction.
 
-\begin{figure}[htb]
+\begin{figure}[hptb]
 \begin{center}
 <<label=figure2,fig=TRUE,echo=FALSE>>=
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
@@ -419,19 +427,20 @@ for(id in 1:2) {
 \label{fig:fig2}
 \end{figure}
 
-
+\newpage
 \subsection{Extraction of insulin secretion rate}
 \label{isr}
 
-Insulin secretion rates (ISR) can be estimated based on measurements of the
-concentration of C-peptide in the blood, since insulin an C-peptide
-are secreted in equi-molar amounts. This example will first
-illustrate a way to simulate C-peptide data based on a model for the ISR,
+Insulin secretion rates (ISR) can be estimated based on measurements
+of the concentration of C-peptide in the blood, since insulin and
+C-peptide are secreted in equi-molar amounts. This example will first
+illustrate a way to simulate C-peptide data based on a model for ISR,
 and then how ISR can be estimated again using a more simple model. The
-models used are described in further detail in \cite{klim06}.
+models used in the example are described in further detail in
+\cite{klim06}.
 
-The simulated measurements of C-peptide will span over 24H, during
-which the patients will recieve three meals at 8 a.m., 12 a.m. and 6
+The simulated measurements of C-peptide spans over 24H, during
+which the patients recieves three meals at 8 a.m., 12 a.m. and 6
 p.m. These meals will give rise to an increase in insulin secretion,
 which will be modelled and estimated.
 
@@ -447,22 +456,41 @@ Cauter estimates \cite{vancauter92}.
   \label{fig:modelisr}
 \end{figure}
 
-The first two states of the simulation model is concentraion in compartment 1 and
-2. The third $ISR$ is the secretion which is modelled as a structural part based
-on the three meal time plus a constant baseline $B$ and random noise
-through a Wiener process. The fourth state $Q$ is used to model
-ISR, where $Q$ is controlled by an input which is equal to 1 for
-$30min$ af meal times. The model can be defined as
+The first two states of the simulation model is concentraion in
+compartment 1 and 2, $C1$, $C2$. The third state is $ISR$ and is the
+secretion which is modelled as a structural part based on the three
+meal time plus a constant baseline $B$ and random noise through a
+Wiener process. The fourth state $Q$ is used to model ISR, where $Q$
+is controlled by an input $u_2$ which is equal to 1 for $30min$ after meal
+times. The model can be defined as
 
 \begin{eqnarray}
-  dC_1 &=& a \\
-  dC_2 &=& b \\
-  dISR  &=& c \\
-  dQ    &=& d 
+  dC_1 &=& [-(k_1+k_e)C_1 +k_2C_2 + ISR]dt \\
+  dC_2 &=& [k_1C_1 - k_2C_2]dt \\
+  dISR  &=& [-a_1ISR + a_1Q + B^i]dt + \sigma_{ISR}d\omega \label{eqisr3}\\
+  dQ    &=& [-a_2Q + a_2K^iu_2]dt \label{eqisr4}
 \end{eqnarray}
 
-The model is definded in PSM as:
+\noindent which is linear and can thus again be written on matrix
+form.  
 
+The model is initialized in steady state just prior to the
+first meal time. The individual variation in the model is included in
+the initial concentration $C_1(0)^i$, baseline $B^i$ and height of the
+peaks $K^i$ such that
+
+\begin{eqnarray}
+  B^i &=& B\exp(\eta_1) \\
+  K^i &=& K\exp(\eta_2) \\
+  C_1(0)^i &=& C_1(0)\exp(\eta_3)
+\end{eqnarray}
+
+In order to write a model containing a constant in the differential
+equations (here $B^i$) on the linear form as defined in Eq.
+\eqref{sssm1} and \eqref{sssm2} it is necessary to include a constant
+input $u_1=1$ and multiply this with $B^i$. The matrix description of
+the model can be found in \cite{klim06} p. 69. Using this, the model
+can be definded in PSM as follows.
 
 
 <<ISR.ModelDefinition>>=
@@ -477,10 +505,10 @@ Model.SimISR <- list(
                                          k1 , -k2 ,   0 ,   0,
                                           0 ,   0 , -a1 ,  a1,
                                           0 ,   0 ,   0 , -a2),nrow=4,byrow=T)
-                 matB <- matrix( c(0           , 0      ,
-                                   0           , 0      ,
-                                   B           , 0      ,
-                                   0           , a2*K     ),byrow=T,nrow=4)
+                 matB <- matrix( c(0 , 0   ,
+                                   0 , 0   ,
+                                   B , 0   ,
+                                   0 , a2*K),byrow=T,nrow=4)
                  matC <- matrix(c(1,0,0,0),nrow=1)
                  matD <- matrix(c(0,0),nrow=1)
                  return(list(matA=matA,matB=matB,matC=matC,matD=matD))},
@@ -510,7 +538,8 @@ Model.SimISR <- list(
 @ 
 
 For this example two individuals will be simulated. They will both be
-sampled at predefined time points during 24H. This defined as below. 
+sampled at predefined time points during 24H. This defined as below
+together with the input data for each individual. 
 
 <<ISR.SimulateData>>=
 Sim.Data <- vector(mode="list",length=2)
@@ -524,8 +553,10 @@ for (i in 1:2) {
 }
 @ 
 
-Everything is now setup and the simulation can be
-performed. PARAMETERVAERDIER... HVORFRA ETC.
+Both the model, sample times and input is now prepared and the
+simulation can be performed. The parameter estimates are taken from
+\cite{klim06} p. 70. The simulated data are shown in Figure
+\ref{fig:fig3}.
 
 <<ISR.SimulateData>>=
 Sim.THETA <-  c(0.02798 , 0.01048 , 4 , 427.63 , 1.7434)
@@ -535,7 +566,6 @@ if(Redo) {
   load("simisr.RData")
 @ 
 
-The simulated data are shown in Figure \ref{fig:fig3}.
 
 \begin{figure}[htb]
 \begin{center}
@@ -560,12 +590,19 @@ for(id in 1:2) {
 \label{fig:fig3}
 \end{figure}
 
+The next step is to generate a model for estimation of ISR. It is
+again based on the model illustrated in Figure \ref{fig:modelisr} only
+this time the ISR is simply modelled as a random walk. Thus no
+information about the meal times is used in the estimation of ISR. 
 
-SOMETHING ABOUT ETAS.
+The model simplification is done by replacing Eq. \eqref{eqisr3} and
+\eqref{eqisr4} by Eq. \eqref{eq:isrny} below. The model for estimation
+can thus be seen as estimating the outcome of the random walk for
+$ISR$ based on the observed (simulated) data for $C1$.
 
-ESTIMATION MODEL - (could be simplified by removing U from data.)
-  
-
+\begin{equation}
+  dISR = \sigma_{ISR} \label{eq:isrny}
+\end{equation}  
 
 <<ISR.EstimationModel>>=
 Model.Est <- list(
@@ -596,7 +633,8 @@ Model.Est <- list(
             )
 @ 
 
-Remove U from data
+Since the model now does not use any input, this must be removed from
+the simulated data.
 
 <<ISR.RemoveInputFromData>>=
 Pop.Data <- Sim.Data
@@ -604,7 +642,10 @@ for (i in 1:2)
   Pop.Data[[i]]$U <- NULL
 @ 
 
-Do the estimation - choose model, data...!
+The data and model for estimation is now prepared, and the model can
+be estimated by calling \verb|PSM.estimate|. This is done below and
+the output in \verb|obj1[1:3]| containing the log-likelihood value,
+parameter estimates and confidence intervals is shown as output.
 
 <<ISR.ParameterEstimation>>=
 par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
@@ -614,7 +655,23 @@ if(Redo) obj1 <- PSM.estimate(Model.Est, Pop.Data, par1,CI=T,trace=1)
 obj1[1:3]
 @ 
 
-Look at CI. Do smoothing. Estimation time (aalso dose model).
+
+
+Looking at the estimated confidence intervals, it is seen that the
+simulated values for $\bs\Theta$ = \verb|Sim.THETA| = (\Sexpr{Sim.THETA[1]}, \Sexpr{Sim.THETA[2]},
+\Sexpr{Sim.THETA[3]}, \Sexpr{Sim.THETA[4]}) are nicely contained
+within the limits.
+
+\large
+\textcolor{blue}{\textbf{Discuss estimation times.}} (Remove usepackage(color)).
+\normalsize
+
+Using the estimated model parameters it is possible to give smoothed
+estimates of the three model states $C1$, $C2$ and $ISR$. This is done
+below and the result is plottet in Figure \ref{fig:fig4}. In Figure \ref{fig:fig5}
+the smoothed $ISR$ state is plotted together with the estimated
+uncertainty. For both figures the true simulated states is also
+plotted for reference.
 
 <<ISR.EstimateStates>>=
 if(Redo)
@@ -622,9 +679,7 @@ if(Redo)
 @ 
 
 
-Smooth states. Figure \ref{fig:fig4}
-
-\begin{figure}[htb]
+\begin{figure}[hptb]
 \begin{center}
 <<label=figure4,fig=TRUE,echo=FALSE>>=
 par(mfcol=c(4,2),mar = c(2, 4, 2, 2)+.1)
@@ -649,10 +704,9 @@ for(id in 1:2) {
 \label{fig:fig4}
 \end{figure}
 
-Plot ISR with bounds for an individual. Figure \ref{fig:fig5}.
-\begin{figure}[htb]
+\begin{figure}[hptb]
 \begin{center}
-<<label=figure5,fig=TRUE,echo=FALSE,height=3.5,width=6>>=
+<<label=figure5,fig=TRUE,echo=FALSE,height=4.5,width=6>>=
 par(mfcol=c(2,1),mar = c(3,3, 0, 2)+.1)
 for(ID in 1:2) {
   CMT <- 3
@@ -679,6 +733,8 @@ for(ID in 1:2) {
   individual 1 and 2 compared with the true simulated ISR.}
 \label{fig:fig5}
 \end{figure}
+
+\newpage
 
 \small
 \begin{thebibliography}{99}
@@ -709,7 +765,8 @@ for(ID in 1:2) {
     Klim S, Mortensen SB (2006) Stochastic PK/PD Modelling. M.Sc. thesis,
     Informatics and Mathematical Modelling, Technical University of
     Denmark. \\ 
-    \footnotesize{http://www2.imm.dtu.dk/pubdb/views/edoc\_download.php/4533/pdf/imm4533.pdf}
+    http://www2.imm.dtu.dk/pubdb/views/edoc\_download.php/4533/pdf/imm4533.pdf
+    
   \bibitem{vancauter92}
     Van Cauter E, Mestrez F, Sturis J, Polonsky KS (1992) Estimation of
     insulin secretion rates from C-peptide levels. Comparison of
