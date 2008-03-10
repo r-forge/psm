@@ -1,5 +1,5 @@
 `LinKalmanFilter` <-
-function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
+function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
 # Linear Continous Kalman Filter for a State Space formulation
 #     Input: 
 #     Model           type: list
@@ -31,12 +31,14 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 #     C:[dimY dimX] ; D:[dimY dimU] ; S:[dimY,dimY]
 #
 
+
+echo = FALSE
+
     # Print current value of phi .. Handy in minimizations.
   if(echo) cat("phi:" , paste(round(as.double(phi),2) , "\t"))
 
     # Extract Data components
-    Time  <- Data[["Time"]]
- 
+    Time  <- Data[["Time"]] 
     Y     <- Data[["Y"]]
 
     # Check for INPUT and set it
@@ -53,7 +55,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 
     # Set Uk
     if(ModelHasInput) {
-      Uk <- U[,1,drop=F]
+      Uk <- U[,1,drop=FALSE]
     } else {Uk <- NA}
 
     ModelHasDose <- "Dose" %in% names(Model)
@@ -64,40 +66,71 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
     matC  <- tmp$matC
     matD  <- tmp$matD 
   
-    # Calculate Init state and initial SIG
-    InitialState  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
-    SIG           <- Model$SIG(phi=phi)
-  S     <- Model$S(phi=phi)
-
-    dimT  <- length(Time)     # Time is vector -> use length
-    dimY  <- nrow(Y)          # Dimensionality of observations
-    dimU  <- ifelse(ModelHasInput,nrow(U),0)
-    dimX  <- nrow(InitialState)
+  # Calculate Init state and initial SIG
+  InitialState  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
+  SIG           <- Model$SIG(phi=phi)
+  S             <- Model$S(phi=phi)
+  
+  dimT  <- length(Time)     # Time is vector -> use length
+  dimY  <- nrow(Y)          # Dimensionality of observations
+  dimU  <- ifelse(ModelHasInput,nrow(U),0)
+  dimX  <- nrow(InitialState)
 
     # Is A singular ???
     rankA <- qr(matA)$rank
     singA <- (rankA<dimX)
+    
+  if(echo) {
+      cat("\n *** \ndimX= " ,dimX, "\n")
+      cat("dimY= " ,dimY, "\n")  
+      cat("dimU= " ,dimU, "\n")
+      cat("dimT= " ,dimT, "\n")
+      cat("rankA= " , rankA , "\n")
+      cat("singA= " , singA , "\n")
+      }
+      
+
 
   # Use compiled Fortran Code
-  if(fast) {
+  if(fast && !singA) {
+  
+    if(echo) cat("Preparing compiled code \n")
 
     #Currently only nonsingular A
     if(singA) {
       stop("Singular A not currently available in compiled code")
     }
 
-    # Missing observations change NA ->BIG M
+    # Missing observations change NA -> BIG M
     Y[is.na(Y)] <- 1E300
 
     # Pseudo input - Fortran code assumes input
     if(!ModelHasInput) {
+      if(echo) {cat("CREATING PSEUDO INPUT U \n")}
       dimU <- 1
       U <- array( 0 , c(dimU,dimT))
       matB <- array(0 , c(dimX,dimU))
       matD <- array(0 , c(dimY,dimU))      
     }
     
+    # DOSING
+    if(ModelHasDose) {
+      if(echo) {cat("USING ORIGINAL DOSING SCHEME \n")}
+      DoseN     <- length(Model$Dose$Time)
+      DoseTime  <- Model$Dose$Time
+      DoseState <- Model$Dose$State
+      DoseAmt   <- Model$Dose$Amount
+    } else {
+      # Create Pseudo Dose with Amount 0
+      if(echo) {cat("CREATING PSEUDO DOSE \n")}
+      DoseN     <- 1
+      DoseTime  <- Time[1]
+      DoseState <- 1
+      DoseAmt   <- 0
+    }
+        
     # Fortran Internals - Initialize
+    if(echo) {cat("CREATING FORTRAN INTERNALS \n")}
     LL <-  -1.0
     INFO <- -1
     YP <- array(-1 , c(dimY,dimT))
@@ -109,6 +142,8 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
     R <- array( -1 , c(dimY,dimY,dimT))
     KGAIN <- array(-1 , c(dimX,dimY,dimT))
 
+    if(echo) {cat("Starting .Fortran() \n")}
+    
     # Run compiled code
     FOBJ <-  .Fortran("LTI_KALMAN_FULLA_WITHINPUT",
                       LL   =as.double(LL),
@@ -127,6 +162,10 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
                       dimY =as.integer(dimY),
                       dimU =as.integer(dimU),
                       dimX =as.integer(dimX),
+                      DoseN=as.integer(DoseN),
+                      DoseTime=as.double(DoseTime),
+                      DoseAmt=as.double(DoseAmt),
+                      DoseState=as.integer(DoseState),
                       Xf   =as.double(XF),
                       Xp   =as.double(XP),
                       Pf   =as.double(PF),
@@ -137,9 +176,10 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
                       PACKAGE="PSM")
     
     
-    if(echo) cat("\t -LL: " ,  round(FOBJ$LL,3) , "\n")
+    if(echo) cat("\t -iLL: " ,  round(FOBJ$LL,3) , "\n")
     if(outputInternals) {
       return( list( negLogLike=FOBJ$LL,
+                   Time=array(FOBJ$Time,c(dimT)), 
                    Xp=array(FOBJ$Xp,c(dimX,dimT)),
                    Xf=array(FOBJ$Xf,c(dimX,dimT)),
                    Yp=array(FOBJ$Yp,c(dimY,dimT)),
@@ -149,7 +189,10 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
                    R =array(FOBJ$R,c(dimY,dimY,dimT))
                    )
              )
+    } else {
+      return(as.vector(FOBJ$LL))
     }
+    
     
   }
 
@@ -168,8 +211,8 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 
 
   
-    PHI0   <- t.default(Pint[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])
-    P0    <- PS*PHI0 %*% Pint[1:dimX,(dimX+1):(2*dimX),drop=F]
+    PHI0   <- t.default(Pint[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=FALSE])
+    P0    <- PS*PHI0 %*% Pint[1:dimX,(dimX+1):(2*dimX),drop=FALSE]
 
     #----------------------------------------------------------
     # Init matrices used in the Kalman filtering
@@ -185,6 +228,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
     # Insert initial estimates into matrices
     Pp[,,1] <- P0
     Xp[,1]  <- InitialState
+
 
 
     #----------------------------------------------------------
@@ -210,26 +254,35 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
     matA.Inv <- solve.default(matA)
   }
 
+
+  
   matASIGSIGTzerosmatAT <-  rbind( cbind(-matA , SIGSIGT ) ,
                   cbind( ZERODIMXDIMX , matA.T  ))
 
     # Loop over timepoints
     for(k in 1:dimT) {
+    
+        if(echo) cat("Looping \t k= " ,k, ", Time = " , Time[k] , "\n")
+
+
+        if(echo) cat("Output Predictions...\n")          
         # Does the observation has missing values?
         ObsIndex  <- which(!is.na(Y[,k]))
-        E         <- DIAGDIMY[ObsIndex,,drop=F]
+        E         <- DIAGDIMY[ObsIndex,,drop=FALSE]
 
         # Set Uk
         if(ModelHasInput) {
-          Uk <- U[,k,drop=F]
+          Uk <- U[,k,drop=FALSE]
         } else {Uk <- NA}                
 
         # Create output prediction
         Yp[ObsIndex,k] <- {
                   if(ModelHasInput) {
-                  E %*% (matC%*%Xp[,k,drop=F] + matD%*%Uk)
+                  E %*% (matC%*%Xp[,k,drop=FALSE] + matD%*%Uk)
                   } else { 
-                  E%*%matC%*%Xp[,k,drop=F]} }
+                  E%*%matC%*%Xp[,k,drop=FALSE]} }
+
+        if(echo) cat(paste(Yp[ObsIndex,k],"\n",sep="")) 
 
         # Output prediction covariance    
         #S     <- Model$S(phi=phi)
@@ -237,17 +290,20 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 
   
         if(length(ObsIndex)>0) { #there must be at least one obs for updating.
+        
+          if(echo) cat("Updating States ...\n")          
+            
           # Kalman gain
           KfGain[,ObsIndex,k] <- Pp[,,k]%*% matC.T %*% t.default(E) %*% solve.default(R[ObsIndex,ObsIndex,k])
 
           # Updating
-          e       <- Y[ObsIndex,k,drop=F]-Yp[ObsIndex,k,drop=F]
-          KFg     <- CutThirdDim(KfGain[,ObsIndex,k,drop=F])
-          Xf[,k]  <- Xp[,k,drop=F] + KFg%*%e
+          e       <- Y[ObsIndex,k,drop=FALSE]-Yp[ObsIndex,k,drop=FALSE]
+          KFg     <- CutThirdDim(KfGain[,ObsIndex,k,drop=FALSE])
+          Xf[,k]  <- Xp[,k,drop=FALSE] + KFg%*%e
           Pf[,,k] <- Pp[,,k] - KFg %*% R[ObsIndex,ObsIndex,k] %*% t.default(KFg)
   
           # Add contribution to negLogLike: CTSM page 3. (1.14)
-          tmpR        <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=F])
+          tmpR        <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=FALSE])
           tmp        <-  determinant.matrix(tmpR)
      
           negLogLike  <- negLogLike + .5*( log(tmp$sign*exp(tmp$modulus)) + t.default(e)%*%solve.default(tmpR)%*%e)
@@ -260,6 +316,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
         if(ModelHasDose) {
           # Check if dosing is occuring at this timepoint.
           if( any(Time[k]==Model$Dose$Time)) {
+            if(echo) cat("Dosing...\n")          
             idxD = which(Time[k]==Model$Dose$Time)
             # Multiple dosing a timepoint[k]
             for(cmt in 1:length(idxD)) {
@@ -277,17 +334,23 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
         # Abort state pred if finished
         if(k==dimT) break
         
+        if(echo) cat("State Prediction...\n")            
 
         # State prediction
         tau   <- Time[k+1]-Time[k]
 
         # Use large time invariant matrix
+        if(echo) cat("Starting matrix exponential...\n")
+        if(echo) print(tau)
+        if(echo) print(matASIGSIGTzerosmatAT)         
         tmp   <- matexp(tau * matASIGSIGTzerosmatAT)
+        if(echo) cat("Finished matexp()\n")         
+        
 
         # CTSM (1.48)
-        PHI   <- t.default(tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=F])
+        PHI   <- t.default(tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=FALSE])
         # CTSM (1.49)
-        IntExpASIG <- PHI %*% tmp[1:dimX,(dimX+1):(dimX*2),drop=F]
+        IntExpASIG <- PHI %*% tmp[1:dimX,(dimX+1):(dimX*2),drop=FALSE]
         # CTSM (1.45)
         Pp[,,k+1] <- PHI %*% Pf[,,k] %*% t.default(PHI) + IntExpASIG
 
@@ -295,9 +358,9 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
         if( !singA ) {
             # Special case #3: Non-singular A, zero order hold on inputs.
             Xp[,k+1] <- { if( ModelHasInput) {
-                              PHI%*%Xf[,k,drop=F]+ matA.Inv %*%(PHI-DIAGDIMX)%*%matB%*%Uk
+                              PHI%*%Xf[,k,drop=FALSE]+ matA.Inv %*%(PHI-DIAGDIMX)%*%matB%*%Uk
                               } else {
-                              PHI%*%Xf[,k,drop=F] } }
+                              PHI%*%Xf[,k,drop=FALSE] } }
         } else {
 
               # Special case #1: Singular A, zero order hold on inputs.
@@ -309,13 +372,13 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
                   # CTSM Mathguide Special Case no.1 page 10
                
                   PHITilde      <- Ua.T %*% PHI %*% Ua
-                  PHITilde1     <- PHITilde[1:rankA,1:rankA,drop=F]
+                  PHITilde1     <- PHITilde[1:rankA,1:rankA,drop=FALSE]
                   # PHITilde2     <- PHITilde[1:rankA,(rankA+1):dimX,drop=F]
                   # PHITilde1Inv  <- solve(PHITilde1)
 
                   ATilde    <- Ua.T %*% matA %*% Ua
-                  ATilde1   <- ATilde[1:rankA,1:rankA,drop=F]
-                  ATilde2   <- ATilde[1:rankA,(rankA+1):dimX,drop=F]
+                  ATilde1   <- ATilde[1:rankA,1:rankA,drop=FALSE]
+                  ATilde2   <- ATilde[1:rankA,(rankA+1):dimX,drop=FALSE]
                   ATilde1Inv <- solve.default(ATilde1)
 
                   IntExpAtildeS <- ZERODIMXDIMX
@@ -343,7 +406,7 @@ function( phi , Model , Data , echo=F, outputInternals=FALSE,fast=FALSE) {
 
         if(echo) cat("\t -LL: " ,  round(negLogLike,0) , "\n")
         if(outputInternals) {
-          return( list( negLogLike=negLogLike,Xp=Xp, Xf=Xf, Yp=Yp, KfGain=KfGain,Pf=Pf, Pp=Pp, R=R))
+          return( list( negLogLike=negLogLike,Time=Time,Xp=Xp, Xf=Xf, Yp=Yp, KfGain=KfGain,Pf=Pf, Pp=Pp, R=R))
         } else {
           return(as.vector(negLogLike)) }
 }

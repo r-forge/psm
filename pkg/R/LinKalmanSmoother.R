@@ -5,7 +5,7 @@ function(phi, Model, Data) {
 
 
   # Do a forward Kalman Filter
-  Obj <- LinKalmanFilter( phi , Model , Data , echo=F, outputInternals=TRUE)
+  Obj <- LinKalmanFilter( phi , Model , Data , echo=FALSE, outputInternals=TRUE)
 
   
 
@@ -24,7 +24,7 @@ function(phi, Model, Data) {
   }
   if(ModelHasInput) {
     U <- Data[["U"]]
-    Uk <- U[,1,drop=F]
+    Uk <- U[,1,drop=FALSE]
   } else {
     U <- NA
     Uk <- NA
@@ -50,6 +50,7 @@ function(phi, Model, Data) {
 
                                         # Init Smoothing arrays and variables
   Xs <- array(NA, c(dimX,dimN))
+  Ys <- array(NA, c(dimY,dimN))
   Ps <- array(NA, c(dimX,dimX,dimN))
   lambda <- array(0.0, c(dimX))
   LAMBDA <- array(0.0, c(dimX, dimX))
@@ -62,16 +63,16 @@ function(phi, Model, Data) {
     
     Adis <- matexp(matA*ts)
  
-    if( is.na(Y[,tau,drop=F])) {
+    if( is.na(Y[,tau,drop=FALSE])) {
       Fk <- Adis
       lambda <- t.default(Fk)%*%lambda
       LAMBDA <- t.default(Fk) %*% LAMBDA %*% Fk
       
     } else {
-      KpGain <- Adis %*% CutThirdDim( Obj$KfGain[,,tau,drop=F] )
+      KpGain <- Adis %*% CutThirdDim( Obj$KfGain[,,tau,drop=FALSE] )
       Fk <- Adis - KpGain %*% matC
       lambda <- t.default(Fk)%*%lambda +
-        t.default(matC) %*% solve(Obj$R[,,tau]) %*% (Y[,tau,drop=F]-Obj$Yp[,tau,drop=F])
+        t.default(matC) %*% solve(Obj$R[,,tau]) %*% (Y[,tau,drop=FALSE]-Obj$Yp[,tau,drop=FALSE])
       LAMBDA <- t.default(Fk) %*% LAMBDA %*% Fk +
         t.default(matC)%*% solve(Obj$R[,,tau]) %*% matC
     }
@@ -79,7 +80,10 @@ function(phi, Model, Data) {
     
     
     # Create Smooth State
-    Xs[,tau] <- Obj$Xp[,tau,drop=F] + CutThirdDim(Obj$Pp[,,tau,drop=F]) %*% lambda
+    Xs[,tau] <- Obj$Xp[,tau,drop=FALSE] + CutThirdDim(Obj$Pp[,,tau,drop=FALSE]) %*% lambda
+
+    # Create Smooth Output
+    #Ys[,tau] <- 
    
     # Create Smoothed covariance
     Ps[,,tau] <- Obj$Pp[,,tau] - Obj$Pp[,,tau] %*% LAMBDA %*% Obj$Pp[,,tau]

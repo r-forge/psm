@@ -6,9 +6,14 @@ matexp <- function(a, dt=1, order=8) {
       stop("matrix not square")
     if (!is.numeric(order) | order < 1 )
       stop("order must be a positive integer number")
+    
+    # What if the matrix has only zero elements or dt=0
+    if(dt==0 | all(a == 0) ) 
+      return(diag(da[1]))
+    
     # Internals
     # SUBROUTINE DGPADM( IDEG,M,T,H,IFLAG )
-    Fobj <- .Fortran("matexpfortransub",
+    Fobj <- .Fortran("MATEXPFORTRANSUB",
                      as.integer(order), #IDEG  1
                      as.integer(da[1]), #M     2
                      as.double(dt),     #T     3
