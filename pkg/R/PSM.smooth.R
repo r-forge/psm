@@ -73,11 +73,12 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     lkf[[i]] <- LinKalmanSmoother( phi=phi, Model=Model , Data=Di )
     if(trace)
       print(paste("Individual",i))
-  }
+  
 
-  if(FullOutput) {
-    lkf[[i]]$eta <- etaList[,i]
-    lkf[[i]]$negLogL <- apl$negLogLike
+    if(FullOutput) {
+      lkf[[i]]$eta <- etaList[,i]
+      lkf[[i]]$negLogL <- apl$negLogLike
+    } 
   } 
 
   lkf
