@@ -1,3 +1,10 @@
+rm(list=ls())
+
+detach(package:PSM)
+library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
+
+REDO = FALSE
+
 # This example demonstrates the simulation of a bolus dose
 # in a 2-compartment system.
 V1 <- 5      #[L]
@@ -41,23 +48,26 @@ Model.SimDose <- list(
 
 # Create Simulation Timeline 
 SimDose.Subj <- 2
-SimDose.Data <- vector(mode="list",length=SimDose.Subj)
-for (i in 1:SimDose.Subj) 
-  SimDose.Data[[i]]$Time <- seq(from=10,by=10,to=400)
-
-
-load("simdose.RData")
+if(REDO) {
+  SimDose.Data <- vector(mode="list",length=SimDose.Subj)
+  for (i in 1:SimDose.Subj) 
+    SimDose.Data[[i]]$Time <- seq(from=10,by=10,to=400)
+}
 
 #############
 # Simulation
 #############
 
 #                   sig11  S  OMEGA
-SimDose.THETA <-  c(10 , 20 , .5)
+SimDose.THETA <-  c(10 , 40 , .5)
 
-SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=SimDose.Subj)
 
-# View the Simulated datastructure
+if(REDO) {
+  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=SimDose.Subj)
+} else {
+  load("simdose.RData")
+}
+  # View the Simulated datastructure
 names(SimDose.Data[[1]])
 
 # Plot of the simulations
@@ -66,12 +76,45 @@ for(id in 1:SimDose.Subj) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
          ylab="Observations", main=paste('individual',id,', eta:',round(SimDose.Data[[id]]$eta,3)))
   for(i in 1:2) {
-    plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],type="l",
+    plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
          ylab=paste('state',i))
     rug(SimDose.Data[[id]]$Time)
   }
   print(SimDose.Data[[id]]$eta)
 }
+var(c(SimDose.Data[[1]]$eta,SimDose.Data[[2]]$eta))
+
+
+## TEST KALMAN FILTER
+source("../R/LinKalmanFilter.R",echo=F)
+theta <- Model.SimDose$ModelPar(SimDose.THETA)$theta
+OMEGA <- Model.SimDose$ModelPar(SimDose.THETA)$OMEGA
+indv = 2
+DataI <- SimDose.Data[[indv]]
+etaI =.5
+phi <- Model.SimDose$h(eta=etaI,theta=theta)
+of <- LinKalmanFilter(phi=phi, Model=Model.SimDose , Data=DataI , output=T,fast=TRUE)
+os <- LinKalmanFilter(phi=phi, Model=Model.SimDose , Data=DataI , output=T,fast=FALSE)
+names(of)
+names(os)
+plot(as.vector(DataI$Y*V1*exp(etaI)))
+plot(as.vector(DataI$Y))
+lines(as.vector(os$Yp))
+lines(as.vector(of$Yp),lty=2,col=2)
+plot(as.vector(of$Xf[1,])/as.vector(os$Xf[1,]))
+of$negLogLike
+os$negLogLike
+system.time(
+            for(i in 1:100)
+            o <- LinKalmanFilter(phi=phi, Model=Model.SimDose , Data=DataI , output=T,fast=TRUE)
+            )
+o$negLogLike
+par(mfrow=c(3,1))
+for(i in 1:3)
+  plot(DataI$T,o$Xf[i,],type="l")
+rug(DataI$T)
+
+
 
 
 
@@ -80,7 +123,7 @@ for(id in 1:SimDose.Subj) {
 ###########
 
 parA <- list(LB=SimDose.THETA/50, Init=SimDose.THETA , UB=SimDose.THETA*50 )
-fitA <- PSM.estimate(Model=Model.SimDose,Data=SimDose.Data,Par=parA,CI=T,trace=2)
+fitA <- PSM.estimate(Model=Model.SimDose,Data=SimDose.Data,Par=parA,CI=T,trace=1)
 fitA[1:3]
 
 Model.SimDoseB <- Model.SimDose
@@ -88,7 +131,7 @@ Model.SimDoseB$ModelPar = function(THETA){
                         list(theta=list(sig11=0, S=THETA[1]), OMEGA=matrix(THETA[2]) ) }
 parB <- list(LB=SimDose.THETA[2:3]/50, Init=SimDose.THETA[2:3] , UB=SimDose.THETA[2:3]*50 )
 
-fitB <- PSM.estimate(Model=Model.SimDoseB,Data=SimDose.Data,Par=parB,CI=T,trace=2)
+fitB <- PSM.estimate(Model=Model.SimDoseB,Data=SimDose.Data,Par=parB,CI=T,trace=1)
 fitB[1:3]
 #TEST for SDE
 pchisq(2*(fitB$NegLogL-fitA$NegLogL), 3-2, lower.tail = FALSE) #p=0.005 - significant
@@ -114,24 +157,27 @@ for (id in 1:SimDose.Subj) {
 ###########
 # Smoothing
 ###########
-
+#APL.KF(THETA=fitA$THETA,Model=Model.SimDose,Pop.Data=SimDose.Data,GUIFlag=1,longOutput=TRUE)
+#source("../R/PSM.smooth.R",echo=F)
 out <- PSM.smooth(Model = Model.SimDose, Data = SimDose.Data, THETA = fitA$THETA, subsample = 20)
-
+#save(list=c('SimDose.Data','fitA','out'),file='simdose.RData')
 # View the data structure
 names(out[[1]])
 
 #Plot of the smoothed estimates
-par(mfcol=c(3,SimDose.Subj))
+par(mfcol=c(3,SimDose.Subj),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:SimDose.Subj) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
-         ylab="Observations", xlab=paste('individual',id))
-  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)))
+         ylab="Observations", main=paste('Individual',id))
+  legend(400, y = max(SimDose.Data[[id]]$Y), legend=c('Smooth est.'),lty=c('71A1'),col=c(4),
+           xjust=1,yjust=1,bty="n")
+  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)),lty='71A1',col=4)
   for(i in 1:2) {
-    plot(out[[id]]$Time , out[[id]]$Xs[i,],type="l",
-         ylab=paste('smooth state',i), xlab=paste('individual',id))
-    lines(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$X[i,],lty=2,col=4)
+    plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
+         ylab=paste('Smooth state',i))
+    lines(out[[id]]$Time , out[[id]]$Xs[i,],lty='71A1',col=4)
     rug(SimDose.Data[[id]]$Time)
-    legend(400, y = max(out[[id]]$Xs[i,]), legend=c('simulation','smooth est'),lty=c(2,1),col=c(4,1),
-           xjust=1,yjust=1,bty="n",cex=1,y.intersp=.7)
+    legend(400, y = max(out[[id]]$Xs[i,]), legend=c('Simulation','Smooth est.'),lty=c('solid','71A1'),col=c(1,4),
+           xjust=1,yjust=1,bty="n",y.intersp=.8)
   }
 }
