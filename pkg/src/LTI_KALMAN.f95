@@ -100,7 +100,7 @@ DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
 !-------------------------------------------------INITIALIZATIONS-----!
 !
     DEBUG = .FALSE.
-    DEBUG = .TRUE.
+    ! DEBUG = .TRUE.
 
     IF(DEBUG) THEN
         !PRINT * , "Debugging Mode enabled - Done within the FORTRAN code"
