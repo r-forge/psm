@@ -89,9 +89,9 @@ DOUBLE PRECISION,DIMENSION(dimY,dimN) :: YPERR
 DOUBLE PRECISION,DIMENSION(dimY,dimY,dimN) :: RINV
 
 DOUBLE PRECISION,DIMENSION(dimX,dimX) :: AINV,PHIS,EYEDIMX,SIGSIGT,TMPXX,INTL
-DOUBLE PRECISION,DIMENSION(dimX,dimY) :: TMPXY
-DOUBLE PRECISION,DIMENSION(dimY,dimX) :: TMPYX
-DOUBLE PRECISION,DIMENSION(dimY,dimY) :: TMPYY , EYEDIMY , E
+DOUBLE PRECISION,DIMENSION(dimX,dimY) :: TMPXY , TMP2XY
+DOUBLE PRECISION,DIMENSION(dimY,dimX) :: TMPYX , TMP2YX
+DOUBLE PRECISION,DIMENSION(dimY,dimY) :: TMPYY , EYEDIMY , E , TMP2YY , TMP3YY
 DOUBLE PRECISION,DIMENSION(dimX,dimU) :: TMPXU
 DOUBLE PRECISION,DIMENSION(dimY) :: TMPY , ERR
 DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
@@ -100,7 +100,7 @@ DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
 !-------------------------------------------------INITIALIZATIONS-----!
 !
     DEBUG = .FALSE.
-!    DEBUG = .TRUE.
+    DEBUG = .TRUE.
 
     IF(DEBUG) THEN
         !PRINT * , "Debugging Mode enabled - Done within the FORTRAN code"
@@ -130,8 +130,12 @@ DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
 
     TMPXX       =  0.0D0    ! help variable of dimension (NX,NX)
     TMPXY       =  0.0D0    ! help variable of dimension (NX,NY)
+    TMP2XY      =  0.0D0    
     TMPYX       =  0.0D0    ! help variable of dimension (NY,NX)
-    TMPYY	=  0.0D0    ! Tmp variable of dimension dimY, dimY
+    TMP2YX      =  0.0D0    
+    TMPYY		=  0.0D0    ! Tmp variable of dimension dimY, dimY
+    TMP2YY 	=  0.0D0
+    TMP3YY	    = 0.0D0
     TMPXU       =  0.0D0
     TMPY        =  0.0D0
     TMPX	=  0.0D0
@@ -257,43 +261,6 @@ END IF
 
 
 !COM------------------------------------------------------------------!
-!COM  OUTPUT PREDICTION COVARIANCE MATRIX R(:,:,K)
-!COM  Eqn. (1.29) [CTSM 2.3 Math Guide, Dec. 2003, Kristensen, N.R.]  !
-!COM------------------------------------------------------------------!
-!
-! Calculate R= C * P *CT + S
-! First TMP = C*P
-
-IF(DEBUG) THEN
-    CALL INTPR("*** R Calculation",17,0,0)
-END IF
-
-! F77 call dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-! F95 CALL DGEMM(C,PP(:,:,K),TMPYX,'N','N',1.0D0,0.0D0)
-CALL DGEMM('N','N', dimY, dimX, dimX, 1.0D0, C, dimY, PP(:,:,K), dimX, &
-   0.0D0, TMPYX, dimY)
-
-! THEN R = TMP*CT
-! F95 CALL DGEMM(TMPYX,C,R(:,:,K),'N','T',1.0D0,0.0D0)
-CALL DGEMM('N', 'T', dimY, dimY, dimX, 1.0D0, TMPYX, dimY, C, dimY, &
-   0.0D0, R(:,:,K), dimY)
-
-
-! Finally add S
-DO I = 1,dimY
-  DO J = 1,dimY
-    R(I,J,K) = R(I,J,K) + S(I,J)
-  ENDDO
-ENDDO
-
-
-IF(DEBUG) THEN
-    CALL DBLEPR("R : ",3 , R(:,:,K),dimY*dimY)
-END IF
-
-
-
-!COM------------------------------------------------------------------!
 !COM  MISSING OBSERVATIONS
 !COM  Eqn. (1.29) [CTSM 2.3 Math Guide, Dec. 2003, Kristensen, N.R.]  !
 !COM------------------------------------------------------------------!
@@ -302,13 +269,12 @@ END IF
 IF(DEBUG) THEN
     CALL INTPR("*** Missing Observations",24,0,0)
     CALL DBLEPR(" Y : " ,2, Y(:,K),dimY)
-!    PRINT * , "Limit : " , HUGE(1.0)
 END IF
 
 DO I = 1,DIMY
     !LOBSINDEX(I) = (Y(I,K) < HUGE(1.0D0) )
     LOBSINDEX(I) = (Y(I,K) < 1.0D200 )
-ENDDO
+END DO
 
 YCOUNT = COUNT(LOBSINDEX)
 
@@ -320,8 +286,6 @@ IF(DEBUG) THEN
     CALL INTPR("YCOUNT :",8 , YCOUNT,1)
 END IF
 
-
-
 ! Create E matrix
 E = EYEDIMY
 J = 1
@@ -329,12 +293,93 @@ DO I=1,dimY
   IF(LOBSINDEX(I) ) THEN
     E(J,:) = E(I,:)
     J = J+1
-  ENDIF
-ENDDO
+  END IF
+END DO
 
 DO I=J,dimY
    E(J,:) = 0.0D0
-ENDDO
+END DO
+
+IF(DEBUG) THEN
+    CALL DBLEPR("E-Matrix:",9 , E , dimY*dimY)
+END IF
+
+!COM------------------------------------------------------------------!
+!COM  OUTPUT PREDICTION COVARIANCE MATRIX R(:,:,K)
+!COM  Eqn. (1.29) [CTSM 2.3 Math Guide, Dec. 2003, Kristensen, N.R.]  !
+!COM------------------------------------------------------------------!
+!
+! Calculate R= E * C * P *T(C)*T(E) + E*S*T(E)
+! First TMP = C*P
+
+IF(DEBUG) THEN
+    CALL INTPR("*** R Calculation",17,0,0)
+END IF
+
+! First 	E*C
+! F77 call dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+CALL DGEMM('N','N', YCOUNT, dimX, dimY, 1.0D0, E , dimY, C , dimY, &
+   0.0D0, TMPYX, dimY)
+
+IF(DEBUG) THEN
+    CALL DBLEPR("C:",2,C,dimY*dimX)
+	CALL DBLEPR("E*C:",4,TMPYX,dimY*dimX)
+END IF
+
+! Then (E*C)*P
+CALL DGEMM('N','N', YCOUNT, dimX, dimX, 1.0D0, TMPYX , dimY , PP(:,:,K), dimX , &
+   0.0D0, TMP2YX, dimY)
+IF(DEBUG) THEN
+	CALL DBLEPR("PP:",3,PP(:,:,K),dimX*dimX)
+	CALL DBLEPR("(E*C)*PP:",9,TMP2YX,dimY*dimX)
+END IF
+      
+! THEN (E*C*P)*T(C)
+CALL DGEMM('N','T', YCOUNT, dimY, dimX, 1.0D0, TMP2YX , dimY , C , dimX , &
+   0.0D0, TMPYY, dimY)
+IF(DEBUG) THEN
+	CALL DBLEPR("(E*C*P)*T(C):",13,TMPYY,dimY*dimY)
+END IF
+      
+! THEN (E*C*P*T(C) ) * T(E)
+CALL DGEMM('N','T', YCOUNT, YCOUNT, dimY, 1.0D0, TMPYY , dimY , E , dimY , &
+   0.0D0, TMP2YY, dimY)
+   
+IF(DEBUG) THEN
+	CALL DBLEPR("(E*C*P*T(C) )*T(E):",19,TMP2YY,dimY*dimY)
+END IF
+
+   
+IF(DEBUG) THEN
+	CALL DBLEPR("S:",2,S,dimY*dimY)
+END IF
+! THEN E*S
+CALL DGEMM('N','N', YCOUNT, dimY, dimY, 1.0D0, E , dimY , S , dimY , &
+   0.0D0, TMPYY, dimY)
+IF(DEBUG) THEN
+	CALL DBLEPR("E*S:",4,TMPYY,dimY*dimY)
+END IF
+   
+! THEN (E*S) * T(E) 
+CALL DGEMM('N','T', YCOUNT, YCOUNT, dimY, 1.0D0, TMPYY , dimY , E , dimY , &
+   0.0D0, TMP3YY, dimY)
+
+IF(DEBUG) THEN
+    CALL DBLEPR("(E*S) * T(E):",13 , TMP3YY,dimY*dimY)
+END IF
+   
+
+
+! Store in R
+DO I=1,dimY
+	DO J=1,dimY
+		R(I,J,K) = TMP2YY(I,J) + TMP3YY(I,J)            
+	END DO
+END DO
+   
+IF(DEBUG) THEN
+    CALL DBLEPR("R : ",3 , R(:,:,K),dimY*dimY)
+END IF
 
 
 
@@ -373,28 +418,34 @@ IF(INFO /= 0) THEN
 END IF
 !
 
+! Remember  that only upper [YCOUNT ; YCOUNT] is valid
 RINV(:,:,K) = TMPYY
+
+
+IF(DEBUG) THEN
+    CALL DBLEPR("RINV(:,:,K):",12, RINV(:,:,K),dimY*dimY)
+END IF
 
 
 ! Calculate kalman gain
 ! K = P*T(C)*T(E)*Inv(R)
 
-
-! TMPXY=P*T(C)
+!   P*T(C)
 CALL DGEMM('N','T', dimX, dimY, dimX, 1.0D0, PP(:,:,K), dimX, &
-   C, dimY, 0.0D0, TMPXY, dimX)
+   C, dimX, 0.0D0, TMPXY, dimX)
 
-! TMPXY = TMPXY*T(E)
-CALL DGEMM('N','T',dimX,YCOUNT,YCOUNT,1.0D0,TMPXY,dimX, &
-   E, dimY, 0.0D0 , TMPXY,dimX)
-
-! TMPXY = TMPXY * INV(R)
-CALL DGEMM('N','N', dimX, YCOUNT, YCOUNT, 1.0D0, TMPXY, dimX, &
+! (P * T(C) ) * T(E)
+CALL DGEMM('N','T',dimX,YCOUNT,dimY,1.0D0,TMPXY,dimX, &
+   E, dimY, 0.0D0 , TMP2XY,dimX)
+   
+! (P *T(C)*T(E) ) * INV(R)
+CALL DGEMM('N','N', dimX, YCOUNT, YCOUNT, 1.0D0, TMP2XY, dimX, &
    RINV(:,:,K), dimY, 0.0D0, KGAIN(:,:,K), dimX)
 
 IF(DEBUG) THEN
-    CALL DBLEPR("KGain :",7 , KGAIN(:,:,K),dimX*dimX)
+    CALL DBLEPR("KGain :",7 , KGAIN(:,:,K), dimX*dimX)
 END IF
+
 
 !------------------------------------------------------------------!
 ! LikeLihood contribution
@@ -413,37 +464,37 @@ YPERR(:,K)  = Y(:,K) - YP(:,K)     ! INNOVATION AT TIME K
 DO I=1,dimY
   IF(.NOT. LOBSINDEX(I)) THEN
      YPERR(I,K) = 0.0D0
-  ENDIF
-ENDDO
+  END IF
+END DO
 
 
 ! Missing Observation -> fit ERR accordingly
+! DGEMV(TRANSA, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 CALL DGEMV('N',dimY,dimY,1.0D0,E,dimY,YPERR(:,K),1,&
    0.0D0,ERR, 1)
 
-
 IF(DEBUG) THEN
-    CALL DBLEPR("ERR :",5 , ERR,dimY)
-    CALL DBLEPR("RINV :",6 , RINV(:,:,K) , dimX*dimX)
+    CALL DBLEPR("ERR :"  ,5 , ERR,dimY)
+    CALL DBLEPR("RINV :",6 , RINV(:,:,K) , dimY*dimY)
 END IF
 
-
-CALL DGEMV('N',dimY,dimY,1.0D0,RINV(:,:,K),dimY,ERR,1,&
+CALL DGEMV('N',YCOUNT,YCOUNT,1.0D0,RINV(:,:,K),dimY,ERR,1,&
    0.0D0,TMPY,1)
-
 
 ! DETR <- Determinant of R
 PIVY = 0
 CALL DTRM( R(:,:,K),YCOUNT,DETR,PIVY)
 
+
 ! LL = LL  + LOG(DETR) + DOT(ERR,TMPY)
-LL = LL  + 0.5D0*(LOG(DETR) + DOT_PRODUCT(ERR,TMPY))
+LL = LL  + 0.5D0*(LOG(DETR) + DOT_PRODUCT(ERR(1:YCOUNT),TMPY(1:YCOUNT)))
 
 IF(DEBUG) THEN
     CALL DBLEPR("log(DETR) :",11,LOG(DETR),1)
-    CALL DBLEPR("wE : ",4 ,  DOT_PRODUCT(ERR,TMPY),1)
-    CALL DBLEPR("dLL : ",5  , 0.5D0*(LOG(DETR) + DOT_PRODUCT(ERR,TMPY)) ,1)
+    CALL DBLEPR("wE : ",4 ,  DOT_PRODUCT(ERR(1:YCOUNT),TMPY(1:YCOUNT)),1)
+    CALL DBLEPR("dLL : ",5  , 0.5D0*(LOG(DETR) + DOT_PRODUCT(ERR(1:YCOUNT),TMPY(1:YCOUNT))) ,1)
 END IF
+
 
 
 !COM------------------------------------------------------------------!
@@ -488,10 +539,8 @@ IF(DEBUG) THEN
 END IF
 
 
-
 CALL DGEMM('N','N',dimX, YCOUNT, YCOUNT, 1.0D0, KGAIN(:,:,K), dimX, &
    R(:,:,K), dimY, 0.0D0, TMPXY, dimX)
-
 
 CALL DGEMM('N','T', dimX, dimX, YCOUNT, 1.0D0, TMPXY, dimX, &
    KGAIN(:,:,K), dimX, 0.0D0, TMPXX, dimX)
