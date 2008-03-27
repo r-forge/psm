@@ -21,7 +21,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
   # controllist
   if( is.null(controllist)) {
     # The user did not supply a controllist for the optimizer
-    controllist <- list(maxit=100, abstol=1e-5, trace=trace, REPORT=1 )
+    controllist <- list(maxit=100, trace=trace, REPORT=1 )
     # put parameters on similar scale if bounds are missing
     if(is.null(Par$LB))
       controllist$parscale <- abs(Par$Init)+1e-3
