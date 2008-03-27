@@ -58,8 +58,13 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
 
   # Hessian approximation (19)
   h_Li <- matrix(0,dimEta,dimEta)
-  for (q in 1:dimN) 
-    h_Li = h_Li + t(CutThirdDim(eGrad[,,q,drop=F]))%*%solve(o$R[,,q])%*%CutThirdDim(eGrad[,,q,drop=F])
+  for (q in 1:dimN) {
+    ObsIndex  <- which(!is.na(Data$Y[,q]))
+    if(length(ObsIndex)>0) {
+      eG <- CutThirdDim(eGrad[ObsIndex,,q,drop=F])
+      h_Li <- h_Li + t.default(eG) %*%  solve(o$R[ObsIndex,ObsIndex,q]) %*% eG
+    }
+  }
   h_Li <- - h_Li - solve(OMEGA);
 
   # RETURN neg. log. likelihood contribution

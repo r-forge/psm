@@ -61,6 +61,9 @@ fit1[1:3]
                                         #$NegLogL [1] 3052.865,
                                         #Runtime:  23:23.02 (linux04, CI=F)
 
+                                        #med L-BFGS-B på indvendig opt:
+                                        #$NegLogL [1] 3052.866
+                                        #Runtime:  18:15.79 (linux06, CI=T)
 
 smooth1 <- PSM.smooth(Model=Model1,Data=Cpep,THETA=fit1$THETA,sub=10)
 
@@ -181,6 +184,8 @@ fit2 <- PSM.estimate(Model=Model2,Data=Cpep2,Par=par2,CI=T,trace=1)
 fit2[1:3]
                                         # Runtime:  566:1.2 > $NegLogL [1] 2950.34
                                         # Runtime:  235:4.6 > $NegLogL [1] 2950.357 (2. sæt par) $THETA [1] 2.605852e-02 9.804498e-03 4.815092e+00 3.973301e+02 1.655686e+00
+                                        # med L-BFGS-B på intern opt:
+                                        # Runtime:  261:44.0 > $NegLogL 2950.348 (factr 1e10) (diag cov neg..)
 
 smooth2 <- PSM.smooth(Model=Model2,Data=Cpep2,THETA=fit2$THETA,sub=10)
 
@@ -192,5 +197,86 @@ for(i in 1:4) {
   if(i==1) points(Cpep2[[j]]$Time,Cpep2[[j]]$Y)
   rug(Cpep[[1]]$Time)
 }
+
+
+
+##################################################################
+# Model 2b - ISR as intervention model with
+#            random effects for peaks, baseline and C0.
+#            *NAs inserted in data.*
+##################################################################
+
+Cpep2b <- Cpep2
+for (j in 1:12) {
+  Cpep2b[[j]]$Y <- matrix(NA,ncol=length(Cpep2b[[j]]$Time)*2,nrow=2)
+  Cpep2b[[j]]$U <- matrix(NA,ncol=length(Cpep2b[[j]]$Time)*2,nrow=4)
+  for(i in 1:length(Cpep2b[[j]]$Time)) {
+    Cpep2b[[j]]$Y[(i%%2)+1,i*2-1] <- Cpep2[[j]]$Y[1,i]
+    Cpep2b[[j]]$U[,i*2-1] <- Cpep2b[[j]]$U[,i*2] <- Cpep2[[j]]$U[,i]
+  }
+  Cpep2b[[j]]$Y <- Cpep2b[[j]]$Y[,-2] #remove to preserve tau=t2-t1 for P0
+  Cpep2b[[j]]$U <- Cpep2b[[j]]$U[,-2]
+  Cpep2b[[j]]$Time <- c(0,15,22,30,37,45,52,60,67,75,82,90,105,120,135,150,165,180,195,
+                        210,225,240,255,270,285,300,315,330,345,360,390,420,450,480,540,600,607,
+                        615,622,630,637,645,652,660,667,675,682,690,705,720,735,750,765,780,795,
+                        810,825,840,850,959,1050,1140,1230,1320,1365,1410,1425,1440,1455)
+}
+# Show the new data with NAs
+rbind(Cpep2b[[1]]$Y[,1:8],
+      Cpep2b[[1]]$U[,1:8],
+      Cpep2b[[1]]$Time[1:8])
+rbind(Cpep2[[1]]$Y[,1:4],
+      Cpep2[[1]]$U[,1:4],
+      Cpep2[[1]]$Time[1:4])
+
+# Modify model to fit 2-dim Y
+Model2b <- Model2
+Model2b$Matrices <- function(phi) {
+  a1  <- phi[["a1"]]
+  a2  <- phi[["a2"]]
+  B  <- phi[["B"]]
+  K  <- phi[["K"]]
+  a2K1 <- phi[["a2K1"]]
+  a2K2 <- phi[["a2K2"]]
+  a2K3 <- phi[["a2K3"]]
+  matA <- matrix( c(-(k1+ke) ,  k2 ,   1 ,   0,
+                    k1 , -k2 ,   0 ,   0,
+                    0 ,   0 , -a1 ,  a1,
+
+                    0 ,   0 ,   0 , -a2),nrow=4,byrow=T)
+  matB <- matrix( c(0           , 0          , 0               , 0,
+                    0           , 0          , 0               , 0,
+                    0           , 0          , 0               , B,
+                    a2K1        , a2K2       , a2K3            , 0),
+                 byrow=T,nrow=4)
+  matC <- matrix(rep(c(1,0,0,0),each=2),nrow=2)
+  matD <- matrix(rep(0,8),nrow=2)
+  list(matA=matA,matB=matB,matC=matC,matD=matD)
+}
+Model2b$S = function(phi) {
+                 diag(phi[["S"]],2)
+               }
+ModelCheck( Model=Model2b , Data=Cpep2b[[1]], Par=par2)
+
+
+# Test Kalman-Filter
+source("../R/LinKalmanFilter.R",echo=F)
+theta2b <- Model2b$ModelPar(par2$Init)$theta
+phi2b <- Model2b$h(eta=rep(0,5),theta=theta2b,covar=NULL)
+Ob1 <- LinKalmanFilter( phi=phi2b , Model=Model2b , Data=Cpep2b[[1]] , output = TRUE, echo=FALSE,fast=FALSE)
+Ob1$negLogLike
+Ob2 <- LinKalmanFilter( phi=phi2b , Model=Model2  , Data=Cpep2[[1]] , output = TRUE, echo=FALSE,fast=FALSE)
+Ob2$negLogLike
+Yp1 <- as.vector(Ob1$Yp)
+Yp1 <- Yp1[!is.na(Yp1)]
+Yp1-Ob2$Yp
+Ob1$Xf[1,1:8]
+Ob2$Xf[1,1:8]
+
+# TEST APL-evaluering 
+# Uden NAs
+APL.KF(par2$Init,Model2,Cpep2,GUIFlag=2)
+# Med NAs
+APL.KF(par2$Init,Model2b,Cpep2b,GUIFlag=2)
 
 
