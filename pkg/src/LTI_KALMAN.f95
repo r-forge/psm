@@ -722,6 +722,18 @@ MISSINGOBS: DO K = dimN,1,-1
    ID = COUNT(LOBSINDEX)**2
    YCOUNT = COUNT(LOBSINDEX)
 
+   ! NAs in YP
+   IF( YCOUNT.GT.0) THEN
+   		DO I=1,dimY
+   			IF(.NOT. LOBSINDEX(I)) THEN
+   				YP(I,K) = 1.0D300
+   			END IF
+   		END DO
+   	ELSE
+   		YP(:,K) = 1.0D300
+   	END IF
+   
+   ! Unfolding R
    IF (YCOUNT.GT.0) THEN
       DO J = DIMY,1,-1
          DO I = DIMY,1,-1
@@ -736,6 +748,28 @@ MISSINGOBS: DO K = dimN,1,-1
    ELSE
       R(:,:,K) = 1.0D300
    END IF
+
+      
+	! Unfolding of Kalman Gain	   
+   	IF (YCOUNT.GT.0) THEN
+		ID = YCOUNT
+		DO J=dimY,1,-1	
+    	IF( LOBSINDEX(J) ) THEN
+    		DO I=1,dimX
+    			KGAIN(I,J,K) = KGAIN(I,ID,K)
+    		END DO
+    		ID = ID-1
+    	ELSE
+    		DO I=1,dimX
+    			KGAIN(I,J,K) = 1.0D300
+    		END DO
+    	END IF
+    END DO
+   ELSE
+      KGAIN(:,:,K) = 1.0D300
+   END IF
+   
+   
 END DO MISSINGOBS
 !---------------------------------------END SUBROUTINE LTI_KALMAN-----!
 END SUBROUTINE LTI_KALMAN_FULLA_WITHINPUT

@@ -1,6 +1,15 @@
 rm(list=ls())
-detach(package:PSM); detach(package:mexp)
-library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
+
+PC <- TRUE
+
+if (PC) {
+  library(PSM)
+  DataPath  <- "C:/Data/"
+} else {
+  detach(package:PSM); detach(package:mexp)
+  library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
+  DataPath  <- "~/PSM/isr/"
+}
 
 
 
@@ -8,11 +17,11 @@ library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
 # Load C-peptide data for 12 individuals
 ###############################################
 
-tmpData <- read.table("~/PSM/isr/CPEP",sep="\t", col.names=paste('ID',1:13))
+tmpData <- read.table(paste(DataPath,"CPEP",sep=""),sep="\t", col.names=paste('ID',1:13))
 Cpep <- vector(mode="list")
 for(i in 1:12)
   Cpep[[i]] <-
-  list(Time= read.table("~/PSM/isr/T")$V1, Y=matrix(tmpData[[i]],nrow=1))
+  list(Time= read.table(paste(DataPath,"T",sep=""))$V1, Y=matrix(tmpData[[i]],nrow=1))
 
 
 
