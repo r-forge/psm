@@ -24,7 +24,7 @@ k1 = 0.053; k2 = 0.051; ke = 0.062;
 Model1 <- list(
                Matrices=function(phi) {
                  list(
-                      matA=matrix(c(-(k1+ke),k2,1,k1,-k2,0,0,0,0),ncol=3,byrow=T),
+                      matA=matrix(c(-(k1+ke),k2,1,k1,-k2,0,0,0,0.00001),ncol=3,byrow=T),
                       matB=NA,
                       matC=matrix(c(1,0,0),nrow=1),
                       matD=NA )
@@ -56,7 +56,17 @@ par1 <- list(LB   = c(  200,  50^2,   0,  .0 ),
              Init = c( 1000, 100^2,  10,  .25),
              UB   = c( 1800, 150^2,  15,  .50))
 
+Rprof(filename = "Rprof1.out")
 fit1 <- PSM.estimate(Model=Model1,Data=Cpep,Par=par1,CI=T,trace=1)
+Rprof(NULL)
+
+Rprof(filename = "Rprof2.out")
+fit2 <- PSM.estimate(Model=Model1,Data=Cpep,Par=par1,CI=T,trace=1,fast=F)
+Rprof(NULL)
+
+summaryRprof(filename = "Rprof1.out")
+summaryRprof(filename = "Rprof2.out")
+
 fit1[1:3] 
                                         #$NegLogL [1] 3052.865,
                                         #Runtime:  23:23.02 (linux04, CI=F)
@@ -260,18 +270,20 @@ ModelCheck( Model=Model2b , Data=Cpep2b[[1]], Par=par2)
 
 
 # Test Kalman-Filter
-source("../R/LinKalmanFilter.R",echo=F)
 theta2b <- Model2b$ModelPar(par2$Init)$theta
 phi2b <- Model2b$h(eta=rep(0,5),theta=theta2b,covar=NULL)
-Ob1 <- LinKalmanFilter( phi=phi2b , Model=Model2b , Data=Cpep2b[[1]] , output = TRUE, echo=FALSE,fast=FALSE)
+Ob1 <- LinKalmanFilter( phi=phi2b , Model=Model2b , Data=Cpep2b[[1]] , output = TRUE, echo=FALSE,fast=TRUE)
 Ob1$negLogLike
-Ob2 <- LinKalmanFilter( phi=phi2b , Model=Model2  , Data=Cpep2[[1]] , output = TRUE, echo=FALSE,fast=FALSE)
+Ob2 <- LinKalmanFilter( phi=phi2b , Model=Model2  , Data=Cpep2[[1]] , output = TRUE, echo=FALSE,fast=TRUE)
 Ob2$negLogLike
-Yp1 <- as.vector(Ob1$Yp)
-Yp1 <- Yp1[!is.na(Yp1)]
-Yp1-Ob2$Yp
-Ob1$Xf[1,1:8]
-Ob2$Xf[1,1:8]
+
+Ob2$R[,,1:3]
+Ob1$R[,,1:4]
+Ob2$KfGain[,,1:3]
+Ob1$KfGain[,,1:4]
+Ob2$Yp[,1:4]
+Ob1$Yp[,1:4]
+Cpep2b[[1]]$Y[,1:4]
 
 # TEST APL-evaluering 
 # Uden NAs
