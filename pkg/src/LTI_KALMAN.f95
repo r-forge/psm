@@ -111,7 +111,7 @@ DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
 
 
 
-        PS          =  1.0D0    ! Initial covariance scaling
+    PS          =  1.0D0    ! Initial covariance scaling
     XF          =  0.0D0    ! state variables before filtering
     PF          =  0.0D0    ! covariance matrix of XF
     XP          =  0.0D0    ! one-step prediction state variables
@@ -228,6 +228,10 @@ END IF
 !-------------------------------------------------PREDICTION PART-----!
 !
 
+!IF(K > 3) THEN
+!	DEBUG = .FALSE.
+!END IF
+
 IF(DEBUG) THEN
     CALL INTPR("-------------------",10,K,0)
     CALL INTPR("LOOP:", 5,K,1)
@@ -335,7 +339,7 @@ IF(DEBUG) THEN
 END IF
       
 ! THEN (E*C*P)*T(C)
-CALL DGEMM('N','T', YCOUNT, dimY, dimX, 1.0D0, TMP2YX , dimY , C , dimX , &
+CALL DGEMM('N','T', YCOUNT, dimY, dimX, 1.0D0, TMP2YX , dimY , C , dimY , &
    0.0D0, TMPYY, dimY)
 IF(DEBUG) THEN
 	CALL DBLEPR("(E*C*P)*T(C):",13,TMPYY,dimY*dimY)
@@ -432,7 +436,7 @@ END IF
 
 !   P*T(C)
 CALL DGEMM('N','T', dimX, dimY, dimX, 1.0D0, PP(:,:,K), dimX, &
-   C, dimX, 0.0D0, TMPXY, dimX)
+   C, dimY, 0.0D0, TMPXY, dimX)
 
 ! (P * T(C) ) * T(E)
 CALL DGEMM('N','T',dimX,YCOUNT,dimY,1.0D0,TMPXY,dimX, &
@@ -443,7 +447,7 @@ CALL DGEMM('N','N', dimX, YCOUNT, YCOUNT, 1.0D0, TMP2XY, dimX, &
    RINV(:,:,K), dimY, 0.0D0, KGAIN(:,:,K), dimX)
 
 IF(DEBUG) THEN
-    CALL DBLEPR("KGain :",7 , KGAIN(:,:,K), dimX*dimX)
+    CALL DBLEPR("KGain : P*T(C)*T(E)*Inv(R) : ", 28 , KGAIN(:,:,K), dimX*dimX)
 END IF
 
 
@@ -475,7 +479,7 @@ CALL DGEMV('N',dimY,dimY,1.0D0,E,dimY,YPERR(:,K),1,&
 
 IF(DEBUG) THEN
     CALL DBLEPR("ERR :"  ,5 , ERR,dimY)
-    CALL DBLEPR("RINV :",6 , RINV(:,:,K) , dimY*dimY)
+    
 END IF
 
 CALL DGEMV('N',YCOUNT,YCOUNT,1.0D0,RINV(:,:,K),dimY,ERR,1,&

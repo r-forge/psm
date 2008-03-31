@@ -4,12 +4,20 @@
 
 rm(list=ls())
 
-detach(package:PSM)
+PC <- TRUE
 
-library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
-source("../R/PSM.estimate.R",echo=F)
-source("../R/invlogit.R",echo=F)
-source("../R/LinKalmanFilter.R",echo=F)
+if(PC){
+  if( is.loaded('PSM')) detach(package:PSM) 
+  library(PSM)
+} else {
+  detach(package:PSM)
+
+  library(PSM,lib.loc="~/PSM/Rpackages/gridterm")
+  source("../R/PSM.estimate.R",echo=F)
+  source("../R/invlogit.R",echo=F)
+  source("../R/LinKalmanFilter.R",echo=F)
+}
+
 
 # Load the Data and Variables
 tmpData <- read.table("Heat_Data.csv",sep=";", col.names=c("TIME","Te","Ti","Q"))
@@ -53,6 +61,40 @@ HeatModel <- list(
                   )
 
 names(HeatModel)
+
+# -------------------------------------------------------------
+# Test of Fortran Code
+# -------------------------------------------------------------
+
+Testphi <- c( 13 ,25 , 100 , 1 , 2 , 49 , .5 , .2 , .2 , 0.01)
+names(Testphi) <- c("X01","X02","G1","H1","H2","G2","H3","SIG11","SIG22","S")
+
+Ob1 <- LinKalmanFilter( phi=Testphi , Model=HeatModel , Data=Pop.Data[[1]] , echo=FALSE, outputInternals=TRUE,fast=TRUE)
+Ob2 <- LinKalmanFilter( phi=Testphi , Model=HeatModel , Data=Pop.Data[[1]] , echo=FALSE, outputInternals=TRUE,fast=FALSE)
+names(Ob1)
+Ob1$negLogLike
+Ob2$negLogLike
+
+IDX = 1:7
+
+Ob1$Yp[,1]
+Ob2$Yp[,1]
+
+Ob1$Pp[,,1]
+Ob2$Pp[,,1]
+
+(TestmatC <- matrix( c(0,-2) ,nrow=1))
+(TestS <- Testphi["S"])
+TestmatC %*% Ob1$Pp[,,1] %*% t(TestmatC) + TestS
+
+Ob1$R[,,1]
+Ob2$R[,,1]
+
+
+
+# -------------------------------------------------------------
+# Test of Fortran Code
+# -------------------------------------------------------------
 
 # Parameter estimation
 # Initial guess from CTSM
