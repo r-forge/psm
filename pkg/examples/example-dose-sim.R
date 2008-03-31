@@ -63,7 +63,7 @@ SimDose.THETA <-  c(10 , 40 , .5)
 
 
 if(REDO) {
-  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, dt=.1 , individuals=SimDose.Subj)
+  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, deltaTime=.1 , individuals=SimDose.Subj)
 } else {
   load("simdose.RData")
 }
