@@ -11,6 +11,40 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     }
   }
   if(!ok) stop(paste("Input did not pass model check."))
+  
+  # Check for fast option and Singular A
+  if(fast) {
+    #Get the ModelParameters
+    tmp       <- Model$ModelPar(Par$Init)
+    tmpDimEta <- ifelse( is.null(tmp$OMEGA) , 0 , dim(tmp$OMEGA)[1] )
+    tmpPhi    <- Model$h( eta=rep(0, tmpDimEta) , theta=tmp$theta , covar=Data[[1]]$covar)
+    tmpMat    <- Model$Matrices(tmpPhi)
+    matA  <- tmpMat$matA
+    
+    # Check for Model INPUT (U)
+    if(is.null(Data[[1]][["U"]])) { #check if U exists.
+      ModelHasInput <- FALSE
+    } else if ( any(is.na(Data[[1]][["U"]])) ) { #check if it contains any NA
+      ModelHasInput <- FALSE
+    } else {
+      ModelHasInput <- TRUE
+    }
+    tmpU     <- if( !ModelHasInput) { NA } else { Data[[1]][["U"]] }
+
+    # Set Uk
+    if(ModelHasInput) {
+      Uk <- tmpU[,1,drop=FALSE]
+    } else {Uk <- NA}
+    
+    tmpdimX <- nrow( Model$X0(Time=Data[[1]]$Time[1], phi=tmpPhi, U = Uk) )
+    
+    rankA <- qr(matA)$rank
+    singA <- (rankA<tmpdimX)
+    
+    if( singA) 
+      cat("Unable to use option \"fast\" on singular A matrix - Switching to fast=FALSE \n") 
+      fast=FALSE 
+  }
     
   T0 <- proc.time()[3]
 
