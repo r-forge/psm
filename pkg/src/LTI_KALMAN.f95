@@ -83,7 +83,7 @@ DOUBLE PRECISION :: TAU,DETR,PS
 INTEGER :: I,J,K,PIVX(dimX),PIVY(dimY),IALLOC
 LOGICAL :: DEBUG
 LOGICAL, DIMENSION(dimY) :: LOBSINDEX
-INTEGER :: YCOUNT,TOTALMISSINGOBS
+INTEGER :: YCOUNT,TOTALMISSINGOBS,ID
 
 DOUBLE PRECISION,DIMENSION(dimY,dimN) :: YPERR
 DOUBLE PRECISION,DIMENSION(dimY,dimY,dimN) :: RINV
@@ -118,7 +118,7 @@ DOUBLE PRECISION,DIMENSION(dimX) :: TMPX
     PP          =  0.0D0    ! covariance matrix of XP
 
     YP          =  0.0D0    ! output prediction
-    R           =  0.0D0    ! inverse covariance matrix of YP
+    R           =  1.0D300  ! inverse covariance matrix of YP
     RINV        =  0.0D0    ! inverse covariance matrix R
 
     LL          =  0.0D0    ! minus log-likelihood value
@@ -713,5 +713,29 @@ INFO = 0
 IF(DEBUG) THEN
     CALL DBLEPR("Inside Fortran LL: " ,19 ,LL,1)
 END IF
+
+MISSINGOBS: DO K = dimN,1,-1
+   DO I = 1,DIMY
+      LOBSINDEX(I) = (Y(I,K) < 1.0D200 )
+   END DO
+   
+   ID = COUNT(LOBSINDEX)**2
+   YCOUNT = COUNT(LOBSINDEX)
+
+   IF (YCOUNT.GT.0) THEN
+      DO J = DIMY,1,-1
+         DO I = DIMY,1,-1
+            IF (LOBSINDEX(I).AND.LOBSINDEX(J)) THEN
+               R(I,J,K) = R( MOD(ID-1,YCOUNT) +1,  (ID-1)/YCOUNT +1 ,K)
+               ID = ID-1
+            ELSE
+               R(I,J,K) = 1.0D300
+            ENDIF
+         END DO
+      END DO
+   ELSE
+      R(:,:,K) = 1.0D300
+   END IF
+END DO MISSINGOBS
 !---------------------------------------END SUBROUTINE LTI_KALMAN-----!
 END SUBROUTINE LTI_KALMAN_FULLA_WITHINPUT
