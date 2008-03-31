@@ -6,7 +6,7 @@
   This is an internal function. Evaluates the gradient of APL.KF.
 }
 \usage{
-APL.KF.gr(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GradSTEP = 1e-04, GUIFlag = 0)
+APL.KF.gr(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GradSTEP = 1e-04, GUIFlag = 0, fast=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,6 +17,7 @@ APL.KF.gr(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GradSTEP = 1e-04, GUIFla
   \item{UB}{ Upper bounds }
   \item{GradSTEP}{Steplength for gradient}
   \item{GUIFlag}{ Display tracing information}
+  \item{fast}{ Boolean. Use compiled Fortran code }
 }
 \value{
   Vector with gradient of APL.KF.

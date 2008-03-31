@@ -1,5 +1,5 @@
 `APL.KF.gr` <-
-function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GradSTEP=1e-4,GUIFlag=0) {
+function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GradSTEP=1e-4,GUIFlag=0,fast=TRUE) {
   # Forward gradient function for APL.KF
 
   
@@ -15,7 +15,7 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GradSTEP=1e-4,GUIFlag=0) {
   TP[L+1,] <- THETA
   
   for ( i in 1:(L+1) )
-    APL[i] <- APL.KF(TP[i,],Model=Model,Pop.Data=Pop.Data,LB=LB,UB=UB,GUIFlag=0)
+    APL[i] <- APL.KF(TP[i,],Model=Model,Pop.Data=Pop.Data,LB=LB,UB=UB,GUIFlag=0,fast=fast)
         
   # Calculate Gradient and insert
   for (i in 1:L)
@@ -23,9 +23,9 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GradSTEP=1e-4,GUIFlag=0) {
 
   if(GUIFlag>1) {
     if(!is.null(LB))
-      print(c(" THETA  =", signif(invlogit(THETA,LB,UB),5)),q=F)
-    print(c("<THETA> =", signif(THETA,5)),q=F)
-    print(c("<GR>    =", signif(GRAD,5)),q=F)
+      print(c(" THETA  =", signif(invlogit(THETA,LB,UB),5)),q=FALSE)
+    print(c("<THETA> =", signif(THETA,5)),q=FALSE)
+    print(c("<GR>    =", signif(GRAD,5)),q=FALSE)
   }
    
   GRAD

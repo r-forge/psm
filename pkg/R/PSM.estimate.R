@@ -36,7 +36,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
                  gr = APL.KF.gr, method = "BFGS",
                  control = controllist, hessian = CI,
                  Model=Model, Pop.Data=Data, LB=Par$LB, UB=Par$UB,
-                 GUIFlag=trace,...)
+                 GUIFlag=trace,fast=fast,...)
     NegLogL     <- out$value
     ParEstimate <- out$par
     if(CI) Hess <- out$hessian
@@ -48,7 +48,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
       # typsize=Par$Init,stepmax=(.1*abs(Par$Init))+1e-3,          
       out <- nlm(f=APL.KF, p=Par$Init, hessian=CI, print.level=trace,
                  Model=Model, Pop.Data=Data, LB=Par$LB,
-                 UB=Par$UB, GUIFlag=trace,...)
+                 UB=Par$UB, GUIFlag=trace,fast=fast,...)
                  
         NegLogL     <- out$minimum 
         ParEstimate <- out$estimate

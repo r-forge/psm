@@ -6,7 +6,7 @@
   This in an internal function. Performs a linear Kalman filtering.
 }
 \usage{
-LinKalmanFilter(phi, Model, Data, echo = F, outputInternals = FALSE)
+LinKalmanFilter(phi, Model, Data, echo = FALSE, outputInternals = FALSE, fast=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,6 +16,7 @@ LinKalmanFilter(phi, Model, Data, echo = F, outputInternals = FALSE)
   \item{echo}{ Boolean. Display more tracing information }
   \item{outputInternals}{ If true, output is a list containing
     negLogLike, X, Xf, Yp, KfGain, Pf, Pp, R}
+  \item{fast}{ Boolean. Use compiled Fortran code }
 }
 \value{
   Returns neg. log-likelihood.

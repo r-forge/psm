@@ -7,7 +7,7 @@
   individuals for APL.KF.
 }
 \usage{
-APL.KF.individualloop(theta, OMEGA, Model, Data, GUIFlag = 0)
+APL.KF.individualloop(theta, OMEGA, Model, Data, GUIFlag = 0, fast=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,6 +16,7 @@ APL.KF.individualloop(theta, OMEGA, Model, Data, GUIFlag = 0)
   \item{Model}{ Model list}
   \item{Data}{ Data list}
   \item{GUIFlag}{ Display tracing information }
+  \item{fast}{ Boolean. Use compiled Fortran code }
 }
 \value{
   Returns list containing:

@@ -8,7 +8,7 @@
   Kalman filter.
 }
 \usage{
-PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllist=NULL)
+PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",controllist=NULL,fast=TRUE,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -121,7 +121,10 @@ PSM.estimate(Model, Data, Par, CI = F, trace = 0, optimizer = "optim",controllis
       \item{\code{REPORT}}{1}
       }
   }
-  
+  \item{fast}{  Boolean. Use compiled Fortran code for faster
+    estimation.}
+
+  \item{...}{Further arguments to be passed to the chosen optimzer.}
 }
 
 \details{

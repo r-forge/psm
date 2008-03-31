@@ -1,5 +1,5 @@
 `APL.KF.individualloop` <-
-function (theta,OMEGA,Model,Data,GUIFlag=0) {
+function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
 ### NOTES -  requires: o$R, o$Yp, h(eta,theta)
   dimEta <- dim(OMEGA)[1]
   tmp <- dim(Data$Y)
@@ -10,20 +10,20 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   controllist <- list(trace=0,maxit=500)
   
   if(GUIFlag>2) {
-    controllist$trace <- 1  #higher number -> more detail
+    controllist$trace <- GUIFlag-2  #higher number -> more detail
     controllist$REPORT <- 1 #report for every X iteration
   }
   if(0) { #unconstrained
     controllist$reltol <- 1e-7
     out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF , gr = IndividualLL.KF.gr,
                  method = "BFGS", control = controllist, hessian = FALSE, 
-                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data)
+                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data, fast=fast)
   } else { #constrained
     controllist$factr <- 1e8
     out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF, gr = IndividualLL.KF.gr,
                  method = "L-BFGS-B", lower = -4*sqrt(diag(OMEGA)),upper = 4*sqrt(diag(OMEGA)),
                  control = controllist, hessian = FALSE, 
-                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data)
+                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data, fast=fast)
   }
   
   
@@ -34,7 +34,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   optimStat_i <- c(out$convergence, out$value, out$counts[1])
   
   phi <- Model$h(eta=out$par,theta=theta,covar=Data$covar)
-  o <- LinKalmanFilter(phi=phi, Model=Model, Data=Data, output=T)
+  o <- LinKalmanFilter(phi=phi, Model=Model, Data=Data, output=TRUE, fast=fast)
   
   # Calculate stepsize in central diffenrence gradient
   stepSize <- 1E-5;
@@ -46,11 +46,11 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
     
     # Forward difference
     phi.f <- Model$h(out$par+d,theta,covar=Data$covar)
-    eF <- Data$Y - LinKalmanFilter(phi=phi.f, Model=Model, Data=Data, output=T)$Yp
+    eF <- Data$Y - LinKalmanFilter(phi=phi.f, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp
 
     # Backward difference
     phi.b <- Model$h(out$par-d,theta,covar=Data$covar)
-    eB <- Data$Y - LinKalmanFilter(phi=phi.b, Model=Model, Data=Data, output=T)$Yp;
+    eB <- Data$Y - LinKalmanFilter(phi=phi.b, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp;
 
     #Insert the calculated gradient.
     eGrad[,p,] <- (eF-eB)/(2*stepSize)
@@ -61,7 +61,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0) {
   for (q in 1:dimN) {
     ObsIndex  <- which(!is.na(Data$Y[,q]))
     if(length(ObsIndex)>0) {
-      eG <- CutThirdDim(eGrad[ObsIndex,,q,drop=F])
+      eG <- CutThirdDim(eGrad[ObsIndex,,q,drop=FALSE])
       h_Li <- h_Li + t.default(eG) %*%  solve(o$R[ObsIndex,ObsIndex,q]) %*% eG
     }
   }

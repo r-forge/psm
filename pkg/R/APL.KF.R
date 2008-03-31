@@ -1,5 +1,5 @@
 `APL.KF` <-
-function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=F) {
+function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE) {
 ### NOTES -  requires: Model$ModelPar(), 
   
   if (!is.null(LB)) {
@@ -27,13 +27,14 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=F) {
     if(GUIFlag>2)
       print(paste('Individual', i))
     if(!is.null(OMEGA)) {
-      result <- APL.KF.individualloop(theta=theta,OMEGA=OMEGA,Model=Model,Data=Pop.Data[[i]],GUIFlag=GUIFlag) 
+      result <- APL.KF.individualloop(theta=theta,OMEGA=OMEGA,Model=Model,
+                                      Data=Pop.Data[[i]],GUIFlag=GUIFlag,fast=fast) 
       LiPart[i] <- result$LiPart_i
       etaList[,i] <- result$eta_i
       optimStat[,i] <- result$optimStat_i
     }
     else {
-      LiPart[i] <- LinKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]] )
+      LiPart[i] <- LinKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]],fast=fast )
       etaList[,i] <- NaN
       optimStat[,i] <- NaN
     }
@@ -44,7 +45,7 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=F) {
     totaltime = proc.time()[3]-starttime
     minutes = floor(totaltime/60)
     tid <- paste("  (",minutes,":",round(totaltime-60*minutes,2),")",sep="")
-    print(c(" -logL  =", signif(sum(LiPart),10),tid),q=F)
+    print(c(" -logL  =", signif(sum(LiPart),10),tid),q=FALSE)
 
   }
   

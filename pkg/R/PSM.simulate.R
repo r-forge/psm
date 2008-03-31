@@ -1,5 +1,5 @@
 `PSM.simulate` <- 
-function(Model, Data, THETA, deltaTime, individuals=1) {
+function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
 
   ok <- TRUE
   dimS <- length(Data)
@@ -201,7 +201,10 @@ function(Model, Data, THETA, deltaTime, individuals=1) {
 
     Result[[i]] <- list(X=matrix(X[,idx],nrow=dimX),Y=matrix(Y[,idx],nrow=dimY),
                         Time=SampleTime,U=Ulist[[i]],eta=eta[,i])
-
+    if(longX) {
+      Result[[i]]$longX <- X
+      Result[[i]]$longTime <- tseq
+    }
   } #end individual loop
   
   # list(Xlist=Xlist,Ylist=Ylist,Tlist=SampleTlist,Ulist=Ulist,eta=eta)

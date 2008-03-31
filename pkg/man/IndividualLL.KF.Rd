@@ -6,7 +6,7 @@
   This in an internal function. Evaluates the indivdual neg. log-likelihood function.
 }
 \usage{
-IndividualLL.KF(eta, theta, OMEGA, Model, Data)
+IndividualLL.KF(eta, theta, OMEGA, Model, Data, fast=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,6 +15,7 @@ IndividualLL.KF(eta, theta, OMEGA, Model, Data)
   \item{OMEGA}{ Covariance matrix for random effects}
   \item{Model}{ Model list}
   \item{Data}{ Data list}
+  \item{fast}{ Boolean. Use compiled Fortran code }
 }
 \value{
   Returns individual neg. log-likelihood.
