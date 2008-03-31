@@ -133,14 +133,14 @@ echo = FALSE
     if(echo) {cat("CREATING FORTRAN INTERNALS \n")}
     LL <-  -1.0
     INFO <- -1
-    YP <- array(-1 , c(dimY,dimT))
-    XF <- array(-1 , c(dimX,dimT))
-    XP <- array(-1 , c(dimX,dimT))
-    PF <- array(-1 , c(dimX,dimX,dimT))
-    PP <- array(-1 , c(dimX,dimX,dimT))
-    YP <- array(-1 , c(dimY,dimT))
-    R <- array( -1 , c(dimY,dimY,dimT))
-    KGAIN <- array(-1 , c(dimX,dimY,dimT))
+    YP <- rep(-1 , dimY*dimT)
+    XF <- rep(-1 , dimX*dimT)
+    XP <- rep(-1 , dimX*dimT)
+    PF <- rep(-1 , dimX*dimX*dimT)
+    PP <- rep(-1 , dimX*dimX*dimT)
+    YP <- rep(-1 , dimY*dimT)
+    R <- rep( -1 , dimY*dimY*dimT)
+    KGAIN <- rep(-1 , dimX*dimY*dimT)
 
     if(echo) {cat("Starting .Fortran() \n")}
     
@@ -178,16 +178,22 @@ echo = FALSE
     
     if(echo) cat("\t -iLL: " ,  round(FOBJ$LL,3) , "\n")
     if(outputInternals) {
-      return( list( negLogLike=FOBJ$LL,
-                   Time=array(FOBJ$Time,c(dimT)), 
-                   Xp=array(FOBJ$Xp,c(dimX,dimT)),
-                   Xf=array(FOBJ$Xf,c(dimX,dimT)),
-                   Yp=array(FOBJ$Yp,c(dimY,dimT)),
-                   KfGain=array(FOBJ$Kgain,c(dimX,dimY,dimT)),
-                   Pf=array(FOBJ$Pf,c(dimX,dimX,dimT)),
-                   Pp=array(FOBJ$Pp,c(dimX,dimX,dimT)),
-                   R =array(FOBJ$R,c(dimY,dimY,dimT))
-                   )
+      R <- array(FOBJ$R,c(dimY,dimY,dimT))
+      Yp <- array(FOBJ$Yp,c(dimY,dimT))
+      KfGain <- array(FOBJ$Kgain,c(dimX,dimY,dimT))
+      R[R>1E200] <- NA
+      Yp[Yp>1E200] <- NA
+      KfGain[KfGain>1E200] <- NA   
+      return(list( negLogLike=FOBJ$LL,
+                  Time=array(FOBJ$Time,c(dimT)), 
+                  Xp=array(FOBJ$Xp,c(dimX,dimT)),
+                  Xf=array(FOBJ$Xf,c(dimX,dimT)),
+                  Yp=Yp,
+                  KfGain=KfGain,
+                  Pf=array(FOBJ$Pf,c(dimX,dimX,dimT)),
+                  Pp=array(FOBJ$Pp,c(dimX,dimX,dimT)),
+                  R = R
+                  )
              )
     } else {
       return(as.vector(FOBJ$LL))
