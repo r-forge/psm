@@ -49,7 +49,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
   T0 <- proc.time()[3]
 
   if(!is.null(Par$LB)) {
-    cat("Using logit transformation of parameters \n")
+    if(trace>1) cat("Using logit transformation of parameters \n")
     Par$Init <- logit(Par$Init,Par$LB,Par$UB) }
 
   # controllist

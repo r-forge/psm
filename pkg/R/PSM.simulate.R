@@ -34,9 +34,9 @@ function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
     eta <- NULL
   }
 
-
+  cat("Simulating individual: ")
   for (i in 1:individuals) {
-    print(paste("Simulating individual: ",i))
+    cat(paste(i,', ',sep=""))
     if(!is.null(OMEGA)) {
       phi <- Model$h(eta=eta[,i],theta=theta,covar=covarlist[[i]])
     }else {
@@ -206,7 +206,7 @@ function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
       Result[[i]]$longTime <- tseq
     }
   } #end individual loop
-  
+  cat("Done\n")
   # list(Xlist=Xlist,Ylist=Ylist,Tlist=SampleTlist,Ulist=Ulist,eta=eta)
   return(Result)
 }
