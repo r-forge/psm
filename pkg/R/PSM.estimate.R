@@ -41,9 +41,10 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     rankA <- qr(matA)$rank
     singA <- (rankA<tmpdimX)
     
-    if( singA) 
+    if( singA) {
       cat("Unable to use option \"fast\" on singular A matrix - Switching to fast=FALSE \n") 
       fast=FALSE 
+    }
   }
     
   T0 <- proc.time()[3]

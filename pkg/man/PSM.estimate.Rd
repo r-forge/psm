@@ -21,7 +21,9 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	the model equation. Must return a list of matrices named
 	\code{matA}, \code{matB}, \code{matC} and \code{matD}.
 	If there is no input, \code{matB} and \code{matD} may be omitted
-	by setting them to \code{NULL}.
+	by setting them to \code{NULL}. Note, if the matrix \eqn{A} is
+	singular the option \code{fast} is set to \code{FALSE}, as
+	this is not supported in the compiled Fortran code.
       }
       \item{\code{X0 = function(Time, phi, U)}}{
 	Defines the model state at \code{Time[1]} before
