@@ -7,5 +7,5 @@ Encoding: latin1
 Author: Stig Mortensen <sbm@imm.dtu.dk> and Søren Klim <skl@imm.dtu.dk>
 Maintainer: Søren Klim <skl@imm.dtu.dk>
 Depends: 
-Description: This package provides functions for estimation of mixed-effects models using stochastic differential equations. Moreover it provides functions for finding smoothed estimates of model states and for simulation. The setup allows for any multivariate linear time-invariant model to be specified, and it also handels multidimentional input and specification of dosage regimen.
+Description: This package provides functions for estimation of mixed-effects models using stochastic differential equations. Moreover it provides functions for finding smoothed estimates of model states and for simulation. The setup allows for any multivariate linear time-invariant model to be specified, and it also handels multidimentional input, co-variates, missing observations and specification of dosage regimen.
 License: GPL (>=2)

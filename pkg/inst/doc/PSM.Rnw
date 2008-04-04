@@ -24,7 +24,7 @@ foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
 \title{Population Stochastic Modelling: \\
 Model definition, description and examples} 
 
-\date{February 15, 2008}
+\date{April 4, 2008}
 
 \author{Stig Mortensen and S\o ren Klim}
 \maketitle
@@ -108,7 +108,7 @@ S(\bs\phi_i))$.
 The initial state of the model is given as a function of $t_1$,
 $\bs\phi_i$, and $u_{i1}$ and defines the model state at time $t_1$
 before update based on the first observation. The initial state can thus
-be included in the parameter estimation as nescessary. The covariance
+be included in the parameter estimation as necessary. The covariance
 matrix of the initial state  is
 set to the integral of the Wiener process and the dynamics of the system over 
 the first sample interval $t_2-t_1$ as also done in \cite{kristensen03}.
@@ -143,6 +143,11 @@ zero and covariance $\bs \Omega$, i.e.  $\bs \eta_i \in N(\bs 0,\bs
 
 \section{Parameter estimation}
 
+Parameter estimation is done using maximum likelihood. The likelihood
+function will only be outlined briefly here, so please refer to
+\cite{mortensen07, overgaard05, kristensen03} for a detailed
+description. 
+
 The full set of model parameters to be estimated for the final mixed effects
 model based on SDEs are the matrices $\bs\Sigma$, $\bs\sigma_\omega$,
 $\bs\Omega$ and the fixed effect parameters in the vector
@@ -159,7 +164,7 @@ PSM: \verb|THETA|) such that
 \bs\Omega) .
 \end{equation}
 
-Parameter estimation is done using maximum likelihood. The exact
+The exact
 population likelihood function cannot be evaluated analytically and
 thus a second-order Taylor expansion is made of the individual a
 posteriori log-likelihood function around the value of $\hat{\bs
@@ -191,9 +196,41 @@ The objective function in Nonmem ($l_{NM}$) is advertised as $-2\log L$ but
 in fact it lacks a constant equal to the likelihood of the data. The PSM
 objective function ($l_{PSM}$) is  $-\log L$ as seen in
 Eq. \eqref{PSMobj} and the relation thereby becomes $l_{NM} = 2\cdot
-l_{PSM} - \log(2\pi) \cdot \sum n_i $. The relation has been testet
+l_{PSM} - \log(2\pi) \cdot \sum n_i $. The relation has been tested
 for a number of models \cite{mortensen07}. 
 
+\subsubsection*{Models with no random effects}
+
+A special case arises in models where no random effects are specified.
+This may be defined in PSM by setting \verb|OMEGA = NULL|. This
+greatly simplifies the likelihood function, as it is no longer
+necessary to integrate out the random effects. The likelihood
+function is thus reduced to a product of conditional probabilities of
+the observations. In the form of a log-likelihood function this may be
+written as
+
+\begin{equation}
+  - \log L(\bs \Theta) = - \sum_{i=1}^N \sum_{j=1}^{n_i} \log
+  p(y_{ij}|\cdot) \label{CTSMobj}
+\end{equation}
+
+\noindent where the $\cdot$ indicates conditioning on parameters and past
+observations for individual $i$. The latter conditioning is necessary
+due to the inclusion of SDEs in the model.
+
+The likelihood function in Eq. \eqref{CTSMobj} is identical to the one
+used in CTSM \cite{kristensen03}, and is sometimes referred to as a
+pooled likelihood. The inner sum of the likelihood function is also
+equal to the a priori individual log-likelihood function in the mixed
+effects framework.
+
+\subsubsection*{Implementation issues}
+The estimation algorithm for PSM is based on the Kalman filter, which
+has been written in Fortran for faster execution times. However, the
+Fortran code does not support a singular $A$-matrix, and will in these
+cases fall back on an R version of the Kalman filter. This may be
+circumvented by adding a very small value to the diagonal of $A$,
+at least in order to find the first rough parameter estimates.
 
 \newpage
 \section{Examples}
@@ -205,11 +242,14 @@ for a number of models \cite{mortensen07}.
 
 \vspace{5mm}
 
-\noindent This document is written using
+\noindent The following provides two examples to illustrate the use of PSM. It
+may also be useful when trying to set up a new model, by using the
+shown code as model templates. 
+The document is written using
 Sweave\footnote{http://www.ci.tuwien.ac.at/$\sim$leisch/Sweave/}, and thus
 all R-code shown in the examples can be extracted into an R-script
 file by writing \verb|Stangle("PSM.Rnw")| in R. This allows for easy
-access to further experimentaion with the code behind the examples.
+access to further experimentation with the code behind the examples.
 The PSM.Rnw file is located in /doc in the PSM installation folder.
 
 To save time in the processing of the document all computer intensive
@@ -223,7 +263,7 @@ based on the new simulated data sets.
 Redo = FALSE
 @ 
 
-\newpage
+%\newpage
 
 \subsection{Dosing in two-compartment model}
 \label{dose2comp}
@@ -261,7 +301,7 @@ is described as
 \end{eqnarray}
 
 \noindent where $\bs A_t = [ A_1 ~ A_2]^T$ are the amount in each compartment and thus
-$A_1/V_1^i$ is the measured concentration. It is seens that the
+$A_1/V_1^i$ is the measured concentration. It is seems that the
 elimination will follow a normal two-compartment model, but with a
 small random diffusion between the compartments. The mass is preserved
 since the diffusion terms are equal with opposite signs.
@@ -378,16 +418,18 @@ fitA[1:3]
 @ 
 
 It is seen that the estimated parameters are reasonably close to the
-true values of $\bs\Theta = (10, 20, 0.5)$ and the 95\% conficdence
-intervals include the true values. In particular the first parameter
-$\sigma_1$ is significant which shows that deviations from a normal
-ODE two-compartment model are significant. This could also be tested
+true values of $\bs\Theta = $ (\verb|sig1|, \verb|S|, \verb|OMEGA|) $
+= (10, 20, 0.5)$ and the 95\% conficdence intervals include the true
+values. In particular the first parameter $\sigma_1$ is significantly
+different from zero which shows that deviations from a normal ODE
+two-compartment model are significant.
 
 Based on the estimated parameters it is possible to obtain an estimate
 of the model states by using \verb|PSM.smooth|. The
 estimates are shown in Figure \ref{fig:fig2}. The structure of the
 output from the smoothing function is also shown using the
-\verb|names| command.
+\verb|names| command. Please refer to \verb|help(PSM.smooth)| for a
+more detailed description of the output.
 
 <<Dose.EstimateStates>>=
 if(Redo) 
@@ -398,7 +440,7 @@ names(out[[1]])
 
 By comparing the smoothed estimates of the states to the
 true simulated states, it can be seen that they are very close. This
-shows that the system noise and observation noise has been separeted
+shows that the system noise and observation noise has been separated
 properly in the reconstruction.
 
 \begin{figure}[hptb]
@@ -406,9 +448,10 @@ properly in the reconstruction.
 <<label=figure2,fig=TRUE,echo=FALSE>>=
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:2) {
+  tmp <- out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta))
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
-         ylab="Observations", main=paste('Individual',id))
-  legend(400, y = max(SimDose.Data[[id]]$Y), legend=c('Smooth est.'),
+         ylab="Observations", main=paste('Individual',id),ylim=range(tmp))
+  legend(400, y = max(tmp), legend=c('Smooth est.'),
          lty=c('71A1'),col='blue', xjust=1,yjust=1,bty="n")
   lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)),lty='71A1',col='blue')
   for(i in 1:2) {
@@ -490,7 +533,7 @@ equations (here $B^i$) on the linear form as defined in Eq.
 \eqref{sssm1} and \eqref{sssm2} it is necessary to include a constant
 input $u_1=1$ and multiply this with $B^i$. The matrix description of
 the model can be found in \cite{klim06} p. 69. Using this, the model
-can be definded in PSM as follows.
+can be defined in PSM as follows.
 
 
 <<ISR.ModelDefinition>>=
@@ -633,8 +676,14 @@ Model.Est <- list(
             )
 @ 
 
+Looking at the \verb|ModelPar|-function it is seen that it is chosen
+to include the average initial concentration $C_1(0)$, measurement
+variation $S$, the coefficient of the random walk for $ISR$
+$\sigma_{ISR}$ and the variance of the random effect on $C_1(0)$
+denoted $\Omega_{C_1(0)}$ in the likelihood estimation.
+
 Since the model now does not use any input, this must be removed from
-the simulated data.
+the simulated data before estimation.
 
 <<ISR.RemoveInputFromData>>=
 Pop.Data <- Sim.Data
@@ -658,13 +707,16 @@ obj1[1:3]
 
 
 Looking at the estimated confidence intervals, it is seen that the
-simulated values for $\bs\Theta$ = \verb|Sim.THETA| = (\Sexpr{Sim.THETA[1]}, \Sexpr{Sim.THETA[2]},
-\Sexpr{Sim.THETA[3]}, \Sexpr{Sim.THETA[4]}) are nicely contained
-within the limits.
+values used in the simulation $\bs\Theta$ = (900,8500,4,0.2) are
+nicely contained within the limits.
 
-\large
-\textcolor{blue}{\textbf{Discuss estimation times.}} (Remove usepackage(color)).
-\normalsize
+The estimation time including the confidence interval is about 3
+minutes on a 2GHz computer. Since the matrix $A$ in the estimation
+model is singular, the estimation cannot make use of the compiled
+Fortran code. As mentioned, this may be circumvented by adding
+e.g. $10^{-6}$ to the diagonal. This reduces the estimation time to 12
+sec. It changes the maximum log-likelihood value to 499.4781, and thus
+yields virtually no difference in parameter estimates.
 
 Using the estimated model parameters it is possible to give smoothed
 estimates of the three model states $C1$, $C2$ and $ISR$. This is done
@@ -726,6 +778,7 @@ for(ID in 1:2) {
   legend(1440, y = max(polyCI), legend=c('Simulation','Smooth est.'),
          col=c("black","blue"),xjust=1,
          yjust=1,bty="n",y.intersp=.8,lwd=c(1,2),pch=c(NA,NA))
+  box()
 }
 @
 \end{center}
@@ -756,6 +809,7 @@ for(ID in 1:2) {
     Kristensen NR, Madsen H (2003) Continous time stochastic
     modelling: CTSM 2.3 mathematics guide, Technical University of
     Denmark \\
+    http://www2.imm.dtu.dk/ctsm/MathGuide.pdf
     
   \bibitem{nonmem}
     Beal SL, Sheiner LB (2004) NONMEM\textregistered Users Guide. University of
