@@ -15,8 +15,7 @@ matexp(a, dt=1,order = 8)
   \item{order}{ Pade approximation order}
 }
 \details{
-  This implementation is based on Niels Rode Kristensens work which is
-  based on Roger B. Sidje's work. This package is also highly inspired
+  This implementation is based on Niels Rode Kristensens work. This package is also highly inspired
   by David Firth's R package mexp. 
 }
 \value{
@@ -24,8 +23,7 @@ matexp(a, dt=1,order = 8)
   problems occured in the fortran engine.
 }
 \references{
-  This implementation is based on Niels Rode Kristensens work which is
-  based on Roger B. Sidje's work. This package is also highly inspired
+  This implementation is based on Niels Rode Kristensens work. This package is also highly inspired
   by David Firth's R package mexp.
 
   The examples below are all from David Firth's mexp package but the
@@ -33,8 +31,6 @@ matexp(a, dt=1,order = 8)
   the accuracy.
   
   Niels Rode Kristensen, http://www2.imm.dtu.dk/~ctsm/
-
-  Roger B. Sidje, http://www.maths.uq.edu.au/expokit/
   
 }
 \author{Søren Klim, Stig B. Mortensen}
