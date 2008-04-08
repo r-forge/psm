@@ -46,7 +46,7 @@ PSM.simulate(Model, Data, THETA, deltaTime, individuals = 1, longX=TRUE)
 }
 \details{
   
-  The \eqn{eta_i}{eta} is drawn from the multivariate normal
+  The \eqn{\eta_i}{eta} is drawn from the multivariate normal
   distribution \eqn{N(0,\Omega)}{N(0,OMEGA)}. The simulation is an euler
   based method but for every time interval dt the model is predicted and
   the states affected by system noise (\eqn{\sigma}{SIG}).
