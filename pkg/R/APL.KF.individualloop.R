@@ -68,7 +68,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
   h_Li <- - h_Li - solve(OMEGA);
 
   # RETURN neg. log. likelihood contribution
-  list(   LiPart_i = .5*log(abs(det(h_Li))) + out$value,
+  list(   LiPart_i = .5*log(det(-1*h_Li/(2*pi))) + out$value,
              eta_i = out$par,
        optimStat_i = optimStat_i
        )
