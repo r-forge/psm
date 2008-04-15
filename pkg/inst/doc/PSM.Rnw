@@ -34,6 +34,7 @@ Model definition, description and examples}
 Package:& \Sexpr{foo[['Package']]}, version \Sexpr{foo[['Version']]}\\
 License:& \Sexpr{foo[['License']]}\\
 Built:  & \Sexpr{foo[['Built']]} \\
+URL:    & \Sexpr{foo[['URL']]} 
 \end{tabular}
 \end{center}
 
