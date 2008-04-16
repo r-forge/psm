@@ -2,7 +2,7 @@ Package: PSM
 Type: Package
 Title: Mixed-Effects modelling using Stochastic Differential Equations.
 Version: 0.2
-Date: 2007-11-23
+Date: 2008-03-31
 Encoding: latin1
 Author: Stig Mortensen <sbm@imm.dtu.dk> and Søren Klim <skl@imm.dtu.dk>
 Maintainer: Søren Klim <skl@imm.dtu.dk>

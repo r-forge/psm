@@ -9,22 +9,15 @@
 
 <<PackageDescription,include=FALSE,echo=FALSE>>=
 options(keep.source = TRUE, width = 60)
-package.In.Default.Lib.Loc <- 
-  suppressWarnings(!is.na(packageDescription("PSM")))[1]
-if(package.In.Default.Lib.Loc) {
-  foo <- packageDescription("PSM")
-  library("PSM")
-} else {
-  foo <- packageDescription("PSM",lib.loc="~/PSM/Rpackages/gridterm")
-  library("PSM",lib.loc="~/PSM/Rpackages/gridterm")
-}
+foo <- packageDescription("PSM")
+library("PSM")
 foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
 @
 
 \title{Population Stochastic Modelling: \\
 Model definition, description and examples} 
 
-\date{April 4, 2008}
+\date{\Sexpr{format(as.Date(foo[['Date']]),"%B %e, %Y")}}
 
 \author{Stig Mortensen and S\o ren Klim}
 \maketitle
