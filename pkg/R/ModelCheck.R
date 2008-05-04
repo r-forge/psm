@@ -4,17 +4,17 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   # Data is data for a single subject
   # Data$Time ; Data$Y ; Data$U
 
-
+  ModelHasInput <- TRUE
   if ( is.null(Data$U) ) {
     ModelHasInput <- FALSE
   } else if(any(is.na(Data$U))) {
-    ModelHasInput <- FALSE
-  } else {
-    ModelHasInput <- TRUE
-  }
+    print(paste("Input U contains NA.")); return(FALSE)
+  } else if(!is.matrix(Data$U)) {
+    print(paste("Input U is not a matrix.")); return(FALSE)
+  } 
 
   if (ModelHasInput) {
-    Uk <- Data$U[1,]
+    Uk <- Data$U[,1,drop=FALSE]
   } else {
     Uk <- NULL
   }
@@ -63,6 +63,8 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   # Calculate parameter phi
   Parlist <- Model$ModelPar(THETA=Par$Init)
   if(!is.null(Parlist$OMEGA)) {
+    if(!is.matrix(Parlist$OMEGA)) {
+      print("Model$OMEGA is not a matrix") ; return(FALSE) }
     dimEta <- nrow(Parlist$OMEGA)
     phi <- Model$h(eta=rep(0,dimEta) , theta=Parlist$theta ,covar=Data$covar)
   } else {
@@ -76,10 +78,23 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   matC  <- tmp$matC
   matD  <- tmp$matD
 
-  
   X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
   SIG <-  Model$SIG(  phi=phi)
   S <- Model$S(  phi=phi )
+
+  #type check!
+  if(!is.matrix(S)) {
+    print("Model$S is not a matrix") ; return(FALSE) }
+  if(!is.matrix(matA)) {
+    print("A is not a matrix") ; return(FALSE) }
+  if(!is.matrix(matC)) {
+    print("C is not a matrix") ; return(FALSE) }
+  if(ModelHasInput && !is.matrix(matB)) {
+    print("B is not a matrix") ; return(FALSE) }
+  if(ModelHasInput && !is.matrix(matD)) {
+    print("D is not a matrix") ; return(FALSE) } 
+
+  
 
   # Test for positive semidefinit
   if(dim(SIG)[1]!=dim(SIG)[2] || dim(SIG)[1]==0) {
