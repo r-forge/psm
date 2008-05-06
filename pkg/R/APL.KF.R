@@ -1,6 +1,7 @@
 `APL.KF` <-
 function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE) {
 ### NOTES -  requires: Model$ModelPar(), 
+
   
   if (!is.null(LB)) {
     THETA <- invlogit(THETA,LB,UB)
@@ -8,7 +9,7 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
 
   OMEGA <- Model$ModelPar(THETA)$OMEGA
   theta <- Model$ModelPar(THETA)$theta
-  
+
 
   # Dimensions
   dimS <- length(Pop.Data)
@@ -40,30 +41,31 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
     }
       
   }
+
+  # Boundary Penalty function
+  pen <- 0
+  if (!is.null(LB)) {
+     # Penalty-function
+      lambda = 1e-4 #værdi fra ctsm-userguide p. xx
+      dx = 1e-30    #
+      for(i in 1:length(THETA)) pen = pen + lambda*(LB[i]/(THETA[i]-LB[i]+dx) + UB[i]/(UB[i]-THETA[i]+dx))
+  }
+
   
   if(GUIFlag>1) {
     totaltime = proc.time()[3]-starttime
     minutes = floor(totaltime/60)
     tid <- paste("  (",minutes,":",round(totaltime-60*minutes,2),")",sep="")
-    print(c(" -logL  =", signif(sum(LiPart),10),tid),q=FALSE)
+    print(c(" -logL  =", signif(sum(LiPart)+pen,10),tid),q=FALSE)
 
   }
   
   if(longOutput) {
-    list(negLogLike=sum(LiPart),etaList=etaList,optimStat=optimStat)
-  } else {
-    if (!is.null(LB)) {
-      # Penalty-function
-      lambda = 1e-4 #værdi fra ctsm-userguide p. xx
-      dx = 1e-30    #
-      pen = 0
-      for(i in 1:length(THETA)) {
-        pen = pen + lambda*(LB[i]/(THETA[i]-LB[i]+dx) + UB[i]/(UB[i]-THETA[i]+dx))
-      }
-    }
+    list(negLogLike=sum(LiPart)+pen,etaList=etaList,optimStat=optimStat)
+  } 
     
     #The return variable - neg. Log. Likelihood
     sum(LiPart)+pen
-  }
+
 }
 
