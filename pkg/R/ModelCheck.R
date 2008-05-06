@@ -20,12 +20,12 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   }
 
   # Model contains the correct object
-  if( any(!( c("Matrices","X0","SIG","S","h","ModelPar")   %in% names(Model))) ) {
+  if( any(!( c("Matrices","X0","SIG","S","ModelPar")   %in% names(Model))) ) {
     print("Model doesn't contain the correct objects") ; return(FALSE) }
 
   # Model objects are functions
 
-  for (name in c("Matrices","X0","SIG","S","h","ModelPar")) 
+  for (name in c("Matrices","X0","SIG","S","ModelPar")) 
     if(!is.function(Model[[name]])) {
       print(paste("Model object",name,"is not a function")); return(FALSE) }
 
@@ -63,6 +63,10 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   # Calculate parameter phi
   Parlist <- Model$ModelPar(THETA=Par$Init)
   if(!is.null(Parlist$OMEGA)) {
+    if( !( "h"   %in% names(Model)) ) {
+      print("Model is missing function h") ; return(FALSE) }
+    if(!is.function(Model$h)) {
+      print("Model object h is not a function"); return(FALSE) }
     if(!is.matrix(Parlist$OMEGA)) {
       print("Model$OMEGA is not a matrix") ; return(FALSE) }
     dimEta <- nrow(Parlist$OMEGA)

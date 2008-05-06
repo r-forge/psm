@@ -16,8 +16,12 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
   if(fast) {
     #Get the ModelParameters
     tmp       <- Model$ModelPar(Par$Init)
-    tmpDimEta <- ifelse( is.null(tmp$OMEGA) , 0 , dim(tmp$OMEGA)[1] )
-    tmpPhi    <- Model$h( eta=rep(0, tmpDimEta) , theta=tmp$theta , covar=Data[[1]]$covar)
+    if( is.null(tmp$OMEGA) ) {
+      tmpPhi <- tmp$theta #phi=theta
+    } else {
+      tmpDimEta <- dim(tmp$OMEGA)[1] 
+      tmpPhi    <- Model$h( eta=rep(0, tmpDimEta) , theta=tmp$theta , covar=Data[[1]]$covar)
+    }
     tmpMat    <- Model$Matrices(tmpPhi)
     matA  <- tmpMat$matA
     
