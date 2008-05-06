@@ -62,10 +62,10 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
   
   if(longOutput) {
     list(negLogLike=sum(LiPart)+pen,etaList=etaList,optimStat=optimStat)
-  } 
-    
+  } else {  
     #The return variable - neg. Log. Likelihood
     sum(LiPart)+pen
+  }
 
 }
 
