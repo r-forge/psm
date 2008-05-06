@@ -105,6 +105,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
                    out$par,
                    out$par+1.96*sqrt(diag(solve(Hess)))),nrow=3,byrow=TRUE)
     rownames(ci) <- c("Lower CI95","MLE","Upper CI95")
+    colnames(ci) <- names(Par$Init)
   } 
   
   if(!is.null(Par$LB)) {
