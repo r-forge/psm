@@ -52,8 +52,18 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
   if(longOutput) {
     list(negLogLike=sum(LiPart),etaList=etaList,optimStat=optimStat)
   } else {
+    if (!is.null(LB)) {
+      # Penalty-function
+      lambda = 1e-4 #værdi fra ctsm-userguide p. xx
+      dx = 1e-30    #
+      pen = 0
+      for(i in 1:length(THETA)) {
+        pen = pen + lambda*(LB[i]/(THETA[i]-LB[i]+dx) + UB[i]/(UB[i]-THETA[i]+dx))
+      }
+    }
+    
     #The return variable - neg. Log. Likelihood
-    sum(LiPart)
+    sum(LiPart)+pen
   }
 }
 

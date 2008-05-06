@@ -82,16 +82,20 @@ function(phi, Model, Data) {
     # Create Smooth State
     Xs[,tau] <- Obj$Xp[,tau,drop=FALSE] + CutThirdDim(Obj$Pp[,,tau,drop=FALSE]) %*% lambda
 
-    # Create Smooth Output
-    #Ys[,tau] <- 
-   
     # Create Smoothed covariance
     Ps[,,tau] <- Obj$Pp[,,tau] - Obj$Pp[,,tau] %*% LAMBDA %*% Obj$Pp[,,tau]
     Ps[,,tau] <- (Ps[,,tau] + t.default(Ps[,,tau])) / 2
     
   } # Loop over DimN
+
+  # Create Smooth Output
+  if(ModelHasInput) {
+    Ys = matC%*%Xs+matB%*%U
+  } else {
+    Ys = matC%*%Xs
+  }
   
-  return( list(Time=Time, Xs=Xs, Ps=Ps,Xf=Obj$Xf, Pf=Obj$Pf, Xp=Obj$Xp, Pp=Obj$Pp,
+  return( list(Time=Time, Xs=Xs, Ps=Ps, Ys = Ys, Xf=Obj$Xf, Pf=Obj$Pf, Xp=Obj$Xp, Pp=Obj$Pp,
                Yp=Obj$Yp, R=Obj$R))
 
 }
