@@ -61,25 +61,24 @@ PSM.smooth(Model, Data, THETA, subsample = 0, trace = 0, etaList = NULL)
 }
 
 \value{
-  \item{negLogL}{Value of the negative log-likelihood function at \code{THETA}.}
-  \item{etaList}{Matrix containing estimated eta's for each individual.}
-  \item{smooth}{
     An unnamed list with one element for each individual. Each element
     contains the following elements:
-    \describe{
-      \item{\code{negLogLike}}{Value of neg. log-likelihood function }
       \item{\code{TIME}}{Possibly subsampled time-vector corresponding
 	to the estimated states }
       \item{\code{Xs}, \code{Ps}}{Smoothed state and state co-variance
-	estimate} 
+	estimate}
+      \item{Ys}{Response based on smoothed state}
       \item{\code{Xf}, \code{Pf}}{Filtered state and state co-variance
 	estimate} 
       \item{\code{Xp}, \code{Pp}}{Predicted state and state co-variance
 	estimate} 
       \item{\code{Yp}, \code{R}}{Predicted observations and observation
-	variances}      
-    }
-  }
+	variances}
+      \item{eta}{Estimated eta}
+      \item{negLogL}{Value of the negative log-likelihood function at
+	\code{THETA} (thus same value for all individuals).} 
+
+
 }
 
 \note{
