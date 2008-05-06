@@ -1,8 +1,14 @@
 `PSM.simulate` <- 
-function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
+function(Model, Data, THETA, deltaTime, longX=TRUE) {
 
-  ok <- TRUE
+  ok <- TRUE 
   dimS <- length(Data)
+
+  if(dimS<1) {
+    print("Length of Data is less than 1.")
+    break
+  }
+  
   for(i in 1:dimS) {
     ok <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
     if(!ok) {
@@ -12,9 +18,9 @@ function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
   }
   if(!ok) stop(paste("Input did not pass model check."))
 
-  Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=individuals)
+  Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=dimS)
 
-  for (i in 1:individuals) {
+  for (i in 1:dimS) {
     Tlist[[i]] <- Data[[i]]$Time
     Ulist[[i]] <- Data[[i]]$U
     covarlist[[i]] <- Data[[i]]$covar
@@ -29,13 +35,13 @@ function(Model, Data, THETA, deltaTime, individuals=1, longX=TRUE) {
 
   if(!is.null(OMEGA)) {
     dimEta <- dim(OMEGA)[1]
-    eta <- sqrtm(OMEGA) %*% matrix(rnorm(individuals*dimEta),nrow=dimEta,ncol=individuals)
+    eta <- sqrtm(OMEGA) %*% matrix(rnorm(dimS*dimEta),nrow=dimEta,ncol=dimS)
   } else {
     eta <- NULL
   }
 
   cat("Simulating individual: ")
-  for (i in 1:individuals) {
+  for (i in 1:dimS) {
     cat(paste(i,', ',sep=""))
     if(!is.null(OMEGA)) {
       phi <- Model$h(eta=eta[,i],theta=theta,covar=covarlist[[i]])

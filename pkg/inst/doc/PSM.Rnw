@@ -371,7 +371,7 @@ Everything is now setup and the simulation can be performed.
 
 <<Dose.SimulateData>>=
 if(Redo) {
-  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, deltaTime=.1 , individuals=2)
+  SimDose.Data <- PSM.simulate(Model.SimDose, SimDose.Data, SimDose.THETA, deltaTime=.1)
 } else 
   load("simdose.RData")
 @ 
@@ -598,7 +598,7 @@ simulation can be performed. The parameter estimates are taken from
 <<ISR.SimulateData>>=
 Sim.THETA <-  c(0.02798 , 0.01048 , 4 , 427.63 , 1.7434)
 if(Redo) {
-  Sim.Data <- PSM.simulate(Model.SimISR, Sim.Data, Sim.THETA, deltaTime=.1 ,individuals=2) 
+  Sim.Data <- PSM.simulate(Model.SimISR, Sim.Data, Sim.THETA, deltaTime=.1 ) 
 } else 
   load("simisr.RData")
 @ 

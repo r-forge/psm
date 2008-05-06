@@ -8,7 +8,7 @@
   on stochastic differential equations using an euler scheme.
 }
 \usage{
-PSM.simulate(Model, Data, THETA, deltaTime, individuals = 1, longX=TRUE) 
+PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,7 +17,8 @@ PSM.simulate(Model, Data, THETA, deltaTime, individuals = 1, longX=TRUE)
   }
   \item{Data}{
     List with elements described below. No \code{Data$Y} is needed as it
-    is generated through the simulation.
+    is generated through the simulation. The number of individuals
+    simulated is equal to length(Data).
     \describe{
       \item{\code{Time}}{
 	Time vector
@@ -35,9 +36,6 @@ PSM.simulate(Model, Data, THETA, deltaTime, individuals = 1, longX=TRUE)
   }
   \item{deltaTime}{
     Time Step in the Euler scheme
-  }
-  \item{individuals}{
-    No of individuals simulated
   }
   \item{longX}{
     Boolean. Toggles output of the entire simulated outcome of the states
