@@ -90,7 +90,7 @@ function(phi, Model, Data) {
 
   # Create Smooth Output
   if(ModelHasInput) {
-    Ys = matC%*%Xs+matB%*%U
+    Ys = matC%*%Xs+matD%*%U
   } else {
     Ys = matC%*%Xs
   }
