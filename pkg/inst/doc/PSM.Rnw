@@ -12,6 +12,7 @@ options(keep.source = TRUE, width = 60)
 foo <- packageDescription("PSM")
 library("PSM")
 foo[['Built']] <- gsub("[#$%^&_{}~]",replacement="-", x=foo[['Built']])
+options(digits=4)
 @
 
 \title{Population Stochastic Modelling: \\
@@ -278,8 +279,10 @@ given after 30 and 180 minutes. In state space formulation the model
 is described as 
 
 \begin{eqnarray}
-  dA_1 &=& [-(CL~V_1^i + CL_d V_1^i)A_1 + CL_dV_2A_2]dt + \sigma_1d\omega \\
-  dA_2 &=& [ CL_dV_1^iA_1 - CL_dV_2A_2]dt - \sigma_1d\omega\\
+  dA_1 &=& \left(-\frac{CL}{V_1^i}A_1 - \frac{CL_d}{V_1^i}A_1 +
+    \frac{CL_d}{V_2}A_2 \right )dt + \sigma_1d\omega \\
+  dA_2 &=& \left( \frac{CL_d}{V_1^i}A_1 - \frac{CL_d}{V_2}A_2
+\right) dt - \sigma_1d\omega\\
   Y &=& A_1/V_1^i + e
 \end{eqnarray}
 
@@ -287,8 +290,8 @@ is described as
 
 \begin{eqnarray}
   d\bs A_t &=& \left[ \begin{array}{cc}
-      -(CL~V_1^i + CL_d V_1^i) & CL_dV_2  \\
-    CL_dV_1^i & - CL_dV_2 \end{array} \right]\bs A_tdt + \left[ 
+      -(CL/V_1^i + CL_d/V_1^i) & CL_d/V_2  \\
+    CL_d/V_1^i & - CL_d/V_2 \end{array} \right]\bs A_tdt + \left[ 
   \begin{array}{cc} \sigma_1 & 0 \\ -\sigma_1 & 0 \end{array}
 \right]d\bs\omega\\ 
   Y_{ij} &=& [ \begin{array}{cc} 1/V_1^i & 0 \end{array}]\bs A_{ij} + e_{ij}
@@ -313,58 +316,56 @@ $\Omega = 0.5$.
 The model can be defined in R as shown below.
 
 <<Dose.ModelDefinition>>=
-Model.SimDose <- list(
-                      Matrices = function(phi) {
-                        V1i <- phi[["V1i"]]
-                        matA <- matrix(c(-(CL+CLd)*V1i ,  CLd*V2 ,   
-                                           CLd*V1i , -CLd*V2 ) ,nrow=2,byrow=T)
-                        matC <- matrix(c(1/V1i,0),nrow=1)
-                        list(matA=matA,matC=matC)
-                      },
-                      X0 = function(Time=Na,phi,U=Na) {
-                        matrix(0,nrow=2)
-                      },
-                      SIG = function(phi) { 
-                        sig1 <- phi[["sig1"]]
-                        matrix(c( sig1,0,
-                                 -sig1,0), nrow=2, byrow=T)
-                      },
-                      S = function(phi) {
-                        matrix(phi[["S"]])
-                      },
-                      h = function(eta,theta,covar) {
-                        phi <- theta
-                        phi[["V1i"]] <- V1*exp(eta[1])
-                        phi                      },
-                      ModelPar = function(THETA){
-                        list(theta=list(sig1=THETA[1], S=THETA[2]),
-                             OMEGA=matrix(THETA[3]) )
-                      },
-                      Dose = list(
-                        Time = c(30,180),
-                        State = c(1, 1),
-                        Amount = c(1500,1500)
-                        )
-                      )
-V1 <- 5
-V2 <- 10
-CLd <- 0.005
-CL <- 0.002
-SimDose.THETA <-  c(10 , 20 , .5)
+Model.SimDose = list()
+Model.SimDose$Matrices = function(phi) {
+  V1i <- phi$V1i; V2=phi$V2; CL = phi$CL; CLd = phi$CLd; 
+  matA <- matrix(c(-(CL+CLd)/V1i ,  CLd/V2 ,   
+                   CLd/V1i , -CLd/V2 ) ,nrow=2,byrow=T)
+  matC <- matrix(c(1/V1i,0),nrow=1)
+  list(matA=matA,matC=matC)
+}
+Model.SimDose$X0 = function(Time=Na,phi,U=Na) {
+  matrix(0,nrow=2)
+}
+Model.SimDose$SIG = function(phi) { 
+  sig1 <- phi[["sig1"]]
+  matrix(c( sig1,0,
+           -sig1,0), nrow=2, byrow=T)
+}
+Model.SimDose$S = function(phi) {
+  matrix(phi[["S"]])
+}
+Model.SimDose$h = function(eta,theta,covar) {
+  phi <- theta
+  phiV1i <- theta$V1*exp(eta[1])
+  phi
+}
+Model.SimDose$ModelPar = function(THETA){
+  V2 <- 10
+  CLd <- 0.1
+  list(theta=list(V1 = THETA['V1'],V2=V2,CLd=CLd,CL=THETA['CL'], sig1=THETA['sig1'], S=THETA['S']),
+       OMEGA=matrix(THETA['OMEGA1']) )
+}
+Model.SimDose$Dose = list(
+  Time = c(30,180),
+  State = c(1, 1),
+  Amount = c(1500,1500)
+  )
+SimDose.THETA <-  c(CL=0.05,V1 = 5, sig1 = 10 , S = 20 , OMEGA1 = .2)
 @ 
 
-Only three parameters in the model will be estimated, as it can be
+Five parameters in the model will be estimated, as it can be
 seen from the \verb|ModelPar| function above. The parameters to be estimated
-are $\bs\Theta$ = (\verb|sig1|, \verb|S|, \verb|OMEGA|).
+are $\bs\Theta$ = (\verb|CL|, \verb|V1|, \verb|sig1|, \verb|S|, \verb|OMEGA1|).
 
-For this example two individuals will be simulated. They will both be
-sampled every $10min$ for $400min$ which is described as below.
+For this example 5 individuals will be simulated. They will
+all be sampled every $10min$ for $400min$ which is described as below.
 
 <<SamplingScheme>>=
-SimDose.Data <- vector(mode="list",length=2)
-for (i in 1:2) 
+N = 5
+SimDose.Data <- vector(mode="list",length=N)
+for (i in 1:N) 
   SimDose.Data[[i]]$Time <- seq(from=10,by=10,to=400)
-
 @ 
 
 Everything is now setup and the simulation can be performed.
@@ -377,7 +378,7 @@ if(Redo) {
 @ 
 
 The simulated data are shown in Figure \ref{fig:fig1}. The first row
-shows the observations for the two individuals and the next two show
+shows the observations for individuals 1 and 2 and the next two show
 state 1 and 2 which we wish to estimate.
 
 \begin{figure}[htb]
@@ -387,7 +388,7 @@ state 1 and 2 which we wish to estimate.
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:2) {
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
-         ylab="Observations", main=paste('Individual ',id,', eta=',
+         ylab="Observations", main=paste('Individual ',id,', eta= ',
                                 round(SimDose.Data[[id]]$eta,3),sep=""))
   for(i in 1:2) {
     plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
@@ -408,15 +409,14 @@ are used and the bounds are $\pm$ a factor 50.
 parA <- list(LB=SimDose.THETA/50, Init=SimDose.THETA , UB=SimDose.THETA*50 )
 if(Redo) fitA <- PSM.estimate(Model.SimDose,SimDose.Data,parA,CI=T)
 fitA[1:3]
-
+SimDose.THETA
 @ 
 
 It is seen that the estimated parameters are reasonably close to the
-true values of $\bs\Theta = $ (\verb|sig1|, \verb|S|, \verb|OMEGA|) $
-= (10, 20, 0.5)$ and the 95\% conficdence intervals include the true
-values. In particular the first parameter $\sigma_1$ is significantly
-different from zero which shows that deviations from a normal ODE
-two-compartment model are significant.
+true values in \verb+SimDose.THETA+ and the 95\% conficdence intervals
+include the true values. In particular the first parameter $\sigma_1$
+is significantly different from zero which shows that deviations from
+a normal ODE two-compartment model are significant.
 
 Based on the estimated parameters it is possible to obtain an estimate
 of the model states by using \verb|PSM.smooth|. The
@@ -442,12 +442,12 @@ properly in the reconstruction.
 <<label=figure2,fig=TRUE,echo=FALSE>>=
 par(mfcol=c(3,2),mar = c(2, 4, 2, 2)+.1)
 for(id in 1:2) {
-  tmp <- out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta))
+  tmp <- out[[id]]$Ys
   plot(SimDose.Data[[id]]$Time , SimDose.Data[[id]]$Y,
          ylab="Observations", main=paste('Individual',id),ylim=range(tmp))
   legend(400, y = max(tmp), legend=c('Smooth est.'),
          lty=c('71A1'),col='blue', xjust=1,yjust=1,bty="n")
-  lines(out[[id]]$Time , out[[id]]$Xs[1,]/(V1*exp(out[[id]]$eta)),lty='71A1',col='blue')
+  lines(out[[id]]$Time , out[[id]]$Ys,lty='71A1',col='blue')
   for(i in 1:2) {
     plot(SimDose.Data[[id]]$longTime , SimDose.Data[[id]]$longX[i,],type="l",
          ylab=paste('State',i))
