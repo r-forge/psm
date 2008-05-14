@@ -68,14 +68,42 @@ function( phi, Model, Data, outputInternals=FALSE) {
   # Insert initial estimates into matrices
   Pp[,,1] <- P0
   Xp[,1]  <- InitialState
+                      
+  # Internal variables                          
+  matXX <- matrix(0,ncol=dimX,nrow=dimX)
+  
+  Index <- NULL
+  for (p in 1:dimX) {
+    Index <- c(Index , (1:p) + dimX*(p-1) )
+  }
 
+  dSystemPred <- function(t,y,parms) {
+  # Phi and Index are set in the outer enviroment
+  # Only Uk needs to be updated at every observation
+      Uk <- parms
+      # Evaluate dX
+      X  <- y[1:dimX]
+      dX <- f(x=X,u=Uk,time=t,phi=phi)
+      # Evaluate dP
+      tmpP <- matXX
+      tmpP[Index] <- y[-(1:dimX)]
+      if(dimX>1) {
+          tmpP[lower.tri(tmpP)] <- tmpP[upper.tri(tmpP)]
+      }
+      Ax <- df(x=X,u=Uk,time=t,phi=phi)
+      SIGx <- Model$SIG(u=Uk,time=t,phi=phi)
+      ### MathGuide (1.79)
+      dP <- Ax%*%tmpP + tmpP*t.default(Ax) + SIGx%*%t.default(SIGx) 
+      dP <- dP[Index]
+      # Return dX and dP
+      list(c( dX, dP))
+    }
 
+  
   ######################
   # Loop over timepoints
   ######################
-
-  negLogLike <- 0
- 
+  negLogLike <- 0 
   for(k in 1:dimT) {
 
     # Set Uk
@@ -96,11 +124,19 @@ function( phi, Model, Data, outputInternals=FALSE) {
     C <- dg(x=Xp[,k,drop=FALSE],u=Uk,time=Time[k],phi=phi)
     S <- Model$S(u=Uk,time=Time[k],phi=phi)
 
+    # Create tmp-variable to save computation
+    mattmp  <- Pp[,,k,drop=FALSE]%*%t.default(C)
+
+
     # Uncertainty on Measurement.
-    R[,,k] <- C%*%Pp[,,k,drop=FALSE]%*%t(C) + S
+    # R[,,k] <- C%*%Pp[,,k,drop=FALSE]%*%t.default(C) + S
+    R[,,k] <- C%*%mattmp + S
+
+    InvR    <- solve(R[,,k,drop=FALSE])
     
     # Kalman gain
-    KfGain[,,k] <- Pp[,,k,drop=FALSE]%*%t(C)%*%solve(R[,,k,drop=FALSE])
+    # KfGain[,,k] <- Pp[,,k,drop=FALSE]%*%t.default(C)%*%solve(R[,,k,drop=FALSE])
+    KfGain[,,k] <- mattmp%*%InvR
     
     # Innovation
     e <- Y[,k,drop=FALSE] - Yp[,k,drop=FALSE]
@@ -114,7 +150,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
 
     # Add contribution to negLogLike
     negLogLike = negLogLike + 0.5 * ( log(det(2*pi*CutThirdDim(R[,,k,drop=FALSE])))
-      + t(e)%*%solve(R[,,k])%*%e )
+      + t.default(e)%*%InvR%*%e )
 
     # Abort state pred if finished
     if(k==dimT) break
@@ -126,36 +162,15 @@ function( phi, Model, Data, outputInternals=FALSE) {
     
     # Create Z combined variable
     # Upper triangle of P
-    Index <- NULL
-    for (p in 1:dimX) {
-      Index <- c(Index , (1:p) + dimX*(p-1) )
-    }
+
     tmpP <- Pf[,,k,drop=FALSE]
     tmpP <- tmpP[Index]
     Z <- c( Xf[,k] , tmpP)
 
-    dSystemPred <- function(t,y,parms) {
-      # Evaluate dX
-      X  <- matrix(y[1:dimX],ncol=1)
-      dX <- f(x=X,u=Uk,time=t,phi=phi)
-      # Evaluate dP
-      tmpP <- matrix(0,ncol=dimX,nrow=dimX)
-      tmpP[Index] <- y[-(1:dimX)]
-      if(dimX>1) {
-        tmpP <- tmpP + t(tmpP) - diag(diag(tmpP))
-      }
-      Ax <- df(x=X,u=Uk,time=t,phi=phi)
-      SIGx <- Model$SIG(u=Uk,time=t,phi=phi)
-      ### MathGuide (1.79)
-      dP <- Ax%*%tmpP + tmpP*t(Ax) + SIGx%*%t(SIGx) 
-      dP <- dP[Index]
-      # Return dX and dP
-      list(c( dX, dP))
-    }
 
     # Prediction of Z
     timevec <- c(Time[k], Time[k+1]) #!should be subsampled for smoothing!!  
-    ZOUT <- lsoda(y=Z, times=timevec, func=dSystemPred, parms=NULL, rtol=1e-6, atol=1e-6)
+    ZOUT <- lsoda(y=Z, times=timevec, func=dSystemPred, parms=Uk, rtol=1e-6, atol=1e-6)
     
 #    %save foreward state estimates for smoothing.
 #    if(nargout==2)
@@ -166,10 +181,10 @@ function( phi, Model, Data, outputInternals=FALSE) {
     # convert back to X,Pk
     Xp[,k+1] <- ZOUT[length(timevec),1+(1:dimX)] #first col is time
     
-    tmpP <- matrix(0,ncol=dimX,nrow=dimX)
+    tmpP <- matXX
     tmpP[Index] <- ZOUT[length(timevec),-(1:(dimX+1))]
     if(dimX>1) {
-      tmpP <- tmpP + t(tmpP) - diag(diag(tmpP))
+      tmpP[lower.tri(tmpP)] <- tmpP[upper.tri(tmpP)]
     }
     Pp[,,k+1] <- tmpP
     
