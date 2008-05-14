@@ -1,5 +1,5 @@
 `APL.KF` <-
-function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE) {
+function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE,Linear) {
 ### NOTES -  requires: Model$ModelPar(), 
 
   
@@ -29,13 +29,17 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
       print(paste('Individual', i))
     if(!is.null(OMEGA)) {
       result <- APL.KF.individualloop(theta=theta,OMEGA=OMEGA,Model=Model,
-                                      Data=Pop.Data[[i]],GUIFlag=GUIFlag,fast=fast) 
+                                      Data=Pop.Data[[i]],GUIFlag=GUIFlag,fast=fast,Linear) 
       LiPart[i] <- result$LiPart_i
       etaList[,i] <- result$eta_i
       optimStat[,i] <- result$optimStat_i
     }
     else {
-      LiPart[i] <- LinKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]],fast=fast )
+      if(Linear) {
+        LiPart[i] <- LinKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]],fast=fast )
+      } else {
+        LiPart[i] <- ExtKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]] )
+      }
       etaList[,i] <- NaN
       optimStat[,i] <- NaN
     }

@@ -14,7 +14,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   
   FullOutput <- FALSE
   if( is.null(etaList)) {
-    apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,longOutput=TRUE)
+    apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,longOutput=TRUE,Linear=TRUE)
     etaList <- apl$etaList
     FullOutput <- TRUE
   }

@@ -1,5 +1,5 @@
 `IndividualLL.KF.gr` <-
-function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0, fast=TRUE) {
+function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0, fast=TRUE, Linear) {
   # Forward gradient function for IndividualLL.KF
   
   L <- length(eta)
@@ -14,7 +14,7 @@ function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0, fast=TRUE) {
   TP[L+1,] <- eta
   
   for ( i in 1:(L+1) )
-    ILL[i] <- IndividualLL.KF(eta=TP[i,],theta=theta,OMEGA=OMEGA,Model=Model,Data=Data,fast=fast)
+    ILL[i] <- IndividualLL.KF(eta=TP[i,],theta=theta,OMEGA=OMEGA,Model=Model,Data=Data,fast=fast,Linear)
         
   # Calculate Gradient and insert
   for (i in 1:L)

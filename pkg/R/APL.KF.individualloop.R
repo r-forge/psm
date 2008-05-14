@@ -1,5 +1,5 @@
 `APL.KF.individualloop` <-
-function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
+function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE,Linear) {
 ### NOTES -  requires: o$R, o$Yp, h(eta,theta)
   dimEta <- dim(OMEGA)[1]
   tmp <- dim(Data$Y)
@@ -23,7 +23,7 @@ function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
     out <- optim(par = rep(0,dimEta), fn = IndividualLL.KF, gr = IndividualLL.KF.gr,
                  method = "L-BFGS-B", lower = -4*sqrt(diag(OMEGA)),upper = 4*sqrt(diag(OMEGA)),
                  control = controllist, hessian = FALSE, 
-                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data, fast=fast)
+                 theta=theta, OMEGA=OMEGA, Model=Model, Data=Data, fast=fast, Linear=Linear)
   }
   
   
@@ -34,7 +34,11 @@ function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
   optimStat_i <- c(out$convergence, out$value, out$counts[1])
   
   phi <- Model$h(eta=out$par,theta=theta,covar=Data$covar)
-  o <- LinKalmanFilter(phi=phi, Model=Model, Data=Data, output=TRUE, fast=fast)
+  if(Linear) {
+    o <- LinKalmanFilter(phi=phi, Model=Model, Data=Data, output=TRUE, fast=fast)
+  } else {
+    o <- ExtKalmanFilter(phi=phi, Model=Model, Data=Data, output=TRUE)
+  }
   
   # Calculate stepsize in central diffenrence gradient
   stepSize <- 1E-5;
@@ -46,11 +50,16 @@ function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE) {
     
     # Forward difference
     phi.f <- Model$h(out$par+d,theta,covar=Data$covar)
-    eF <- Data$Y - LinKalmanFilter(phi=phi.f, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp
-
     # Backward difference
     phi.b <- Model$h(out$par-d,theta,covar=Data$covar)
-    eB <- Data$Y - LinKalmanFilter(phi=phi.b, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp;
+
+    if(Linear) {
+      eF <- Data$Y - LinKalmanFilter(phi=phi.f, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp
+      eB <- Data$Y - LinKalmanFilter(phi=phi.b, Model=Model, Data=Data, outputInternals=TRUE, fast=fast)$Yp
+    } else {
+      eF <- Data$Y - ExtKalmanFilter(phi=phi.f, Model=Model, Data=Data, outputInternals=TRUE)$Yp
+      eB <- Data$Y - ExtKalmanFilter(phi=phi.b, Model=Model, Data=Data, outputInternals=TRUE)$Yp
+    }
 
     #Insert the calculated gradient.
     eGrad[,p,] <- (eF-eB)/(2*stepSize)
