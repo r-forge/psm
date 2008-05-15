@@ -57,13 +57,27 @@ function( phi, Model, Data, outputInternals=FALSE) {
   #----------------------------------------------------------
   # Init matrices used in the Kalman filtering
   #----------------------------------------------------------
-  Xp      <- array(NA,c(dimX,dimT))
-  Xf      <- array(NA,c(dimX,dimT))
-  Yp      <- array(NA,c(dimY,dimT))
-  KfGain  <- array(NA,c(dimX,dimY,dimT))
-  Pf      <- array(NA,c(dimX,dimX,dimT))
-  Pp      <- array(NA,c(dimX,dimX,dimT))
-  R       <- array(NA,c(dimY,dimY,dimT))
+  #Xp <- Xf  <- array(NA,c(dimX,dimT))
+  #Yp        <- array(NA,c(dimY,dimT))
+  #KfGain    <- array(NA,c(dimX,dimY,dimT))
+  #Pp <- Pf  <- array(NA,c(dimX,dimX,dimT))  
+  #R         <- array(NA,c(dimY,dimY,dimT))
+
+  BigNA   <- rep(NA,max(dimX,dimY)*max(dimX,dimY)*dimT)
+
+  Xf      <- BigNA[1:(dimX*dimT)]
+  dim(Xf) <- c(dimX,dimT)
+  Xp <-   Xf
+  Yp      <- BigNA[1:(dimY*dimT)]
+  dim(Yp) <- c(dimY,dimT)
+  KfGain  <- BigNA[1:(dimX*dimY*dimT)]
+  dim(KfGain) <- c(dimX,dimY,dimT)
+  Pf      <- BigNA[1:(dimX*dimX*dimT)]
+  dim(Pf) <- c(dimX,dimX,dimT)
+  Pp <- Pf
+  R       <- BigNA[1:(dimY*dimY*dimT)]
+  dim(R)  <- c(dimY,dimY,dimT)
+
 
   # Insert initial estimates into matrices
   Pp[,,1] <- P0

@@ -83,10 +83,12 @@ mod2$Functions <-
        }
        )
 mod2$S = function(u,time,phi) {
-  as.matrix.default(phi[["S"]])
+  # as.matrix.default(phi[["S"]])
+  phi[["S"]]
 }
 mod2$SIG = function(u,time,phi) {
-  as.matrix.default(10)
+  # as.matrix.default(10)
+  10
 }
 MyPar <- mod2$ModelPar(MyTHETA)
 myphi <- mod2$h(0,MyPar$theta,NA)
@@ -102,7 +104,12 @@ source(file="~/PSM/PSM/R/IndividualLL.KF.gr.R")
 source(file="~/PSM/PSM/R/PSM.smooth.R")
 
 
+Rprof(tmp <- tempfile())
+for(i in 1:100) ExtKalmanFilter( myphi, mod2, SimData[[1]] )
 ExtKalmanFilter( myphi, mod2, SimData[[1]] )
+Rprof()
+summaryRprof(tmp)
+
 LinKalmanFilter( myphi, mod1, SimData[[1]] )
 
 
