@@ -93,10 +93,10 @@ mod2$Functions <-
        }
        )
 mod2$S = function(u,time,phi) {
-  matrix(phi[["S"]])
+  as.matrix.default(phi[["S"]])
 }
 mod2$SIG = function(u,time,phi) {
-  matrix(10)
+  as.matrix.default(10)
 }
 MyPar <- mod2$ModelPar(MyTHETA)
 myphi <- mod2$h(0,MyPar$theta,NA)
@@ -136,6 +136,9 @@ fit1 <- PSM.estimate(mod1,SimData,par)
 fit1[1:2]
 
 # Non-Linear, with-OMEGA
+Rprof(tmp <- tempfile())
 fit2 <- PSM.estimate(mod2,SimData,par,trace=1)
 fit2[1:2]
+Rprof()
+summaryRprof(tmp)
 
