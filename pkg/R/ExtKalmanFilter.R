@@ -32,7 +32,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
   # Calculate Init state and initial SIG
   InitialState  <- Model$X0(Time=Time[1], phi=phi, U = Uk)
   SIG           <- Model$SIG(u=Uk,time=Time[1],phi=phi)
-  Ax0 <- df(x=InitialState ,u=Uk,time=Time[1],phi=phi)  ######### Er DETTE RIGTIGT??
+  Ax0 <- df(x=InitialState ,u=Uk,time=Time[1],phi=phi) 
 
 
   dimT  <- length(Time)     # Time is vector -> use length
@@ -71,7 +71,8 @@ function( phi, Model, Data, outputInternals=FALSE) {
                       
   # Internal variables                          
   matXX <- matrix(0,ncol=dimX,nrow=dimX)
-  
+  DIAGDIMY  <- diag(1,dimY)
+
   Index <- NULL
   for (p in 1:dimX) {
     Index <- c(Index , (1:p) + dimX*(p-1) )
@@ -98,7 +99,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
       # Return dX and dP
       list(c( dX, dP))
     }
-
+  
   
   ######################
   # Loop over timepoints
@@ -106,21 +107,20 @@ function( phi, Model, Data, outputInternals=FALSE) {
   negLogLike <- 0 
   for(k in 1:dimT) {
 
+    # Does the observation has missing values?
+    ObsIndex  <- which(!is.na(Y[,k]))
+    E         <- DIAGDIMY[ObsIndex,,drop=FALSE]
+        
     # Set Uk
     if(ModelHasInput) {
       Uk <- U[,k,drop=FALSE]
     } else {Uk <- NA}                    
     
     
-    ######################
-    # Update
-    ######################
-    
     # Y_Hat, Prediction
-    Yp[,k] <- g(x=Xp[,k,drop=FALSE],u=Uk,time=Time[k],phi=phi)
+    Yp[ObsIndex,k] <- E %*% g(x=Xp[,k,drop=FALSE],u=Uk,time=Time[k],phi=phi)
     
     # Find the h-derivative in this point
-    # dg(X,U,t,phi)
     C <- dg(x=Xp[,k,drop=FALSE],u=Uk,time=Time[k],phi=phi)
     S <- Model$S(u=Uk,time=Time[k],phi=phi)
 
@@ -129,29 +129,49 @@ function( phi, Model, Data, outputInternals=FALSE) {
 
 
     # Uncertainty on Measurement.
-    # R[,,k] <- C%*%Pp[,,k,drop=FALSE]%*%t.default(C) + S
-    R[,,k] <- C%*%mattmp + S
+    R[ObsIndex,ObsIndex,k] <- E%*%C%*%mattmp%*%t.default(E) + E%*%S%*%t.default(E)
 
-    InvR    <- solve(R[,,k,drop=FALSE])
-    
-    # Kalman gain
-    # KfGain[,,k] <- Pp[,,k,drop=FALSE]%*%t.default(C)%*%solve(R[,,k,drop=FALSE])
-    KfGain[,,k] <- mattmp%*%InvR
-    
-    # Innovation
-    e <- Y[,k,drop=FALSE] - Yp[,k,drop=FALSE]
-    
-    # Updating Equations
-    Xf[,k] <- Xp[,k,drop=FALSE] + KfGain[,,k,drop=FALSE]%*%e
-    
-    # Pf(:,:,k) = Pp(:,:,k) - KfGain(:,:,k)*R(:,:,k)*KfGain(:,:,k)';
-    Pf[,,k] <- CutThirdDim(Pp[,,k,drop=FALSE]) -
-      CutThirdDim(KfGain[,,k,drop=FALSE])%*%C%*%CutThirdDim(Pp[,,k,drop=FALSE])
 
-    # Add contribution to negLogLike
-    negLogLike = negLogLike + 0.5 * ( log(det(2*pi*CutThirdDim(R[,,k,drop=FALSE])))
-      + t.default(e)%*%InvR%*%e )
+    if(length(ObsIndex)>0) { #there must be at least one obs for updating.
 
+      ######################
+      # Update
+      ######################
+    
+      InvR    <- solve(R[ObsIndex,ObsIndex,k,drop=FALSE])
+    
+      # Kalman gain
+      KfGain[,ObsIndex,k] <- mattmp %*% t.default(E) %*% InvR
+    
+      # Updating
+      e       <- Y[ObsIndex,k,drop=FALSE] - Yp[ObsIndex,k,drop=FALSE]
+      KFg     <- CutThirdDim(KfGain[,ObsIndex,k,drop=FALSE])
+      Xf[,k]  <- Xp[,k,drop=FALSE] + KFg%*%e
+      Pf[,,k] <- Pp[,,k] - KFg %*% R[ObsIndex,ObsIndex,k] %*% t.default(KFg)
+
+      # Add contribution to negLogLike
+      tmpR       <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=FALSE])
+      tmp        <-  determinant.matrix(2*pi*tmpR)
+      det2piR    <-  tmp$sign*exp(tmp$modulus)
+      negLogLike <- negLogLike + .5*( log(det2piR) + t.default(e) %*% InvR %*% e)
+
+    } else {
+      # No observations, update not available.
+      Xf[,k] <- Xp[,k]
+      Pf[,,k] <- Pp[,,k]
+    }
+    
+    if(ModelHasDose) {
+      # Check if dosing is occuring at this timepoint.
+      if( any(Time[k]==Model$Dose$Time)) {
+        idxD = which(Time[k]==Model$Dose$Time)
+        # Multiple dosing a timepoint[k]
+        for(cmt in 1:length(idxD)) {
+          Xf[Model$Dose$State[idxD[cmt]],k] <- Xf[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
+        }
+      }
+    }
+    
     # Abort state pred if finished
     if(k==dimT) break
 

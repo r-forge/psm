@@ -29,6 +29,8 @@ mod1$h = function(eta,theta,covar) {
   phi$V = theta$V*exp(eta[1])
   phi
 }
+mod1$Dose = list(Time=10,State=1,Amount=500 )
+
 
 names(mod1)
 TimeVec <- c(0,1,2,3,5,7,10,13,16,20,25)
@@ -37,10 +39,11 @@ PrepData = list( list(Time = TimeVec),list(Time = TimeVec) )
 MyTHETA = c(k = 0.08, V = 15)
 
 SimData <- PSM.simulate(mod1,PrepData,MyTHETA,deltaTime = .1)
-
+SimData[[1]]$Y[c(1,6,7,8)] <- NA #MISSING OBS!
+SimData[[2]]$Y[c(2,3,4)] <- NA #MISSING OBS!
 
 names(SimData[[1]])
-plot(SimData[[1]]$Time,SimData[[1]]$Y)
+plot(SimData[[1]]$Time,SimData[[1]]$Y,ylim=c(10,150))
 lines(SimData[[1]]$longTime,SimData[[1]]$longX/MyTHETA['V']/exp(SimData[[1]]$eta))
 points(SimData[[2]]$Time,SimData[[2]]$Y,col=2)
 lines(SimData[[2]]$longTime,SimData[[2]]$longX/MyTHETA['V']/exp(SimData[[2]]$eta),col=2)
@@ -53,22 +56,9 @@ par <- list(LB = MyTHETA/20,
 fit <- PSM.estimate(mod1,SimData,par,CI=TRUE)
 fit[1:3]
 
-sm <- PSM.smooth(mod1,SimData,fit$THETA,subs=10)
+sm <- PSM.smooth(mod1,SimData,fit$THETA,subs=50)
 names(sm[[1]])
 lines(sm[[1]]$Time,sm[[1]]$Ys,col=3)
-
-##### Penalty function.
-
-
-mini = .1
-maxi = 10
-xvec = seq(mini,maxi,length=1000)
-lambda = 1e-4
-dx = 1e-30
-dx=0
-p = lambda*(mini/(xvec-mini+dx) + maxi/(maxi-xvec+dx))
-range(p)
-plot(xvec,p,type="l",ylim=c(0,.001))
 
 
 
@@ -76,7 +66,7 @@ plot(xvec,p,type="l",ylim=c(0,.001))
 ### Non-linear model
 
 
-mod2 <- mod1[c("X0","h","ModelPar")]
+mod2 <- mod1[c("X0","h","ModelPar","Dose")]
 mod2$Functions <- 
   list(
        f = function(x,u,time,phi) {
@@ -141,4 +131,20 @@ fit2 <- PSM.estimate(mod2,SimData,par,trace=1)
 fit2[1:2]
 Rprof()
 summaryRprof(tmp)
+
+
+
+##### Penalty function.
+
+if(FALSE) {
+  mini = .1
+  maxi = 10
+  xvec = seq(mini,maxi,length=1000)
+  lambda = 1e-4
+  dx = 1e-30
+  dx=0
+  p = lambda*(mini/(xvec-mini+dx) + maxi/(maxi-xvec+dx))
+  range(p)
+  plot(xvec,p,type="l",ylim=c(0,.001))
+}
 
