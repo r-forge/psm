@@ -1,25 +1,22 @@
 `PSM.estimate` <-
 function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fast=TRUE,...) {
 
-  Linear <- TRUE
-  if(("Functions" %in% names(Model)) ) {
-    Linear <- FALSE
-  }
-
-  if(Linear) {
-  ok <- TRUE
   dimS <- length(Data)
   for(i in 1:dimS) {
-    ok <- ModelCheck(Model,Data[[i]],Par)
-    if(!ok) {
+    check <- ModelCheck(Model,Data[[i]],Par)
+    if(!check$ok) {
       print(paste("Error occured using data for individual",i))
       break
     }
   }
-  if(!ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(paste("Input did not pass model check."))
+  Linear <- check$Linear
+
+  if(trace>0)
+    cat(ifelse( Linear, "* Linear model *\n", "* Non-linear model *\n"))
   
   # Check for fast option and Singular A
-  if(fast) {
+  if(Linear && fast) {
     #Get the ModelParameters
     tmp       <- Model$ModelPar(Par$Init)
     if( is.null(tmp$OMEGA) ) {
@@ -56,7 +53,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
       fast=FALSE 
     }
   }
-  } #end if linear
+
   T0 <- proc.time()[3]
 
   if(!is.null(Par$LB)) {

@@ -1,22 +1,24 @@
 `PSM.simulate` <- 
 function(Model, Data, THETA, deltaTime, longX=TRUE) {
 
-  ok <- TRUE 
   dimS <- length(Data)
-
   if(dimS<1) {
     print("Length of Data is less than 1.")
     break
   }
   
   for(i in 1:dimS) {
-    ok <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
-    if(!ok) {
+    check <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
+    if(!check$ok) {
       print(paste("Error occured using data for individual",i))
       break
     }
   }
-  if(!ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(paste("Input did not pass model check."))
+  Linear = check$Linear
+
+  if(!Linear)
+    stop('Simulation only implemented for linear models.')
 
   Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=dimS)
 

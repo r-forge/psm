@@ -83,12 +83,12 @@ mod2$Functions <-
        }
        )
 mod2$S = function(u,time,phi) {
-  # as.matrix.default(phi[["S"]])
-  phi[["S"]]
+  as.matrix.default(phi[["S"]])
+  #phi[["S"]]
 }
 mod2$SIG = function(u,time,phi) {
-  # as.matrix.default(10)
-  10
+  as.matrix.default(10)
+  #10
 }
 MyPar <- mod2$ModelPar(MyTHETA)
 myphi <- mod2$h(0,MyPar$theta,NA)
@@ -96,6 +96,7 @@ unlist(myphi)
 
 source(file="~/PSM/PSM/R/ExtKalmanFilter.R")
 source(file="~/PSM/PSM/R/PSM.estimate.R")
+source(file="~/PSM/PSM/R/ModelCheck.R")
 source(file="~/PSM/PSM/R/APL.KF.R")
 source(file="~/PSM/PSM/R/APL.KF.gr.R")
 source(file="~/PSM/PSM/R/IndividualLL.KF.R")

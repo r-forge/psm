@@ -8,9 +8,9 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   if ( is.null(Data$U) ) {
     ModelHasInput <- FALSE
   } else if(any(is.na(Data$U))) {
-    print(paste("Input U contains NA.")); return(FALSE)
+    print(paste("Input U contains NA.")); return(list(ok=FALSE))
   } else if(!is.matrix(Data$U)) {
-    print(paste("Input U is not a matrix.")); return(FALSE)
+    print(paste("Input U is not a matrix.")); return(list(ok=FALSE))
   } 
 
   if (ModelHasInput) {
@@ -19,56 +19,66 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
     Uk <- NULL
   }
 
+  if("Matrices" %in% names(Model)) {
+    Linear = TRUE
+  } else if ("Functions" %in% names(Model)) {
+    Linear = FALSE
+  } else {
+    print("Model must contain an object named either Functions or Matrices") ; return(list(ok=FALSE)) }
+      
   # Model contains the correct object
-  if( any(!( c("Matrices","X0","SIG","S","ModelPar")   %in% names(Model))) ) {
-    print("Model doesn't contain the correct objects") ; return(FALSE) }
+  if( any(!( c("X0","SIG","S","ModelPar")   %in% names(Model))) ) {
+    print("Model doesn't contain the correct objects") ; return(list(ok=FALSE)) }
 
+  
   # Model objects are functions
-
-  for (name in c("Matrices","X0","SIG","S","ModelPar")) 
+  for (name in c("X0","SIG","S","ModelPar")) 
     if(!is.function(Model[[name]])) {
-      print(paste("Model object",name,"is not a function")); return(FALSE) }
-
+      print(paste("Model object",name,"is not a function")); return(list(ok=FALSE)) }
+  if(Linear) {
+    if(!is.function(Model$Matrices)) {
+      print(paste("Model object Matrices is not a function")); return(list(ok=FALSE)) }
+  }
        
 #  if ( any(!(unlist(lapply(Model , function(x) {is.function(x)})))) ) {
-#     print("Model objects are not all functions") ; return(FALSE) }
+#     print("Model objects are not all functions") ; return(list(ok=FALSE)) }
 
   # Check  Par
   if( !("Init" %in% names(Par)) ) {
-    print("Init missing in Par") ; return(FALSE)
+    print("Init missing in Par") ; return(list(ok=FALSE))
   }
   if( "LB" %in% names(Par) ) {
     #The parameter has bounds
     if( any( Par$LB > Par$Init) ) {
-      print("Parameter LB is greater than Init") ; return(FALSE) }
+      print("Parameter LB is greater than Init") ; return(list(ok=FALSE)) }
     if( any( Par$UB < Par$Init) ) {
-      print("Parameter UB is lower than Init") ; return(FALSE) }
+      print("Parameter UB is lower than Init") ; return(list(ok=FALSE)) }
   }
 
   # Check data
   if( any(!( "Time"  %in% names(Data))) ) {
-    print("Individual data does not contain Time.") ; return(FALSE) }
+    print("Individual data does not contain Time.") ; return(list(ok=FALSE)) }
   if(DataHasY) {
     if( any(!( "Y"  %in% names(Data))) ) {
-      print("Individual data does not contain Y.") ; return(FALSE) }
+      print("Individual data does not contain Y.") ; return(list(ok=FALSE)) }
     if( any(is.nan(Data$Y)) ) {
-      print("Data$Y contains NaN. Use NA instead.");return(FALSE) }
+      print("Data$Y contains NaN. Use NA instead.");return(list(ok=FALSE)) }
   }
   if( any(c(is.nan(Data$Time),is.na(Data$Time))) ){
-    print("Data$Time contains NA or NaN.");return(FALSE) }
+    print("Data$Time contains NA or NaN.");return(list(ok=FALSE)) }
   if (ModelHasInput && any(c(is.nan(Data$U),is.na(Data$U))) ){
-    print("Data$U contains NA or NaN.");return(FALSE) }
+    print("Data$U contains NA or NaN.");return(list(ok=FALSE)) }
 
   
   # Calculate parameter phi
   Parlist <- Model$ModelPar(THETA=Par$Init)
   if(!is.null(Parlist$OMEGA)) {
     if( !( "h"   %in% names(Model)) ) {
-      print("Model is missing function h") ; return(FALSE) }
+      print("Model is missing function h") ; return(list(ok=FALSE)) }
     if(!is.function(Model$h)) {
-      print("Model object h is not a function"); return(FALSE) }
+      print("Model object h is not a function"); return(list(ok=FALSE)) }
     if(!is.matrix(Parlist$OMEGA)) {
-      print("Model$OMEGA is not a matrix") ; return(FALSE) }
+      print("Model$OMEGA is not a matrix") ; return(list(ok=FALSE)) }
     dimEta <- nrow(Parlist$OMEGA)
     phi <- Model$h(eta=rep(0,dimEta) , theta=Parlist$theta ,covar=Data$covar)
   } else {
@@ -76,104 +86,116 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   }
 
   # Matrices
-  tmp   <- Model$Matrices(phi=phi)
-  matA  <- tmp$matA
-  matB  <- tmp$matB
-  matC  <- tmp$matC
-  matD  <- tmp$matD
-
-  X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
-  SIG <-  Model$SIG(  phi=phi)
-  S <- Model$S(  phi=phi )
+  if(Linear) {
+    tmp   <- Model$Matrices(phi=phi)
+    matA  <- tmp$matA
+    matB  <- tmp$matB
+    matC  <- tmp$matC
+    matD  <- tmp$matD
+    
+    X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
+    SIG <-  Model$SIG(  phi=phi)
+    S <- Model$S(  phi=phi )
+  } else {
+    X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
+    f  <- Model$Functions$f(x=X0,u=Uk,time=Time[1],phi=phi)
+    df <- Model$Functions$df(x=X0,u=Uk,time=Time[1],phi=phi)
+    g  <- Model$Functions$g(x=X0,u=Uk,time=Time[1],phi=phi)
+    dg <- Model$Functions$dg(x=X0,u=Uk,time=Time[1],phi=phi)
+    SIG<- Model$SIG(u=Uk,time=Time[1],phi=phi)
+    S  <- Model$S(u=Uk,time=Time[1],phi=phi)
+  }
 
   #type check!
   if(!is.matrix(S)) {
-    print("Model$S is not a matrix") ; return(FALSE) }
-  if(!is.matrix(matA)) {
-    print("A is not a matrix") ; return(FALSE) }
-  if(!is.matrix(matC)) {
-    print("C is not a matrix") ; return(FALSE) }
-  if(ModelHasInput && !is.matrix(matB)) {
-    print("B is not a matrix") ; return(FALSE) }
-  if(ModelHasInput && !is.matrix(matD)) {
-    print("D is not a matrix") ; return(FALSE) } 
+    print("Model$S is not a matrix") ; return(list(ok=FALSE)) }
+  if(Linear) {
+    if(!is.matrix(matA)) {
+      print("A is not a matrix") ; return(list(ok=FALSE)) }
+    if(!is.matrix(matC)) {
+      print("C is not a matrix") ; return(list(ok=FALSE)) }
+    if(ModelHasInput && !is.matrix(matB)) {
+      print("B is not a matrix") ; return(list(ok=FALSE)) }
+    if(ModelHasInput && !is.matrix(matD)) {
+      print("D is not a matrix") ; return(list(ok=FALSE)) }
+  }
 
   
 
   # Test for positive semidefinit
   if(dim(SIG)[1]!=dim(SIG)[2] || dim(SIG)[1]==0) {
-    print("Model$SIG is not a square matrix") ; return(FALSE) }
+    print("Model$SIG is not a square matrix") ; return(list(ok=FALSE)) }
   if(dim(S)[1]!=dim(S)[2] || dim(S)[1]==0) {
-    print("Model$S is not a square matrix") ; return(FALSE) }
+    print("Model$S is not a square matrix") ; return(list(ok=FALSE)) }
       
-  if( any( eigen(SIG)$values <0 ) ) {
-    print("Model$SIG is not positiv semidefinit") ; return(FALSE) }
   if( any( eigen(S)$values <0 ) ) {
-    print("Model$S is not positiv semidefinit") ; return(FALSE) }
+    print("Model$S is not positiv semidefinit") ; return(list(ok=FALSE)) }
 
   
   # dimT
   dimT <- length(Data$Time)
   if(DataHasY) {
     if( dimT!=dim(Data$Y)[2]) {
-      print("Data$Time and Data$Y does not have same length") ; return(FALSE) }
+      print("Data$Time and Data$Y does not have same length") ; return(list(ok=FALSE)) }
   }
   if(ModelHasInput) {
     if(dimT!=dim(Data$U)[2]) {
-      print("Data$Time and Data$U does not have same length") ; return(FALSE) }
+      print("Data$Time and Data$U does not have same length") ; return(list(ok=FALSE)) }
     } # ModelHasInput
 
   # dimX
-  dimX <- nrow(matA)
-  if( dimX != ncol(matA) ) {
-    print("A is not square [dimX dimX]") ; return(FALSE) }
-  if( dimX!=ncol(matC) ) {
-    print("A and C dimensions doesn't match") ; return(FALSE) }
-  if( dimX!=length(X0) ) {
-    print("X0 has incorrect size") ; return(FALSE) }
-  if( dimX != nrow(SIG) | dimX != ncol(SIG) ) {
-    print("SIG has incorrect size") ; return(FALSE) }
+  if(Linear) {
+    dimX <- nrow(matA)
+    if( dimX != ncol(matA) ) {
+      print("A is not square [dimX dimX]") ; return(list(ok=FALSE)) }
+    if( dimX!=ncol(matC) ) {
+      print("A and C dimensions doesn't match") ; return(list(ok=FALSE)) }
+    if( dimX!=length(X0) ) {
+      print("X0 has incorrect size") ; return(list(ok=FALSE)) }
+    if( dimX != nrow(SIG) | dimX != ncol(SIG) ) {
+      print("SIG has incorrect size") ; return(list(ok=FALSE)) }
+  }
   
-  if(ModelHasInput) {
+  if(ModelHasInput && Linear) {
     if( dimX!=nrow(matB) ) {
-      print("A and B dimensions doesn't match") ; return(FALSE) }
+      print("A and B dimensions doesn't match") ; return(list(ok=FALSE)) }
     } # ModelHasInput
 
   # dimY
   if(DataHasY) {
-    dimY <- nrow(matC)
-    if (dimY != dim(Data$Y)[1] ){
-      print("C and Data$Y doesn't match") ; return(FALSE) }
+    dimY <- dim(Data$Y)[1]
+    if (Linear && (dimY != nrow(matC)) ){
+      print("C and Data$Y doesn't match") ; return(list(ok=FALSE)) }
     if( dimY != nrow(S) | dimY != ncol(S) ) {
-      print("S has incorrect size") ; return(FALSE) }
+      print("S has incorrect size") ; return(list(ok=FALSE)) }
   }
 
-  if(ModelHasInput && DataHasY) {
+  if(Linear && ModelHasInput && DataHasY) {
     if (dimY != nrow(matD) ){
-      print("Y and D doesn't match") ; return(FALSE) }
+      print("Y and D doesn't match") ; return(list(ok=FALSE)) }
   }
   
   # dimU
-  if( ModelHasInput) {
+  if( Linear && ModelHasInput) {
     dimU <- nrow(Data$U)
     if( dimU != ncol(matB)) {
-      print("Data$U and B doesn't match") ; return(FALSE) }
+      print("Data$U and B doesn't match") ; return(list(ok=FALSE)) }
     if( dimU != ncol(matD)) {
-      print("Data$U and D doesn't match") ; return(FALSE) }
+      print("Data$U and D doesn't match") ; return(list(ok=FALSE)) }
   }
   
   # Dose
   if( "Dose" %in% names(Model) ) {
     MD <- Model$Dose
     if( any(!(MD$Time %in% Data$Time))) {
-      print("Dose times doesn't coincide with Data$Time") ; return(FALSE) }
+      print("Dose times doesn't coincide with Data$Time") ; return(list(ok=FALSE)) }
       
-    if( any( MD$State > dimX) ) {
-      print("Dose states are larger than number of states") ; return(FALSE) }
+    if( Linear && any( MD$State > dimX) ) {
+      print("Dose states are larger than number of states") ; return(list(ok=FALSE)) }
 
     if( !all( (c(length(MD$State),length(MD$Amount))- length(MD$Time))==0  ) ) {
-      print("Dose: Elements Time, State and Amount not of same length") ; return(FALSE)}
+      print("Dose: Elements Time, State and Amount not of same length") ; return(list(ok=FALSE))}
   }
 
-  return(TRUE)
+  return(list(ok=TRUE,Linear=Linear))
 }

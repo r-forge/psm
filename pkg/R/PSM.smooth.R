@@ -1,16 +1,16 @@
 `PSM.smooth` <-
 function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
 
-  ok <- TRUE
   dimS <- length(Data)
   for(i in 1:dimS) {
-    ok <- ModelCheck(Model,Data[[i]],list(Init=THETA))
-    if(!ok) {
+    check <- ModelCheck(Model,Data[[i]],list(Init=THETA))
+    if(!check$ok) {
       print(paste("Error occured using data for individual",i))
       break
     }
   }
-  if(!ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(paste("Input did not pass model check."))
+  Linear <- check$Linear
   
   FullOutput <- FALSE
   if( is.null(etaList)) {
