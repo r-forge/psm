@@ -98,12 +98,12 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
     S <- Model$S(  phi=phi )
   } else {
     X0 <- Model$X0( Time=Data$Time[1], phi=phi, U=Uk)
-    f  <- Model$Functions$f(x=X0,u=Uk,time=Time[1],phi=phi)
-    df <- Model$Functions$df(x=X0,u=Uk,time=Time[1],phi=phi)
-    g  <- Model$Functions$g(x=X0,u=Uk,time=Time[1],phi=phi)
-    dg <- Model$Functions$dg(x=X0,u=Uk,time=Time[1],phi=phi)
-    SIG<- Model$SIG(u=Uk,time=Time[1],phi=phi)
-    S  <- Model$S(u=Uk,time=Time[1],phi=phi)
+    f  <- Model$Functions$f(x=X0,u=Uk ,time=Data$Time[1],phi=phi)
+    df <- Model$Functions$df(x=X0,u=Uk,time=Data$Time[1],phi=phi)
+    g  <- Model$Functions$g(x=X0,u=Uk ,time=Data$Time[1],phi=phi)
+    dg <- Model$Functions$dg(x=X0,u=Uk,time=Data$Time[1],phi=phi)
+    SIG<- Model$SIG(u=Uk,time=Data$Time[1],phi=phi)
+    S  <- Model$S(u=Uk,time=Data$Time[1],phi=phi)
   }
 
   #type check!

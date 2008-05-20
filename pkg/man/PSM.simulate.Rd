@@ -13,6 +13,7 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{Model}{
+    A list containing the model components either Linear or Non-Linear
     Model list.*
   }
   \item{Data}{
@@ -50,6 +51,9 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
   the states affected by system noise (\eqn{\sigma}{SIG}).
   
   The measurements are added an normal error term belonging to \eqn{N(0,S)}.
+  
+  The function \verb+mvrnorm+ from the MASS pacakge is used to to generate random numbers fra multivariate normal distributions. 
+
 }
 \value{
 

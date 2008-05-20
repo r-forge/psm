@@ -1,12 +1,14 @@
 `PSM.simulate` <- 
 function(Model, Data, THETA, deltaTime, longX=TRUE) {
 
+  # Extract Dimenstions of Data and Check
   dimS <- length(Data)
   if(dimS<1) {
     print("Length of Data is less than 1.")
     break
   }
   
+  # Check Model and each Data element  
   for(i in 1:dimS) {
     check <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
     if(!check$ok) {
@@ -14,14 +16,15 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
       break
     }
   }
+  
+  
   if(!check$ok) stop(paste("Input did not pass model check."))
-  Linear = check$Linear
 
-  if(!Linear)
-    stop('Simulation only implemented for linear models.')
+  Linear = check$Linear
+  # if(!Linear) stop('Simulation only implemented for linear models.')
+
 
   Result <- Tlist <- Ulist <- covarlist <- vector(mode="list",length=dimS)
-
   for (i in 1:dimS) {
     Tlist[[i]] <- Data[[i]]$Time
     Ulist[[i]] <- Data[[i]]$U
@@ -31,13 +34,14 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
   if(is.null(Data[[1]]$U)) { #No input present
     Ulist <- NULL
   }  
-  
-  OMEGA <- Model$ModelPar(THETA)$OMEGA
-  theta <- Model$ModelPar(THETA)$theta
+  tmp   <- Model$ModelPar(THETA)
+  OMEGA <- tmp$OMEGA
+  theta <- tmp$theta
 
   if(!is.null(OMEGA)) {
     dimEta <- dim(OMEGA)[1]
-    eta <- sqrtm(OMEGA) %*% matrix(rnorm(dimS*dimEta),nrow=dimEta,ncol=dimS)
+    # New implementation based on MASS mvrnorm
+    eta <- t.default(mvrnorm(n=dimS , mu=rep(0,dimEta) , Sigma=OMEGA))
   } else {
     eta <- NULL
   }
@@ -58,14 +62,12 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     n <- TimeSpan/deltaTime + 1
     
     # find where SampleTime are equal to t
-    where <- abs(t(matrix(rep(SampleTime,n),nrow=len,ncol=n))-tseq) < 1000*.Machine$double.eps
+    where <- abs(t.default(matrix(rep(SampleTime,n),nrow=len,ncol=n))-tseq) < 1000*.Machine$double.eps
     
-    
+    # Check subsampling and choice of deltaTime
     if(sum(where)!=len)
       stop(simpleError("All sample times must belong to t(0)+n*deltaTime, where n is an integer."))
     
-
-
     # Check for INPUT and subsample U
     if( is.null(Ulist) ) { #check if U exists.
       ModelHasInput <- FALSE
@@ -82,72 +84,85 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     } else {
       Ustart <- NA
     }
-    
-    ModelHasDose <- "Dose" %in% names(Model)
-    
-    # Create Matrices
-    tmpM  <- Model$Matrices(phi=phi)
-    matA  <- tmpM$matA
-    matB  <- tmpM$matB
-    matC  <- tmpM$matC
-    matD  <- tmpM$matD 
 
+    # Create logical depending on Dose    
+    ModelHasDose <- "Dose" %in% names(Model)
 
     # Initial States
-    InitialState <- Model$X0(Time=t[1], phi=phi, U = Ustart)
-    SIG <- Model$SIG(phi=phi)  
-
+    InitialState  <- Model$X0(Time=t[1], phi=phi, U = Ustart)
+    
     # Dimensions
     dimX <- nrow(InitialState)
-    dimY <- nrow(matC)
-    
-    # Is A singular ???
-    rankA <- qr(matA)$rank
-    singA <- (rankA<dimX)
-  
-    X <- array(0,dim=c(dimX,n))
-    Y <- array(0,dim=c(dimY,n))
-  
-  # Variables in the for loop
-    DIAGDIMX  <- diag(1,dimX)
-    DIAGRANKA <- diag(1,rankA)
 
-  #Gaussian noise
-    eW <-   matrix(rnorm(n*dimX),nrow=dimX,ncol=n)
-    eObs <- matrix(rnorm(n*dimX),nrow=dimY,ncol=n)
+    if(Linear) {
+      # Linear simulation 
+      # Create Matrices
+      tmpM  <- Model$Matrices(phi=phi)
+      matA  <- tmpM$matA
+      matB  <- tmpM$matB
+      matC  <- tmpM$matC
+      matD  <- tmpM$matD 
+
+      dimY <- nrow(matC)
+
+      # Model components
+      SIG   <- Model$SIG(phi=phi)  
+      Scov  <- Model$S(phi=phi)
     
-    X[,1] <- InitialState
+      # Is A singular ???
+      rankA <- qr(matA)$rank
+      singA <- (rankA<dimX)
+      
+      tmp     <- rep(0, max(dimX,dimY)*n)
+      X       <- tmp[1:(dimX*n)]
+      dim(X)  <- c(dimX,n)
+      Y       <- tmp[1:(dimY*n)]
+      dim(Y)  <- c(dimY,n)
+  
+      # Variables in the for loop
+      DIAGDIMX  <- diag(1,dimX)
+      DIAGRANKA <- diag(1,rankA)
+      BigMat    <- rbind(cbind(-matA , SIG%*%t.default(SIG)) ,
+                        cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
+      matDIMXDIMX     <- matrix(NA,dimX,dimX)
     
+
+      # Wiener and Gaussian noise - Not Time dependent
+      eW <-   matrix(rnorm(n*dimX),nrow=dimX,ncol=n)
+      eObs <- t.default(mvrnorm(n=n*dimX , mu=rep(0,dimY), Sigma=Scov))
     
-    for (k in 1:n) {
+      # Store Initial State
+      X[,1] <- InitialState
+    
+      # Start looping through timepoints   
+      for (k in 1:n) {
  
-      if(ModelHasInput) 
-        Uk <- U[,k,drop=FALSE]
+        if(ModelHasInput) Uk <- U[,k,drop=FALSE]
 
-      # observation
-      if(ModelHasInput) {
-        Y[,k] <- matC %*% X[,k,drop=FALSE] + matD%*%Uk + sqrtm(Model$S(phi=phi)) %*% eObs[,k]
-      } else 
-      Y[,k] <- matC %*% X[,k,drop=FALSE] + sqrtm(Model$S(phi=phi)) %*% eObs[,k]
-
-      # Add dose after measurement is taken at Time[k]
-      if(ModelHasDose) {
-        idxD = which(tseq[k]==Model$Dose$Time)
-        if(length(idxD)==1) {
-          X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+        # observation
+        if(ModelHasInput) {
+          Y[,k] <- matC %*% X[,k,drop=FALSE] + matD%*%Uk + eObs[,k]
+        } else {
+          Y[,k] <- matC %*% X[,k,drop=FALSE] + eObs[,k]
         }
-      }
+      
+        # Add dose after measurement is taken at Time[k]
+        if(ModelHasDose) {
+          idxD = which(tseq[k]==Model$Dose$Time)
+          if(length(idxD)==1) {
+            X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+          }
+        }
       
  
-    # Abort state pred if finished
-      if (k == n) break
+        # Abort state pred if finished
+        if (k == n) break
 
-    # State prediction
-      tmp <- deltaTime * rbind(cbind(-matA , SIG%*%t.default(SIG)) ,
-                        cbind( matrix(0,nrow=dimX,ncol=dimX) , t.default(matA) ))
-      tmp <- matexp(tmp)
-      PHI <- t.default( tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=FALSE])
-      IntExpASIG <- PHI %*% tmp[1:dimX,(dimX+1):(dimX*2),drop=FALSE]
+        # State prediction
+        tmp <- deltaTime * BigMat
+        tmp <- matexp(tmp)
+        PHI <- t.default( tmp[(dimX+1):(2*dimX),(dimX+1):(2*dimX),drop=FALSE])
+        IntExpASIG <- PHI %*% tmp[1:dimX,(dimX+1):(dimX*2),drop=FALSE]
 
     # Different formulaes depending on A and INPUTS
       if( !singA ) {
@@ -179,7 +194,7 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
             ATilde2   <- ATilde[1:rankA,(rankA+1):dimX,drop=FALSE]
             ATilde1Inv <- solve.default(ATilde1)
             
-            IntExpAtildeS <- matrix(NA,dimX,dimX)
+            IntExpAtildeS <- matDIMXDIMX
                   # Insert upper left part of matrix [1:rankA 1:rankA]
             IntExpAtildeS[1:rankA , 1:rankA] <- ATilde1Inv %*% (PHITilde1-DIAGRANKA)
                   # Lower left part
@@ -202,6 +217,68 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     
     } #end for
 
+
+      # End Linear Simulation
+    } else {
+      # Non-Linear simulation
+
+      # Extract functions
+      f  <- Model$Functions$f
+      df <- Model$Functions$df
+      g  <- Model$Functions$g
+      dg <- Model$Functions$dg
+      
+      # Determine Y-dimension      
+      dimY <- length( g(x=InitialState,u=Ustart,time=tseq[1],phi=phi) )
+
+      # Initialize Arrays
+      tmp     <- rep(0, max(dimX,dimY)*n)
+      X       <- tmp[1:(dimX*n)]
+      dim(X)  <- c(dimX,n)
+      Y       <- tmp[1:(dimY*n)]
+      dim(Y)  <- c(dimY,n)
+      
+      # Wiener Noise noise
+      eW <-   matrix(rnorm(n*dimX),nrow=dimX,ncol=n)
+    
+      # Insert X0 in X-array
+      X[,1] <- InitialState
+      
+      # Start looping through timepoints   
+      for (k in 1:n) {
+        
+        # Update input to present timepoint
+        if(ModelHasInput) Uk <- U[,k,drop=FALSE]
+        
+        # observation
+        Y[,k] <- g(x=X[,k,drop=FALSE],u=Uk,time=tseq[k],phi=phi)        
+        # Gaussian Noise
+        ObsErr <- t.default(mvrnorm(n=dimX , mu=rep(0,dimY), Sigma=Model$S(u=Uk,time=tseq[k],phi=phi)))
+        # Obs + Noise
+        Y[,k] <- Y[,k] + ObsErr
+        
+        # Add dose after measurement is taken at tseq[k]
+        if(ModelHasDose) {
+          idxD = which(tseq[k]==Model$Dose$Time)
+          if(length(idxD)==1) {
+            X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+          }
+        }
+        
+        # Abort state pred if finished
+        if (k == n) break
+        
+        # State Prediction
+        X[,k+1] <- X[,k] + deltaTime*f(x=X[,k],u=Uk,time=tseq[k],phi=phi)
+        
+        # Add Wiener noise
+        syserr <- Model$SIG(u=Uk,time=tseq[k],phi=phi) %*% (sqrt(deltaTime) * eW[,k+1])
+        X[,k+1] <- X[,k+1] + syserr
+
+      } # End Looping over timepoints
+      
+    }  # End Non-Linear simulation
+    
     # SubSampling
     idx <- which(( where %*% rep(TRUE,len)) == 1)
 
