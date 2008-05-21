@@ -71,14 +71,15 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     # Check for INPUT and subsample U
     if( is.null(Ulist) ) { #check if U exists.
       ModelHasInput <- FALSE
-    } else if ( any(is.na(Ulist)) ) { #check if it contains any NA
-      ModelHasInput <- FALSE
     } else {
       ModelHasInput <- TRUE
     }
-
+    
+    #check if it contains any NA
+    if( ModelHasInput) if (any(is.na(Ulist)) ) stop("Input contains NA.")
+    
     if( ModelHasInput) {
-      RepIdx <- rep( 1:length(SampleTime) , times=c(diff(SampleTime)/deltaTime,1))
+      RepIdx <- rep( 1:length(SampleTime) , times=round(c(diff(SampleTime)/deltaTime,1)))
       U <- Ulist[[i]][ , RepIdx ,drop=FALSE]
       Ustart <- U[,1,drop=FALSE]
     } else {
