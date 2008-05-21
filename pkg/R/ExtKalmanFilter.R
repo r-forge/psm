@@ -175,16 +175,6 @@ function( phi, Model, Data, outputInternals=FALSE) {
       Pf[,,k] <- Pp[,,k]
     }
     
-    if(ModelHasDose) {
-      # Check if dosing is occuring at this timepoint.
-      if( any(Time[k]==Model$Dose$Time)) {
-        idxD = which(Time[k]==Model$Dose$Time)
-        # Multiple dosing a timepoint[k]
-        for(cmt in 1:length(idxD)) {
-          Xf[Model$Dose$State[idxD[cmt]],k] <- Xf[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
-        }
-      }
-    }
     
     # Abort state pred if finished
     if(k==dimT) break
@@ -193,24 +183,30 @@ function( phi, Model, Data, outputInternals=FALSE) {
     ######################
     # Prediction
     ######################
-    
+
+    Xstart <- Xf[,k]
+    # Add dose before starting to predict.
+    if(ModelHasDose) {
+      # Check if dosing is occuring at this timepoint.
+      if( any(Time[k]==Model$Dose$Time)) {
+        idxD = which(Time[k]==Model$Dose$Time)
+        # Multiple dosing a timepoint[k]
+        for(cmt in 1:length(idxD)) {
+          Xstart[Model$Dose$State[idxD[cmt]]] <-
+            Xstart[Model$Dose$State[idxD[cmt]]] + Model$Dose$Amount[idxD[cmt]]
+        }
+      }
+    }
+   
     # Create Z combined variable
     # Upper triangle of P
-
     tmpP <- Pf[,,k,drop=FALSE]
     tmpP <- tmpP[Index]
-    Z <- c( Xf[,k] , tmpP)
-
+    Z <- c( Xstart , tmpP)
 
     # Prediction of Z
-    timevec <- c(Time[k], Time[k+1]) #!should be subsampled for smoothing!!  
+    timevec <- c(Time[k], Time[k+1]) 
     ZOUT <- lsoda(y=Z, times=timevec, func=dSystemPred, parms=Uk, rtol=1e-6, atol=1e-6)
-    
-#    %save foreward state estimates for smoothing.
-#    if(nargout==2)
-#        sub_foreward(i).time = dummyT;
-#        sub_foreward(i).state = ZOUT(:,1:dimX);
-#    end
     
     # convert back to X,Pk
     Xp[,k+1] <- ZOUT[length(timevec),1+(1:dimX)] #first col is time

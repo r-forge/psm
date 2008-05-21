@@ -14,7 +14,8 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   
   FullOutput <- FALSE
   if( is.null(etaList)) {
-    apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,longOutput=TRUE,Linear=TRUE)
+    apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,
+                   longOutput=TRUE,Linear=Linear)
     etaList <- apl$etaList
     FullOutput <- TRUE
   }
@@ -60,8 +61,10 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
         if(j==n)
           break
         YY[,(idx0+1):(idx0+subsample)] = NA
-        TT[(idx0+1):(idx0+subsample)] <- seq(from=Time[j],to=Time[j+1],length.out=(subsample+2))[-c(1,subsample+2)]
-        if(ModelHasInput) UU[,(idx0+1):(idx0+subsample)] = matrix(U[,j],nrow=dim(U)[1],ncol = subsample)
+        TT[(idx0+1):(idx0+subsample)] <- seq(from=Time[j],to=Time[j+1],
+                                             length.out=(subsample+2))[-c(1,subsample+2)]
+        if(ModelHasInput)
+          UU[,(idx0+1):(idx0+subsample)] = matrix(U[,j],nrow=dim(U)[1],ncol = subsample)
       }
       Di <- list(Y = YY, Time = TT, U = UU)
     }
@@ -70,7 +73,12 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     } else {
       phi <- theta
     }
-    lkf[[i]] <- LinKalmanSmoother( phi=phi, Model=Model , Data=Di )
+    if(Linear) {
+      lkf[[i]] <- LinKalmanSmoother( phi=phi, Model=Model , Data=Di )
+    } else {
+      lkf[[i]] <- ExtKalmanSmoother( phi=phi, Model=Model , Data=Di )
+    }
+    
     if(trace)
       print(paste("Individual",i))
   

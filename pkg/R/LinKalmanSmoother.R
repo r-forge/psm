@@ -63,7 +63,7 @@ function(phi, Model, Data) {
     
     Adis <- matexp(matA*ts)
  
-    if( is.na(Y[,tau,drop=FALSE])) {
+    if( any(is.na(Y[,tau,drop=FALSE]))) {  #skip update if Y_k contains any NA
       Fk <- Adis
       lambda <- t.default(Fk)%*%lambda
       LAMBDA <- t.default(Fk) %*% LAMBDA %*% Fk

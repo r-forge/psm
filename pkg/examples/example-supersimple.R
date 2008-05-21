@@ -22,7 +22,7 @@ mod1$ModelPar = function(THETA) {
        OMEGA=matrix(.2))
 }
 mod1$SIG = function(phi) {
-  matrix(10)
+  matrix(50)
 }
 mod1$h = function(eta,theta,covar) {
   phi = theta
@@ -87,12 +87,12 @@ mod2$S = function(u,time,phi) {
   #phi[["S"]]
 }
 mod2$SIG = function(u,time,phi) {
-  as.matrix.default(10)
+  as.matrix.default(50)
   #10
 }
 MyPar <- mod2$ModelPar(MyTHETA)
 myphi <- mod2$h(0,MyPar$theta,NA)
-unlist(myphi)
+
 
 source(file="~/PSM/PSM/R/ExtKalmanFilter.R")
 source(file="~/PSM/PSM/R/PSM.estimate.R")
@@ -103,16 +103,26 @@ source(file="~/PSM/PSM/R/IndividualLL.KF.R")
 source(file="~/PSM/PSM/R/APL.KF.individualloop.R")
 source(file="~/PSM/PSM/R/IndividualLL.KF.gr.R")
 source(file="~/PSM/PSM/R/PSM.smooth.R")
+source(file="~/PSM/PSM/R/PSM.simulate.R")
+source(file="~/PSM/PSM/R/LinKalmanSmoother.R")
+source(file="~/PSM/PSM/R/ExtKalmanSmoother.R")
 
 
-Rprof(tmp <- tempfile())
-for(i in 1:100) ExtKalmanFilter( myphi, mod2, SimData[[1]] )
+#Rprof(tmp <- tempfile())
+#for(i in 1:100) ExtKalmanFilter( myphi, mod2, SimData[[1]] )
 ExtKalmanFilter( myphi, mod2, SimData[[1]] )
-Rprof()
-summaryRprof(tmp)
+#Rprof()
+#summaryRprof(tmp)
 
-LinKalmanFilter( myphi, mod1, SimData[[1]] )
+LinKalmanFilter( myphi, mod1, SimData[[1]])
 
+
+sm1 <- PSM.smooth(mod1,SimData,fit$THETA,subs=20)
+sm2 <- PSM.smooth(mod2,SimData,fit$THETA,subs=20)
+lines(sm2[[1]]$Time,sm2[[1]]$Ys,lty=2,lwd=2)
+
+
+#as.vector(sm1[[1]]$Xs-sm2[[1]]$Xs)/as.vector(sm2[[1]]$Xs)*100
 
 mod1.no.omega <- mod1
 mod2.no.omega <- mod2
@@ -129,17 +139,35 @@ fit1.no.omega[1:2]
 fit2.no.omega <- PSM.estimate(mod2.no.omega,SimData,par)
 fit2.no.omega[1:2]
 
+
+sm <- PSM.smooth(mod1.no.omega,SimData,fit$THETA,subs=50)
+sm2 <- PSM.smooth(mod2.no.omega,SimData,fit$THETA,subs=50)
+lines(sm[[1]]$Time,sm[[1]]$Ys,col=5)
+lines(sm2[[1]]$Time,sm2[[1]]$Ys,lty=2)
+
+
 # Linear, with-OMEGA
 fit1 <- PSM.estimate(mod1,SimData,par)
 fit1[1:2]
 
 # Non-Linear, with-OMEGA
-Rprof(tmp <- tempfile())
+#Rprof(tmp <- tempfile())
 fit2 <- PSM.estimate(mod2,SimData,par,trace=1)
 fit2[1:2]
-Rprof()
-summaryRprof(tmp)
+#Rprof()
+#summaryRprof(tmp)
 
+
+sm1 <- PSM.smooth(mod1,SimData,fit$THETA,subs=20)
+sm2 <- PSM.smooth(mod2,SimData,fit$THETA,subs=20)
+lines(sm2[[1]]$Time,sm2[[1]]$Ys,lty=2,lwd=2)
+
+
+V1 <- fit$THETA['V']*exp(sm2[[1]]$eta)
+plot(sm2[[1]]$Time,sm2[[1]]$Xs,col=3,type="l",lwd=2)
+st <- sqrt(sm2[[1]]$Ps[1,1,])
+lines(sm2[[1]]$Time,sm2[[1]]$Xs+1.96*st,col=3,type="l")
+lines(sm2[[1]]$Time,sm2[[1]]$Xs-1.96*st,col=3,type="l")
 
 
 ##### Penalty function.
