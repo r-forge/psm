@@ -1,6 +1,16 @@
 `IndividualLL.KF.gr` <-
-function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0, fast=TRUE, Linear) {
+function (eta,theta,OMEGA,Model,Data, GradSTEP=1e-4,GUIFlag=0, fast=TRUE, Linear=NULL) {
   # Forward gradient function for IndividualLL.KF
+
+  # Check argument Linear is set otherwise set it.
+  if( is.null(Linear) ) {
+    if( "Matrices" %in% names(Model) | "Functions" %in% names(Model)) {
+      Linear <- TRUE
+      if("Functions" %in% names(Model)) Linear <- FALSE    
+    } else {
+      stop("Cannot determine if model is Linear or Non-linear based on elements in model. (Matrices or Functions)")
+    }
+  }    
   
   L <- length(eta)
   ILL <- rep(0,length=(L+1))

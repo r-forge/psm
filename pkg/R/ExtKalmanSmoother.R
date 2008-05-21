@@ -209,9 +209,9 @@ function(phi, Model, Data) {
 
     # Create Smooth Output
     if(ModelHasInput) {
-      Ys[,k] <- g(x=XSmooth[,k,drop=FALSE],u=U[,i,drop=FALSE],time=Time[i],phi=phi)
+      Ys[,k] <- g(x=XSmooth[,k,drop=FALSE],u=U[,k,drop=FALSE],time=Time[k],phi=phi)
     } else {
-      Ys[,k] <- g(x=XSmooth[,k,drop=FALSE],u=NA,time=Time[i],phi=phi)
+      Ys[,k] <- g(x=XSmooth[,k,drop=FALSE],u=NA,time=Time[k],phi=phi)
     }
 
   }

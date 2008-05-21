@@ -1,6 +1,16 @@
 `APL.KF` <-
-function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE,Linear) {
+function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=TRUE,Linear=NULL) {
 ### NOTES -  requires: Model$ModelPar(), 
+
+    # Check argument Linear is set otherwise set it.
+  if( is.null(Linear) ) {
+    if( "Matrices" %in% names(Model) | "Functions" %in% names(Model)) {
+      Linear <- TRUE
+      if("Functions" %in% names(Model)) Linear <- FALSE    
+    } else {
+      stop("Cannot determine if model is Linear or Non-linear based on elements in model. (Matrices or Functions)")
+    }
+  }
 
   
   if (!is.null(LB)) {

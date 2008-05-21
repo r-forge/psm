@@ -7,7 +7,7 @@
   neg. log-likelihood function. 
 }
 \usage{
-IndividualLL.KF.gr(eta, theta, OMEGA, Model, Data, GradSTEP = 1e-04, GUIFlag = 0, fast=TRUE)
+IndividualLL.KF.gr(eta, theta, OMEGA, Model, Data, GradSTEP = 1e-04, GUIFlag = 0, fast=TRUE,Linear=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +19,7 @@ IndividualLL.KF.gr(eta, theta, OMEGA, Model, Data, GradSTEP = 1e-04, GUIFlag = 0
   \item{GradSTEP}{ Step length for gradient }
   \item{GUIFlag}{ Display tracing information }
   \item{fast}{ Boolean. Use compiled Fortran code }
+  \item{Linear}{Boolean. Is the model Linear or Non-Linear}
 }
 
 \value{

@@ -1,6 +1,18 @@
 `APL.KF.individualloop` <-
-function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE,Linear) {
+function (theta,OMEGA,Model,Data,GUIFlag=0,fast=TRUE,Linear=NULL) {
 ### NOTES -  requires: o$R, o$Yp, h(eta,theta)
+
+
+    # Check argument Linear is set otherwise set it.
+  if( is.null(Linear) ) {
+    if( "Matrices" %in% names(Model) | "Functions" %in% names(Model)) {
+      Linear <- TRUE
+      if("Functions" %in% names(Model)) Linear <- FALSE    
+    } else {
+      stop("Cannot determine if model is Linear or Non-linear based on elements in model. (Matrices or Functions)")
+    }
+  }
+
   dimEta <- dim(OMEGA)[1]
   tmp <- dim(Data$Y)
   dimY <- tmp[1]

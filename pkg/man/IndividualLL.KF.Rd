@@ -6,7 +6,7 @@
   This in an internal function. Evaluates the indivdual neg. log-likelihood function.
 }
 \usage{
-IndividualLL.KF(eta, theta, OMEGA, Model, Data, fast=TRUE)
+IndividualLL.KF(eta, theta, OMEGA, Model, Data, fast=TRUE,Linear=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,6 +16,7 @@ IndividualLL.KF(eta, theta, OMEGA, Model, Data, fast=TRUE)
   \item{Model}{ Model list}
   \item{Data}{ Data list}
   \item{fast}{ Boolean. Use compiled Fortran code }
+  \item{Linear}{Boolean. Is the model Linear or Non-Linear}
 }
 \value{
   Returns individual neg. log-likelihood.

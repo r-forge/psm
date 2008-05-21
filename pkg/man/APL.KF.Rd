@@ -6,7 +6,7 @@
   This is an internal function. It evaluates the population likelihood function.
 }
 \usage{
-APL.KF(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GUIFlag = 0, longOutput = FALSE, fast=TRUE)
+APL.KF(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GUIFlag = 0, longOutput = FALSE, fast=TRUE,Linear=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,6 +18,7 @@ APL.KF(THETA, Model, Pop.Data, LB = NULL, UB = NULL, GUIFlag = 0, longOutput = F
   \item{GUIFlag}{ Display tracing information}
   \item{longOutput}{ Output negLogLike, etaList, optimStat}
   \item{fast}{ Boolean. Use compiled Fortran code }
+  \item{Linear}{Boolean. Is the model Linear or Non-Linear}
 }
 \value{
   Returns value of population likelihood functiion.
