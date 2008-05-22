@@ -133,7 +133,7 @@ CTSMSmooth = read.table("BioReactorCTSMSmooth.csv",sep=";",
 CTSMPred[1:2,];CTSMFilter[1:2,];CTSMSmooth[1:2,]
 
 
-sm <- PSM.smooth(MyModel,list(Data),ctsmTHETA,subs=10)
+sm <- PSM.smooth(MyModel,list(Data),ctsmTHETA)
 sm1 <- sm[[1]]
 
 
@@ -163,8 +163,5 @@ for(i in 1:3) {
 
 
 #CALCULATE DEVIATION IN PCT
-for(i in 1:3) {
-  idx <- seq(1,1101,by=11)
-  pctDEVIATION <- (sm1$Xs[i,idx]-CTSMSmooth[,i+1])/sm1$Xs[i,idx]*100
-  print(max(pctDEVIATION))
-}
+(pct <- max(abs(t(CTSMSmooth[,2:4])-sm1$Xs)/sm1$Xs*100))
+

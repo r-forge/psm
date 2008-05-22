@@ -129,7 +129,7 @@ MyModel$SIG = function(u,time,phi) {
 }
 @ 
 
-\section{Resutls of comparison}
+\section{Results of comparison}
 
 \subsection{Likelihood function value}
 
@@ -176,29 +176,22 @@ directly calling the Extended Kalman Filter using the same
 parameter values
 
 <<EvalLikelihood>>=
-negLogL <- ExtKalmanFilter(theta,MyModel,Data) #CTSM: -388.4857 #PSM: -388.4689
+(negLogL <- ExtKalmanFilter(theta,MyModel,Data)) #CTSM: -388.4857 #PSM: -388.4689
 @ 
 
-\noindent and the result is
-
-<<ShowLikelihood>>=
-negLogL
-@ 
-
-
-\noindent which can be seen to be very similar to the value found by
+\noindent and the result can be seen to be very similar to the value found by
 CTSM as shown in Equation \eqref{ctsmL}.
 
 \subsection{Uncertainty for parameter estimates}
 
 <<Cheat,echo=FALSE>>=
-#load("Case_Bioreactor.RData") 
+#load("Case_Bioreactor.RData") #loads fit + sm1
 options(digits=4)
 @ 
 
 In CTSM parameter uncertainty is given by standard deviation (SD)
 estimates for each parameter. In PSM parameter uncertainty is given by
-a 95\% Wald confidence interval based on the hessian of the
+a 95\% Wald confidence interval based on the Hessian of the
 log-likelihood function.
 
 To find the confidence intervals in PSM a parameter search is started
@@ -216,7 +209,7 @@ Wald confidence intervals. The result from PSM.estimate is shown below.
 
 <<PSMestimate>>=
 #if(FALSE)
-  PSM.estimate(MyModel,list(Data),MyPar,CI=TRUE)[1:3]
+(fit <- PSM.estimate(MyModel,list(Data),MyPar,CI=TRUE)[1:3])
 #fit[1:3]
 @
 
@@ -238,13 +231,13 @@ ctsmEstimates
 @
 
 To visually compare the error estimates in PSM and CTSM a Wald confidence interval
-is generated from CTSM as MLE$\pm 1.95 \cdot$SD. This result of the
+is generated from CTSM as MLE$\pm 1.96 \cdot$SD. This result of the
 comparison is shown if Figure \ref{fig:fig1}.
 
 
 \begin{figure}[hptb]
 \begin{center}
-<<label=figure1,fig=TRUE,echo=FALSE>>=
+<<label=figure1,fig=TRUE,width=4,height=6,echo=FALSE>>=
 par(mfrow=c(5,1),mar=c(2,4,2,2)+.1)
 for(i in 1:length(Pname)) {
   psmCI <- fit$CI[c(1,3),Pname[i]]
@@ -255,8 +248,8 @@ for(i in 1:length(Pname)) {
   #box(bty='l')
   title(main=Pname[i],line=-.5)
   # CI limits
-  lines(rep(psmCI,each=3),1+c(-.2,.2,0,0,.2,-.2),col=2,lwd=3)
-  lines(rep(ctsmCI,each=3),2+c(-.2,.2,0,0,.2,-.2),col=4,lwd=3)
+  lines(rep(psmCI,each=3),1+c(-.2,.2,0,0,.2,-.2),col=2,lwd=2)
+  lines(rep(ctsmCI,each=3),2+c(-.2,.2,0,0,.2,-.2),col=4,lwd=2)
   # MLE
   points(fit$CI[2,Pname[i]],1,pch=23,bg=2,col=2,cex=1.5)
   points(ctsm['MLE',Pname[i]],2,pch=23,bg=4,col=4,cex=1.5)
@@ -268,17 +261,19 @@ for(i in 1:length(Pname)) {
 \label{fig:fig1}
 \end{figure}
 
+\newpage
 
 \subsection{State estimates}
 
 The state estimates in PSM and CTSM should also be equal. This is
-expected to be the case for the state and state covariace one-step
+expected to be the case for the state and state covariance one-step
 predictions since the likelihood function is evaluated
 based on these.
 
 The smoothed state estimate is the optimal state estimate where all
 data is used at each time point. To compare these a smoothed state
-estimate is generated in CTSM and loaded into R. 
+estimate is generated in CTSM and loaded into R in the variable
+CTSMSmooth. The two first rows of this variable are shown below.
 
 <<CTSMsmooth,echo=FALSE>>=
 
@@ -292,48 +287,52 @@ CTSMFilter = read.table("BioReactorCTSMFilter.csv",sep=";",
   col.names=c("Time",nameXf,paste('SD',nameXf)))
 CTSMSmooth = read.table("BioReactorCTSMSmooth.csv",sep=";",
   col.names=c("Time",nameXs,paste('SD',nameXs)))
-       
+@
+
+<<CTSMsmooth2>>=
+CTSMSmooth[1:2,]
 @
 
 The state estimates are then created in PSM using the command shown below.
 
 <<PSMsmooth>>=
 #if(FALSE)
-  sm1 <- PSM.smooth(MyModel,list(Data),ctsmTHETA,subs=10)[[1]]
+  sm1 <- PSM.smooth(MyModel,list(Data),ctsmTHETA)[[1]]
        
-@
-<<PCTdeviation,echo=FALSE>>=
-maxdevpct <- 0
-for(i in 1:3) {
-  idx <- seq(1,1101,by=11)
-  pctDEVIATION <- (sm1$Xs[i,idx]-CTSMSmooth[,i+1])/sm1$Xs[i,idx]*100
-  maxdevpct <- max(maxdevpct,pctDEVIATION)
-}
-maxdevpct <- round(maxdevpct,4)
 @ 
 
 The state estimates from PSM and CTSM are compared in Figure
 \ref{fig:fig2}. Based on a visual inspection these can be seen to be
-very alike. A numerical analysis shows that they differ at most
-\Sexpr{maxdevpct}\%.
+very alike. 
  
 \begin{figure}[hptb]
 \begin{center}
-<<label=figure2,fig=TRUE,echo=FALSE>>=
-par(mfrow=c(3,1))
+<<label=figure2,fig=TRUE,width=4,height=4,echo=FALSE>>=
+par(mfrow=c(3,1),mar=c(3,2,1.5,0)+.1)
 for(i in 1:3) {
-  plot(sm1$Time,sm1$Xp[i,],type="l",col=2,xlab='Time',ylab=nameXp[i])
-  title(main=paste('State prediction est.',nameXp[i],' - PSM vs. CTSM'))
-  lines(CTSMPred[,'Time'],CTSMPred[,i+1],lty=2,lwd=2)
+  plot(sm1$Time,sm1$Xs[i,],type="l",col=2,xlab='Time',ylab=nameXs[i])
+  title(main=paste('State smooting estimate',nameXs[i]))
+  legend(x='topleft',  legend=c('PSM','CTSM'),lty=1:2,col=2:1,lwd=1:2)
+  lines(CTSMSmooth[,'Time'],CTSMSmooth[,i+1],lty=2,lwd=2)
 }
-
-
 @
 \end{center}
-\caption{Smoothed estimate of states.}
+\caption{Comparison of smoothed estimate of states. }
 \label{fig:fig2}
 \end{figure}
 
+An exact numerical analysis of the differences can also be performed
+as shown in the line below.
+
+
+
+<<PCTdeviation>>=
+(pct <- max(abs(t(CTSMSmooth[,2:4])-sm1$Xs)/sm1$Xs*100))
+@ 
+
+
+ As it can be seen the analysis shows that
+smoothed state estimates differ at most \Sexpr{round(pct,3)}\%.
 
 
 \small
