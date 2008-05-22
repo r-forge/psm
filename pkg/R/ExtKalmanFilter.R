@@ -139,7 +139,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
     S <- Model$S(u=Uk,time=Time[k],phi=phi)
 
     # Create tmp-variable to save computation
-    mattmp  <- Pp[,,k,drop=FALSE]%*%t.default(C)
+    mattmp  <- CutThirdDim(Pp[,,k,drop=FALSE])%*%t.default(C)
 
 
     # Uncertainty on Measurement.
@@ -152,7 +152,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
       # Update
       ######################
     
-      InvR    <- solve(R[ObsIndex,ObsIndex,k,drop=FALSE])
+      InvR    <- solve(CutThirdDim(R[ObsIndex,ObsIndex,k,drop=FALSE]))
     
       # Kalman gain
       KfGain[,ObsIndex,k] <- mattmp %*% t.default(E) %*% InvR
