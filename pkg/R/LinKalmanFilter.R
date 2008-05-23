@@ -32,7 +32,7 @@ function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
 #
 
 
-echo = FALSE
+  echo = FALSE
 
     # Print current value of phi .. Handy in minimizations.
   if(echo) cat("phi:" , paste(round(as.double(phi),2) , "\t"))
@@ -44,11 +44,9 @@ echo = FALSE
     # Check for INPUT and set it
   if(is.null(Data[["U"]])) { #check if U exists.
     ModelHasInput <- FALSE
-  }
-  else if ( any(is.na(Data[["U"]])) ) { #check if it contains any NA
+  }  else if ( any(is.na(Data[["U"]])) ) { #check if it contains any NA
     ModelHasInput <- FALSE
-  }
-  else {
+  }  else {
     ModelHasInput <- TRUE
   }
   U     <- if( !ModelHasInput) { NA } else { Data[["U"]] }
@@ -200,7 +198,7 @@ echo = FALSE
     }
     
     
-  }
+  } # Not Fast - Ie. singular or user chose R implementation
 
   
     # P0 CTSM MathGuide page 19 (1.118) and page 8 (1.49)

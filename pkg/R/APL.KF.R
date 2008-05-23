@@ -26,9 +26,9 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
   ifelse(is.null(OMEGA),dimEta <- 1, dimEta <- dim(OMEGA)[1])
 
   # Init
-  etaList <- matrix(0,nrow=dimEta,ncol=dimS)
+  etaList   <- matrix(0,nrow=dimEta,ncol=dimS)
   optimStat <- matrix(0,nrow=3,ncol=dimS)
-  LiPart <- matrix(0,nrow=1,ncol=dimS)
+  LiPart    <- matrix(0,nrow=1,ncol=dimS)
   
   if(GUIFlag>1) 
     starttime <- proc.time()[3]
@@ -38,6 +38,7 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
     if(GUIFlag>2)
       print(paste('Individual', i))
     if(!is.null(OMEGA)) {
+      # OMEGA has a value
       result <- APL.KF.individualloop(theta=theta,OMEGA=OMEGA,Model=Model,
                                       Data=Pop.Data[[i]],GUIFlag=GUIFlag,fast=fast,Linear) 
       LiPart[i] <- result$LiPart_i
@@ -45,15 +46,18 @@ function (THETA,Model,Pop.Data,LB=NULL,UB=NULL,GUIFlag=0,longOutput=FALSE,fast=T
       optimStat[,i] <- result$optimStat_i
     }
     else {
+      # OMEGA is NULL      
+      phi <- Model$h(eta=NULL,theta=theta,covar=Pop.Data[[i]]$covar) 
+
+      # Run Kalman Filter according to complexity    
       if(Linear) {
-        LiPart[i] <- LinKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]],fast=fast )
+        LiPart[i] <- LinKalmanFilter( phi=phi, Model=Model , Data=Pop.Data[[i]],fast=fast )
       } else {
-        LiPart[i] <- ExtKalmanFilter( phi=theta, Model=Model , Data=Pop.Data[[i]] )
+        LiPart[i] <- ExtKalmanFilter( phi=phi, Model=Model , Data=Pop.Data[[i]] )
       }
       etaList[,i] <- NaN
       optimStat[,i] <- NaN
-    }
-      
+    }      
   }
 
   # Boundary Penalty function

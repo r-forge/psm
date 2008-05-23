@@ -14,7 +14,7 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   
   FullOutput <- FALSE
   if( is.null(etaList)) {
-    apl <- APL.KF (THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,
+    apl <- APL.KF(THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,
                    longOutput=TRUE,Linear=Linear)
     etaList <- apl$etaList
     FullOutput <- TRUE
@@ -22,7 +22,6 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   
   OMEGA <- Model$ModelPar(THETA)$OMEGA
   theta <- Model$ModelPar(THETA)$theta
-  dimS <- length(Data)
   dimY <- dim(Data[[1]]$Y)[1]
   lkf = vector(mode="list",length=dimS)
   
@@ -33,11 +32,9 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     # Check for INPUT and set it
     if(is.null(Di[["U"]])) { #check if U exists.
       ModelHasInput <- FALSE
-    }
-    else if ( sum(is.na(Di[["U"]])) >=1 ) { #check if it contains any NA
+    } else if ( sum(is.na(Di[["U"]])) >=1 ) { #check if it contains any NA
       ModelHasInput <- FALSE
-    }
-    else {
+    } else {
       ModelHasInput <- TRUE
     }
     U <- if( !ModelHasInput) { NA } else { Di[["U"]] }
@@ -71,8 +68,10 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     if(!is.null(OMEGA)) {
       phi <- Model$h(etaList[,i],theta=theta,covar=Data[[i]]$covar)
     } else {
-      phi <- theta
-    }
+      # OMEGA IS NULL
+      phi <- Model$h( eta=NULL , theta=theta , covar=Data[[1]]$covar)
+    }    
+    
     if(Linear) {
       lkf[[i]] <- LinKalmanSmoother( phi=phi, Model=Model , Data=Di )
     } else {

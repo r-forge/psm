@@ -20,8 +20,10 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     #Get the ModelParameters
     tmp       <- Model$ModelPar(Par$Init)
     if( is.null(tmp$OMEGA) ) {
-      tmpPhi <- tmp$theta #phi=theta
+       # OMEGA IS NULL, but covariates can be present      
+        tmpPhi <- Model$h( eta=NULL , theta=tmp$theta , covar=Data[[1]]$covar)                
     } else {
+      # OMEGA is not null
       tmpDimEta <- dim(tmp$OMEGA)[1] 
       tmpPhi    <- Model$h( eta=rep(0, tmpDimEta) , theta=tmp$theta , covar=Data[[1]]$covar)
     }
@@ -69,8 +71,6 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
       controllist$parscale <- abs(Par$Init)+1e-3
   }
   
-
-
   switch( EXPR = optimizer,
     optim={
     if(trace>1)  cat( "Using Optimizer: \t optim\n")

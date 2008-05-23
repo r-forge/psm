@@ -52,8 +52,9 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     if(!is.null(OMEGA)) {
       phi <- Model$h(eta=eta[,i],theta=theta,covar=covarlist[[i]])
     }else {
-      phi <- theta
-    }
+      # OMEGA IS NULL
+      phi <- Model$h( eta=NULL , theta=theta , covar=covarlist[[i]])
+    }    
 
     SampleTime <- Tlist[[i]]
     len <- length(SampleTime)

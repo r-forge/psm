@@ -72,17 +72,18 @@ ModelCheck <- function(Model , Data , Par, DataHasY=TRUE) {
   
   # Calculate parameter phi
   Parlist <- Model$ModelPar(THETA=Par$Init)
-  if(!is.null(Parlist$OMEGA)) {
-    if( !( "h"   %in% names(Model)) ) {
+  
+  if( !( "h" %in% names(Model)) ) {
       print("Model is missing function h") ; return(list(ok=FALSE)) }
-    if(!is.function(Model$h)) {
-      print("Model object h is not a function"); return(list(ok=FALSE)) }
+
+  if(!is.null(Parlist$OMEGA)) {
     if(!is.matrix(Parlist$OMEGA)) {
       print("Model$OMEGA is not a matrix") ; return(list(ok=FALSE)) }
     dimEta <- nrow(Parlist$OMEGA)
     phi <- Model$h(eta=rep(0,dimEta) , theta=Parlist$theta ,covar=Data$covar)
   } else {
-    phi <- Parlist$theta
+    # OMEGA is NULL  
+      phi <- Model$h(eta=NULL,theta=Parlist$theta,covar=Data$covar)      
   }
 
   # Matrices
