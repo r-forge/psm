@@ -70,7 +70,5 @@ ModelCheck(Model, Data, Par,DataHasY=TRUE)
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{htest}        %Statistical Inference
-\keyword{models}       %Statistical Models
-\keyword{multivariate} %Multivariate Techniques
-\keyword{ts}           %Time Series
+\keyword{internal}
+

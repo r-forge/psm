@@ -199,7 +199,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 
 \seealso{
   \code{\link{PSM}}, \code{\link{PSM.smooth}},
-  \code{\link{PSM.simulate}}
+  \code{\link{PSM.simulate}}, \code{\link{PSM.template}}
 } 
 
 \examples{

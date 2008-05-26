@@ -52,7 +52,8 @@
 }
 \keyword{ package }
 \seealso{
-  \code{\link{PSM.estimate}}, \code{\link{PSM.smooth}}, \code{\link{PSM.simulate}} 
+  \code{\link{PSM.estimate}}, \code{\link{PSM.smooth}},
+  \code{\link{PSM.simulate}}, \code{\link{PSM.template}}
 }
 %\examples{
 %print("There are no examples.")

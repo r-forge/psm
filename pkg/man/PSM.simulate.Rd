@@ -95,7 +95,7 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
 \author{ Stig B. Mortensen and Søren Klim }
 
 \seealso{  \code{\link{PSM}}, \code{\link{PSM.estimate}},
-  \code{\link{PSM.smooth}}
+  \code{\link{PSM.smooth}}, \code{\link{PSM.template}}
 }
 
 \examples{
