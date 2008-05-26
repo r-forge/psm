@@ -8,21 +8,13 @@
   Mixed-effects models using Stochastic Differential Equations
   
   This package provides functions for estimation and simulation of
-  multivariate linear mixed-effects models using stochastic
-  differential equations. The setup allows for multidimensional input,
+  multivariate linear and non-linear mixed-effects models using stochastic
+  differential equations. The package allows for multidimensional input,
   specification of dosage regimen and is able to return smoothed
   estimates of model states.
 }
 
 \details{
-  \tabular{ll}{
-    Package: \tab PSM\cr
-    Name: \tab Population Stochastic Modelling\cr
-    Type: \tab Package\cr
-    Version: \tab 0.1\cr
-    Date: \tab 2007-11-23\cr
-    License: \tab GPL (>=2)\cr
-  }
   Function overview:
   
   \code{PSM.estimate}\cr
@@ -38,7 +30,7 @@
 
 \note{
   For further details please also read the package vignette pdf-document
-  by writing vignette("PSM",package="PSM") in R.
+  by writing vignette("PSM") in R.
 }
 
 \author{
@@ -53,6 +45,10 @@
   NLME models using stochastic differential equations: Application for
   estimation of insulin secretion rates. J Pharmacokinet Pharmacodyn
   (2007) 34:623-642.
+
+  Web:  \url{http://www.imm.dtu.dk/psm}
+  
+
 }
 \keyword{ package }
 \seealso{

@@ -3,9 +3,9 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Estimate population parameters}
 \description{
-  Estimates population parameters in a mixed effects model based on
-  stochastic differential equations by use of maximum likelihood and the
-  Kalman filter.
+  Estimates population parameters in a linear or non-linear mixed
+  effects model based on stochastic differential equations by use of
+  maximum likelihood and the Kalman filter.
 }
 \usage{
 PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",controllist=NULL,fast=TRUE,...)
@@ -17,7 +17,8 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 
     \describe{
       \item{\code{Matrices = function(phi)}}{
-	Defines the matrices \eqn{A}, \eqn{B}, \eqn{C} and \eqn{D} in
+	\emph{ONLY IN LINEAR MODELS.} Defines the matrices \eqn{A}, \eqn{B},
+	\eqn{C} and \eqn{D} in
 	the model equation. Must return a list of matrices named
 	\code{matA}, \code{matB}, \code{matC} and \code{matD}.
 	If there is no input, \code{matB} and \code{matD} may be omitted
@@ -25,23 +26,39 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	singular the option \code{fast} is set to \code{FALSE}, as
 	this is not supported in the compiled Fortran code.
       }
+      \item{\code{Functions}}{
+	\emph{ONLY IN NON-LINEAR MODELS.} A list containing the functions
+	\code{f(x,u,time,phi)}, \code{g(x,u,time,phi)},
+	\code{df(x,u,time,phi)} and \code{dg(x,u,time,phi)}. The functions \code{f}
+	and \code{g} defines the
+	system and \code{df}
+	and \code{dg} are the Jacobian matrices with first-order partial
+	derivatives for \code{f(x)} and \code{g(x)} which is needed to evaluate the model.
+      }
       \item{\code{X0 = function(Time, phi, U)}}{
 	Defines the model state at \code{Time[1]} before
 	update. \code{Time[1]} and \code{U[,1]} can be used in the
 	evaluation of X0. Must return a column matrix.
       }
-      \item{\code{SIG = function(phi)}}{
-	Defines the matrix \eqn{\sigma}{SIG} for the diffusion
+      \item{\code{SIG = function(phi)}}{ in linear models and \code{SIG
+	  = function(u,time,phi)} in non-linear models. It defines the
+	matrix \eqn{\sigma}{SIG} for the diffusion 
 	term. Returns a square matrix. 
       }
-      \item{\code{S = function(phi)}}{
-	Defines a covariance matrix for the observation noise. Returns a
+      \item{\code{S = function(phi)}}{ in linear models and \code{S =
+	  function(u,time,phi)} in non-linear models. It defines a
+	covariance matrix for the observation noise. Returns a 
 	square matrix. 
       }
       \item{\code{h = function(eta,theta,covar)}}{
 	Second stage model. Defines how random effects (\code{eta}) and
-	covariates (\code{covar}) affects the fixed effects parameters (\code{theta}).
-	Must return a list \code{phi} of individual parameters. 
+	covariates (\code{covar}) affects the fixed effects parameters
+	(\code{theta}). In models where \code{OMEGA=NULL} (no random-effects)
+	\code{h} must still be defined with the same argument list to
+	allow for covariates to affect theta, but the function \code{h}
+	is evaluated with \code{eta=NULL}.
+	Must return a list (or vector) \code{phi} of individual
+	parameters which is used as input argument in the other user-defined functions. 
       }
       \item{\code{ModelPar = function(THETA)}}{
 	Defines the population parameters to be optimized. Returns a
@@ -53,7 +70,8 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	  \item{\code{OMEGA}}{A square covariance matrix
 	    \eqn{\Omega}{OMEGA} for the random effects. If
 	    \code{OMEGA} is missing or \code{NULL} then no 2nd stage
-	    model is used and \code{phi} = \code{theta} }
+	    model is used. However, the function \code{h} must still be
+	    defined, see above. }
 	}
       }
       \item{\code{Dose}}{
@@ -131,14 +149,21 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 
 \details{
   The first stage model describing intra-individual variations is
-  defined as: 
+  for linear models defined as
 
-  \deqn{ dX = (AX + BU)dt + \sigma d\omega}{ dX = (A*X + B*U)dt + SIG*dw}
-  \deqn{ Y = CX + DU + e}{Y = C*X + D*U + e}
+  \deqn{ dx_t = (A(\phi_i)x_t + B(\phi_i)u_t)dt + \sigma(\phi_i) d\omega_t}{ dx
+    = (A(phi)*x + B(phi)*u)dt + SIG(phi)*dw} 
+  \deqn{ y_{ij} = C(\phi_i)x_{ij} + D(\phi_i)u_{ij} + e_{ij}}{y = C(phi)*x + D(phi)*u + e}
 
-  where \eqn{e \sim N(0,S)}{e ~ N(0,S)} and \eqn{\omega}{w} is a
-  standard Brownian motion. The matrices A, B, C, D, \eqn{\sigma}{SIG}
-  and S may depend on the individual parameters \eqn{\phi_i}{phi}. 
+  and for  non-linear models as
+
+  \deqn{ dx_t = f(x_t,u_t,t,\phi_i)dt + \sigma(u_t,t,\phi_i) d\omega_t}{
+    dx = f(x,u,t,phi)dt + SIG(u,t,phi)dw}
+  \deqn{y_{ij} = h(x_{ij},u_{ij},t_{ij},\phi_i) + e_{ij}}{y = h(x, u, t,
+    phi) + e}
+
+  where \eqn{e_{ij} \sim N(0,S(u_{ij},t_{ij},\phi_i))}{e ~ N(0,S(x, u, t))} and \eqn{\omega_t}{w} is a
+  standard Brownian motion. 
 
   The second stage model describing inter-individual variations is
   defined as:
@@ -146,7 +171,9 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
   \deqn{\phi_i = h(\eta_i,\theta,Z_i)}{phi = h(eta,theta,Z)}
 
   where \eqn{\eta_i \sim N(0,\Omega)}{eta ~ N(0,OMEGA)}, \eqn{\theta}
-  are the fixed effect parameters and \eqn{Z_i}{Z} are covariates for individual i.
+  are the fixed effect parameters and \eqn{Z_i}{Z} are covariates for
+  individual i. In a model without random-effects the function \eqn{h}
+  is only used to include possible covariates in the model.
   
 }
 \value{
@@ -165,7 +192,8 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
   by writing vignette("PSM",package="PSM") in R.
 }
 
-\references{ Please refer to the help page for \code{\link{PSM}}. }
+\references{ Please visit \url{http://www.imm.dtu.dk/psm} or refer to
+  the main help page for \code{\link{PSM}}. }
 
 \author{ Stig B. Mortensen and Søren Klim}
 
@@ -176,7 +204,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 
 \examples{
 cat("\nExamples are included in the package vignette.\n")
-vignette("PSM",package="PSM")
+vignette("PSM")
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

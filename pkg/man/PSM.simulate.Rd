@@ -52,7 +52,8 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
   
   The measurements are added an normal error term belonging to \eqn{N(0,S)}.
   
-  The function \verb+mvrnorm+ from the MASS pacakge is used to to generate random numbers fra multivariate normal distributions. 
+  The function \code{mvrnorm} from the MASS pacakge is used to to
+  generate random numbers fra multivariate normal distributions.  
 
 }
 \value{
@@ -85,10 +86,11 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
 
 \note{
   For further details please also read the package vignette pdf-document
-  by writing vignette("PSM",package="PSM") in R.
+  by writing vignette("PSM") in R.
 }
 
-\references{ Please refer to the help page for \code{\link{PSM}}. }
+\references{ Please visit \url{http://www.imm.dtu.dk/psm} or refer to
+  the help page for \code{\link{PSM}}. } 
 
 \author{ Stig B. Mortensen and Søren Klim }
 

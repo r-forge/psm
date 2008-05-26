@@ -9,7 +9,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
       break
     }
   }
-  if(!check$ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(paste("The supplied model, data and parameters did not pass model check."))
   Linear <- check$Linear
 
   if(trace>0)
