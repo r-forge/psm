@@ -26,7 +26,6 @@ Model definition, description and examples}
 \begin{center}
 \begin{tabular}{lp{6cm}}
 Package:& \Sexpr{foo[['Package']]}, version \Sexpr{foo[['Version']]}\\
-License:& \Sexpr{foo[['License']]}\\
 Built:  & \Sexpr{foo[['Built']]} \\
 URL:    & \Sexpr{foo[['URL']]} 
 \end{tabular}
@@ -41,12 +40,8 @@ URL:    & \Sexpr{foo[['URL']]}
 
 \Sexpr{foo[['Description']]}
 
-\subsection*{A work in progress}
-
-The current version of PSM includes only linear models, but it is
-planned also to include support for non-linear models at a later
-stage. Some of the most essential parts of the implentation, namely
-the Kalman filter, is run using compiled code written in Fortran,
+Some of the most essential parts of the implentation, namely
+the Kalman filter, is for linear models run using compiled code written in Fortran,
 which gives significant improvements in the parameter estimation times
 in R. However, otherwise this version is almost entirely created in
 \emph{R}, and estimation times are thus in no way comparrable
@@ -88,6 +83,13 @@ d\bs x_t & = & ( \bs A(\bs\phi_i) \bs x_t + \bs B(\bs\phi_i) \bs u_t)dt +\bs\sig
 \label{sssm2}
 \end{eqnarray}
 
+\noindent and for a general non-linear model as
+
+\begin{eqnarray}
+  d\bs x_t &=& \bs f(\bs x_t,\bs u_t,t,\bs\phi_i)dt + \bs\sigma(u_t,t,\phi_i) d\bs\omega_t \\
+  \bs y_{ij} &=& \bs h(\bs x_{ij},\bs u_{ij},t_{ij},\bs\phi_i) + \bs e_{ij}
+\end{eqnarray}
+
 \noindent where $t$ is the
 continuous time variable, the states of the model and the optional
 inputs  at time $t$ are denoted $\bs x_t$ and $\bs u_t$
@@ -98,7 +100,18 @@ multi-dimensional, and are in such cases thus represented by a vector
 at time $t_{ij}$. The individual model parameters are denoted
 $\bs\phi_i$. Measurements are assumed observed with a Gaussian white
 noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
-S(\bs\phi_i))$.  
+S(\bs\phi_i))$. For a non-linear model the covariance matrix may also
+depend on input and time, that is $S(\bs u_t, t, \bs\phi_i))$.
+
+In the evaluation of the non-linear model is nescessary to specify a
+Jacobian matrix function with first-order partial derivatives for $\bs
+f$ and $\bs h$. These functions are defined as
+
+\begin{equation}
+\frac{\partial \bs f}{\partial \bs x_t} ~~, ~~ \frac{\partial \bs h}{\partial \bs x_t}
+\end{equation}
+
+\noindent and must be given with the model specification. 
 
 The initial state of the model is given as a function of $t_1$,
 $\bs\phi_i$, and $u_{i1}$ and defines the model state at time $t_1$
@@ -180,6 +193,33 @@ Conditional Estimation (FOCE) method, in the same way as it is
 normally done in mixed effects models based on ordinary differential
 equations (ODEs). 
 
+
+\subsubsection*{Uncertainty estimates}
+
+PSM estimates the uncertainty for the parameter estimates based on the
+observed Fisher information.  The parameters to be
+estimated are donoted $\bs \Theta$ and the observed information is
+then defined as
+
+\begin{equation}
+  \bs j ( \bs\Theta ) = -
+  \frac{\partial^2}{\partial\bs\Theta\partial\bs\Theta^T} \log L
+  (\bs\Theta) = - \bs\nabla^2 \log L(\bs\Theta)
+\end{equation}
+
+which is equal to the Hessian matrix of the negative
+log-likelihood function. If the parameters maximizing the
+likelihood function are called $\hat{\bs\Theta}$ they will
+asymptotically have the distribution
+
+\begin{equation}
+  \hat{\bs\Theta} \sim N(\bs\Theta,\bs j ( \hat{\bs\Theta} )^{-1} ) \label{thetadist}
+\end{equation}
+
+This is used in PSM to provied a Wald 95\% confidence interval,
+standard error and correlation matrix for the estimates. The Hessian
+is evaluated using \verb+hessian+ in the \verb+numDeriv+ package.
+
 \subsubsection*{Comparison to NONMEM}
 
 The Nonmem software is a widely used tool for mixed effects modelling
@@ -197,12 +237,12 @@ for a number of models \cite{mortensen07}.
 \subsubsection*{Models with no random effects}
 
 A special case arises in models where no random effects are specified.
-This may be defined in PSM by setting \verb|OMEGA = NULL|. This
-greatly simplifies the likelihood function, as it is no longer
-necessary to integrate out the random effects. The likelihood
-function is thus reduced to a product of conditional probabilities of
-the observations. In the form of a log-likelihood function this may be
-written as
+This may be defined in PSM by setting \verb|OMEGA = NULL| in the
+\verb|ModelPar| function. This greatly simplifies the likelihood
+function, as it is no longer necessary to integrate out the random
+effects. The likelihood function is thus reduced to a product of
+conditional probabilities of the observations. In the form of a
+log-likelihood function this may be written as
 
 \begin{equation}
   - \log L(\bs \Theta) = - \sum_{i=1}^N \sum_{j=1}^{n_i} \log
@@ -228,11 +268,22 @@ circumvented by adding a very small value to the diagonal of $A$,
 at least in order to find the first rough parameter estimates.
 
 \newpage
+\section{User's guide to PSM}
+
+The function \verb+PSM.template+ helps to setup a new a model by
+making a model template script.
+
+Review the examples in the vignette. The R-code from the examples in
+the vignette is availble on the PSM homepage.
+
+
+
+\newpage
 \section{Examples}
 
 \begin{tabular}{llr}
-\ref{dose2comp} & Dosing in two-compartment model . . . . . . . . .& \pageref{dose2comp} \\
-\ref{isr} & Extraction of insulin secretion rate . . . . . . . . .& \pageref{isr} \\
+\ref{dose2comp} & Dosing in two-compartment model (Linear)  . . . .& \pageref{dose2comp} \\
+\ref{isr} & Extraction of insulin secretion rate (Linear)  . . . .& \pageref{isr} \\
 \end{tabular}
 
 \vspace{5mm}
@@ -337,7 +388,7 @@ Model.SimDose$S = function(phi) {
 }
 Model.SimDose$h = function(eta,theta,covar) {
   phi <- theta
-  phiV1i <- theta$V1*exp(eta[1])
+  phi$V1i <- theta$V1*exp(eta[1])
   phi
 }
 Model.SimDose$ModelPar = function(THETA){
@@ -532,46 +583,54 @@ can be defined in PSM as follows.
 
 <<ISR.ModelDefinition>>=
 k1 = 0.053; k2 = 0.051; ke = 0.062;
-Model.SimISR <- list(
-               Matrices = function(phi) {
-                 a1  <- phi[["a1"]]
-                 a2  <- phi[["a2"]]
-                 B  <- phi[["B"]]
-                 K  <- phi[["K"]]
-                 matA <- matrix( c(-(k1+ke) ,  k2 ,   1 ,   0,
-                                         k1 , -k2 ,   0 ,   0,
-                                          0 ,   0 , -a1 ,  a1,
-                                          0 ,   0 ,   0 , -a2),nrow=4,byrow=T)
-                 matB <- matrix( c(0 , 0   ,
-                                   0 , 0   ,
-                                   B , 0   ,
-                                   0 , a2*K),byrow=T,nrow=4)
-                 matC <- matrix(c(1,0,0,0),nrow=1)
-                 matD <- matrix(c(0,0),nrow=1)
-                 return(list(matA=matA,matB=matB,matC=matC,matD=matD))},
-               X0 = function(Time=NA,phi,U=NA) {
-                 C0 <- phi[["C0"]]
-                 tmp    <- C0
-                 tmp[2] <- C0*k1/k2
-                 tmp[3] <- C0*ke
-                 tmp[4] <- 0
-                 return(matrix(tmp,ncol=1) )} ,
-               SIG = function(phi) {
-                 return( diag( c(0,0,phi[["SIG33"]],0)) ) } ,
-               S = function(phi) {
-                 return( matrix(phi[["S"]])) } ,
-               h = function(eta,theta,covar) {
-                 phi <- theta
-                 phi[["B"]] <- theta[["B"]]*exp(eta[1])
-                 phi[["K"]] <- theta[["K"]]*exp(eta[2])
-                 phi[["C0"]] <- theta[["C0"]]*exp(eta[3])
-                 return(phi) } ,
-               ModelPar = function(THETA){
-                 return(list(theta=list(C0=900,S=8500,
-                               a1=THETA[1],a2=THETA[2],SIG33=THETA[3],
-                               K = THETA[4], B = THETA[5]),
-                             OMEGA=diag(c(.2,.2,.2))))}
-               )
+Model.SimISR <- list()
+Model.SimISR$Matrices = function(phi) {
+  a1  <- phi[["a1"]]
+  a2  <- phi[["a2"]]
+  B  <- phi[["B"]]
+  K  <- phi[["K"]]
+  matA <- matrix( c(-(k1+ke) ,  k2 ,   1 ,   0,
+                    k1 , -k2 ,   0 ,   0,
+                    0 ,   0 , -a1 ,  a1,
+                    0 ,   0 ,   0 , -a2),nrow=4,byrow=T)
+  matB <- matrix( c(0 , 0   ,
+                    0 , 0   ,
+                    B , 0   ,
+                    0 , a2*K),byrow=T,nrow=4)
+  matC <- matrix(c(1,0,0,0),nrow=1)
+  matD <- matrix(c(0,0),nrow=1)
+  list(matA=matA,matB=matB,matC=matC,matD=matD)
+}
+Model.SimISR$X0 = function(Time=NA,phi,U=NA) {
+  C0 <- phi[["C0"]]
+  tmp    <- C0
+  tmp[2] <- C0*k1/k2
+  tmp[3] <- C0*ke
+  tmp[4] <- 0
+  matrix(tmp,ncol=1) 
+}
+Model.SimISR$SIG = function(phi) {
+  diag( c(0,0,phi[["SIG33"]],0)) 
+}
+Model.SimISR$S = function(phi) {
+  return( matrix(phi[["S"]])) 
+} 
+Model.SimISR$h = function(eta,theta,covar) {
+  phi <- theta
+  phi[["B"]] <- theta[["B"]]*exp(eta[1])
+  phi[["K"]] <- theta[["K"]]*exp(eta[2])
+  phi[["C0"]] <- theta[["C0"]]*exp(eta[3])
+  return(phi) 
+}
+Model.SimISR$ModelPar = function(THETA){
+  list(theta=list(C0=900,S=8500,
+                a1=THETA[1],a2=THETA[2],
+                SIG33=THETA[3],
+                K = THETA[4], B = THETA[5]),
+              OMEGA=diag(c(.2,.2,.2))
+       )
+}
+
 @ 
 
 For this example two individuals will be simulated. They will both be
