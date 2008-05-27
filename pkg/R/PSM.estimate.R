@@ -111,7 +111,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
       names(THETA) <- THETAnames
       APL.KF(THETA,Model,Data,GUIFlag=GUIFlag)
     }
-    Hess <- hessian(APL.KF.wrapper,ParEstimate, method = "Richardson",
+    Hess <- hessian(tmpfun,ParEstimate, method = "Richardson",
                Model=Model,Data=Data,GUIFlag=trace,THETAnames=names(ctsmTHETA))
     COV <- solve(Hess)
     STD <- matrix(sqrt(diag(COV)),nrow=1)
