@@ -17,7 +17,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 
     \describe{
       \item{\code{Matrices = function(phi)}}{
-	\emph{ONLY IN LINEAR MODELS.} Defines the matrices \eqn{A}, \eqn{B},
+	\emph{Only in linear models.} Defines the matrices \eqn{A}, \eqn{B},
 	\eqn{C} and \eqn{D} in
 	the model equation. Must return a list of matrices named
 	\code{matA}, \code{matB}, \code{matC} and \code{matD}.
@@ -27,7 +27,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	this is not supported in the compiled Fortran code.
       }
       \item{\code{Functions}}{
-	\emph{ONLY IN NON-LINEAR MODELS.} A list containing the functions
+	\emph{Only in non-linear models.} A list containing the functions
 	\code{f(x,u,time,phi)}, \code{g(x,u,time,phi)},
 	\code{df(x,u,time,phi)} and \code{dg(x,u,time,phi)}. The functions \code{f}
 	and \code{g} defines the
@@ -122,29 +122,25 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
     }
   }
   \item{CI}{ Boolean. If true, the program estimates 95\% confidence
-    intervals based on the Hessian of the likelihood function. The
-    Hessian is estimated by the optimizer.
+    intervals, standard deviation and correlation matrix for the
+    parameter estimates based on the Hessian of the likelihood function. The
+    Hessian is estimated by \code{hessian} in the \code{numDeriv} package.
   }
   \item{trace}{ Non-negative integer. If positive, tracing
     information on the progress of the optimization is produced. Higher
     values produces more tracing information.
   }
   \item{optimizer}{ May be either \code{"optim"} or
-    \code{"nlm"}. Chooses between the native optimizers in R.}
-
-  \item{controllist}{ Controllist for the optimizer. Default in package
-    is:
-    \describe{
-      \item{\code{maxit}}{100}
-      \item{\code{abstol}}{1e-5}
-      \item{\code{trace}}{Set to trace as in argument}
-      \item{\code{REPORT}}{1}
-      }
+    \code{"nlm"}. Chooses between the native optimizers in R.
+  }
+  \item{controllist}{ Controllist passed to \code{"optim"}. As default
+    the max iteration limit is set to 100 and the remaining options are the same
+    as in \code{"optim"}. 
   }
   \item{fast}{  Boolean. Use compiled Fortran code for faster
     estimation.}
-
-  \item{...}{Further arguments to be passed to the chosen optimzer.}
+  \item{...}{Further arguments for control of \code{"nlm"} if chosen.
+  }
 }
 
 \details{
@@ -182,6 +178,8 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
   \item{NegLogL}{Value of the negative log-likelihood function at optimum.}
   \item{THETA}{Population parameters at optimum}
   \item{CI}{95\% confidence interval for the estimated parameters}
+  \item{STD}{Standard deviation for the estimated parameters}
+  \item{COR}{Correlation matrix for the estimated parameters}
   \item{opt}{Raw output from the optimizer}
   \item{sec}{Time for the estimation in seconds}
   

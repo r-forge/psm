@@ -76,47 +76,55 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     if(trace>1)  cat( "Using Optimizer: \t optim\n")
     out <- optim(par = Par$Init, fn = APL.KF ,
                  gr = APL.KF.gr, method = "BFGS",
-                 control = controllist, hessian = CI,
+                 control = controllist, hessian = FALSE,
                  Model=Model, Pop.Data=Data, LB=Par$LB, UB=Par$UB,
                  GUIFlag=trace,fast=fast,Linear=Linear,...)
     NegLogL     <- out$value
     ParEstimate <- out$par
-    if(CI) Hess <- out$hessian
+    #if(CI) Hess <- out$hessian
     
     },
     nlm={ 
       if(trace>1)  cat( "Using Optimizer: \t nlm\n")
 
       # typsize=Par$Init,stepmax=(.1*abs(Par$Init))+1e-3,          
-      out <- nlm(f=APL.KF, p=Par$Init, hessian=CI, print.level=trace,
+      out <- nlm(f=APL.KF, p=Par$Init, hessian=FALSE, print.level=trace,
                  Model=Model, Pop.Data=Data, LB=Par$LB,
                  UB=Par$UB, GUIFlag=trace,fast=fast,Linear=Linear,...)
                  
         NegLogL     <- out$minimum 
         ParEstimate <- out$estimate
-        if(CI) Hess <- out$hessian
+        # if(CI) Hess <- out$hessian
     },
     "Otherwise" = {       stop( "Optimizer not recognized")     } 
     )
     
-    
+  if(!is.null(Par$LB)) {
+    ParEstimate = invlogit(ParEstimate,Par$LB,Par$UB)
+  }
   
   ci <- CI
-  if(CI) { 
+  STD <- COR <- FALSE
+  if(CI) {
+    if(trace) cat( "Evaluating Hessian...\n")
+    tmpfun <- function(THETA,Model,Data,THETAnames,GUIFlag) {
+      names(THETA) <- THETAnames
+      APL.KF(THETA,Model,Data,GUIFlag=GUIFlag)
+    }
+    Hess <- hessian(APL.KF.wrapper,ParEstimate, method = "Richardson",
+               Model=Model,Data=Data,GUIFlag=trace,THETAnames=names(ctsmTHETA))
+    COV <- solve(Hess)
+    STD <- matrix(sqrt(diag(COV)),nrow=1)
+    STDmat <- t(STD)%*%STD
+    COR <- 1/STDmat*COV
+    colnames(STD) <- colnames(COR) <- rownames(COR) <- names(Par$Init)
+
     ci <- matrix(c(
                    out$par-1.96*sqrt(diag(solve(Hess))),
                    out$par,
                    out$par+1.96*sqrt(diag(solve(Hess)))),nrow=3,byrow=TRUE)
     rownames(ci) <- c("Lower CI95","MLE","Upper CI95")
     colnames(ci) <- names(Par$Init)
-  } 
-  
-  if(!is.null(Par$LB)) {
-    ParEstimate = invlogit(ParEstimate,Par$LB,Par$UB)
-    if(CI)
-      for (i in 1:3) {
-        ci[i,] <- invlogit(ci[i,],Par$LB,Par$UB)
-      }
   } 
   
   totaltime = proc.time()[3]-T0
@@ -127,7 +135,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     print(tid,quote=FALSE)
   }
 
-  list(NegLogL = NegLogL, THETA = ParEstimate, CI = ci, opt = out, sec = totaltime)
+  list(NegLogL = NegLogL, THETA = ParEstimate, CI = ci, STD=STD, COR=COR, opt = out, sec = totaltime)
 
 }
 
