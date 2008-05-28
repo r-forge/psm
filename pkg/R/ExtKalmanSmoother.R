@@ -180,13 +180,10 @@ function(phi, Model, Data) {
       # Check if dosing is occuring at this timepoint.
       if( any(Time[tau-1]==Model$Dose$Time)) {
         idxD = which(Time[tau-1]==Model$Dose$Time)
-        tmp <- solve(tmpP)%*%sPred[,tau-1,drop=FALSE] #convert to sPred to normal state
         # Multiple dosing a timepoint[k]
-        for(cmt in 1:length(idxD)) {
-          tmp[Model$Dose$State[idxD[cmt]],1] <-
-            tmp[Model$Dose$State[idxD[cmt]],1] - Model$Dose$Amount[idxD[cmt]]
-        }
-        sPred[,tau-1] <- tmpP%*%tmp #convert back
+        for(cmt in 1:length(idxD)) 
+          sPred[,tau-1] <- sPred[,tau-1] -
+            tmpP[,Model$Dose$State[idxD[cmt]]]*Model$Dose$Amount[idxD[cmt]]
       }
     }
     
