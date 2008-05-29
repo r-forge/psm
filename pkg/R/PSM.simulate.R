@@ -255,7 +255,7 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
         # observation
         Y[,k] <- g(x=X[,k,drop=FALSE],u=Uk,time=tseq[k],phi=phi)        
         # Gaussian Noise
-        ObsErr <- t.default(mvrnorm(n=dimX , mu=rep(0,dimY), Sigma=Model$S(u=Uk,time=tseq[k],phi=phi)))
+        ObsErr <- t.default(mvrnorm(n=dimY , mu=rep(0,dimY), Sigma=Model$S(u=Uk,time=tseq[k],phi=phi)))
         # Obs + Noise
         Y[,k] <- Y[,k] + ObsErr
         

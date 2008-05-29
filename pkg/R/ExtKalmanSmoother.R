@@ -47,7 +47,7 @@ function(phi, Model, Data) {
 
   tmpXb <- sPred
   
-  matXX <- matrix(0,ncol=dimX,nrow=dimX)
+  matXX <- matrix(NA,ncol=dimX,nrow=dimX)
   
   #Initial Conditions
   #Both S and Pback starts as Zero pr. defenition
@@ -119,12 +119,12 @@ function(phi, Model, Data) {
     
     # Calculate variables
     # Formal (1.179)
-    Ck <- dg(x=o$Xp[,tau,drop=FALSE],u=Uk,time=Time(tau),phi=phi)
-    S <- Model$S(u=Uk,time=Time(tau),phi=phi)
+    Ck <- dg(x=o$Xp[,tau,drop=FALSE],u=Uk,time=Time[tau],phi=phi)
+    S <- Model$S(u=Uk,time=Time[tau],phi=phi)
 
     if(!any(is.na(Y[,tau,drop=FALSE]))) { #skip update if Y_k contains any NA
       # Innovations
-      e <- Y[,tau,drop=FALSE] - g(x=o$Xp[,tau,drop=FALSE],u=Uk,time=Time(tau),phi=phi)
+      e <- Y[,tau,drop=FALSE] - g(x=o$Xp[,tau,drop=FALSE],u=Uk,time=Time[tau],phi=phi)
 
       # Updates
       # Formel (1.174) og (1.175)
