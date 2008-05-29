@@ -7,7 +7,7 @@
   Creates a template with R-syntax to help setup a model in PSM. 
 }
 \usage{
-  PSM.template(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,file=)
+  PSM.template(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,file="")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

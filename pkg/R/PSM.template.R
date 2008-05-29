@@ -32,6 +32,7 @@ PSM.template <- function(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,fi
   }
 
   str <- paste(str,"MyModel$h = function(eta,theta,covar) {",sep="\n")
+  str <- paste(str,"  phi <- theta",sep="\n")
   str <- paste(str,"  phi",sep="\n")
   str <- paste(str,"}",sep="\n")
 
