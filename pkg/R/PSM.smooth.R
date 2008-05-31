@@ -12,16 +12,17 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   if(!check$ok) stop(paste("Input did not pass model check."))
   Linear <- check$Linear
   
+  OMEGA <- Model$ModelPar(THETA)$OMEGA
+  theta <- Model$ModelPar(THETA)$theta
+
   FullOutput <- FALSE
-  if( is.null(etaList)) {
+  if( is.null(etaList) && !is.null(OMEGA)) {
     apl <- APL.KF(THETA=THETA,Model=Model,Pop.Data=Data,GUIFlag=trace,
                    longOutput=TRUE,Linear=Linear)
     etaList <- apl$etaList
     FullOutput <- TRUE
   }
   
-  OMEGA <- Model$ModelPar(THETA)$OMEGA
-  theta <- Model$ModelPar(THETA)$theta
   dimY <- dim(Data[[1]]$Y)[1]
   lkf = vector(mode="list",length=dimS)
   

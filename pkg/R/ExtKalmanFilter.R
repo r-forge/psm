@@ -165,9 +165,8 @@ function( phi, Model, Data, outputInternals=FALSE) {
 
       # Add contribution to negLogLike
       tmpR       <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=FALSE])
-      tmp        <-  determinant.matrix(2*pi*tmpR)
-      det2piR    <-  tmp$sign*exp(tmp$modulus)
-      negLogLike <- negLogLike + .5*( log(det2piR) + t.default(e) %*% InvR %*% e)
+      logdet2piR <-  determinant.matrix(2*pi*tmpR)$modulus
+      negLogLike <- negLogLike + .5*( logdet2piR + t.default(e) %*% InvR %*% e)
 
     } else {
       # No observations, update not available.

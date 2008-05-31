@@ -222,7 +222,9 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
 
       # End Linear Simulation
     } else {
+      #########################
       # Non-Linear simulation
+      #########################
 
       # Extract functions
       f  <- Model$Functions$f
@@ -261,9 +263,14 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
         
         # Add dose after measurement is taken at tseq[k]
         if(ModelHasDose) {
-          idxD = which(tseq[k]==Model$Dose$Time)
-          if(length(idxD)==1) {
-            X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+           # Check if dosing is occuring at this timepoint.
+          if( any(tseq[k]==Model$Dose$Time)) {
+            idxD = which(tseq[k]==Model$Dose$Time)
+            # Multiple dosing a timepoint[k]
+            for(cmt in 1:length(idxD)) {
+              X[Model$Dose$State[idxD[cmt]],k] <-
+                X[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
+            }
           }
         }
         

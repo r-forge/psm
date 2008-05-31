@@ -308,9 +308,9 @@ function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
   
           # Add contribution to negLogLike: CTSM page 3. (1.14)
           tmpR        <-  CutThirdDim(R[ObsIndex,ObsIndex,k,drop=FALSE])
-          tmp        <-  determinant.matrix(tmpR)
+          logdetR     <-  determinant.matrix(tmpR)$modulus
      
-          negLogLike  <- negLogLike + .5*( log(tmp$sign*exp(tmp$modulus)) + t.default(e)%*%solve.default(tmpR)%*%e)
+          negLogLike  <- negLogLike + .5*(logdetR + t.default(e)%*%solve.default(tmpR)%*%e)
         } else { #no observations, update not available.
           Xf[,k] <- Xp[,k]
           Pf[,,k] <- Pp[,,k]
