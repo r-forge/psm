@@ -1,15 +1,16 @@
 `PSM.estimate` <-
-function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fast=TRUE,...) {
+function(Model,Data,Par,CI=FALSE,trace=0, control=NULL, fast=TRUE) {
 
   dimS <- length(Data)
   for(i in 1:dimS) {
     check <- ModelCheck(Model,Data[[i]],Par)
     if(!check$ok) {
-      print(paste("Error occured using data for individual",i))
+      errmsg <- check$errmsg
+      errmsg <- paste(errmsg, "- the error occured using data for individual", i)
       break
     }
   }
-  if(!check$ok) stop(paste("The supplied model, data and parameters did not pass model check."))
+  if(!check$ok) stop(errmsg)
   Linear <- check$Linear
 
   if(trace>0)
@@ -62,49 +63,32 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     if(trace>1) cat("Using logit transformation of parameters \n")
     Par$Init <- logit(Par$Init,Par$LB,Par$UB) }
 
-  # controllist
-  if( is.null(controllist)) {
-    # The user did not supply a controllist for the optimizer
-    controllist <- list(maxit=100, trace=trace, REPORT=1 )
+  # control
+  if( is.null(control)) {
+    # The user did not supply a control for the optimizer
+    control <- list(maxit=100, trace=trace, REPORT=1 )
     # put parameters on similar scale if bounds are missing
     if(is.null(Par$LB))
-      controllist$parscale <- abs(Par$Init)+1e-3
+      control$parscale <- abs(Par$Init)+1e-3
   }
   
-  switch( EXPR = optimizer,
-    optim={
-    if(trace>1)  cat( "Using Optimizer: \t optim\n")
-    out <- optim(par = Par$Init, fn = APL.KF ,
-                 gr = APL.KF.gr, method = "BFGS",
-                 control = controllist, hessian = FALSE,
-                 Model=Model, Pop.Data=Data, LB=Par$LB, UB=Par$UB,
-                 GUIFlag=trace,fast=fast,Linear=Linear,...)
-    NegLogL     <- out$value
-    ParEstimate <- out$par
-    #if(CI) Hess <- out$hessian
+  if(trace>1)  cat( "Using Optimizer: \t optim\n")
+  out <- optim(par = Par$Init, fn = APL.KF ,
+               gr = APL.KF.gr, method = "BFGS",
+               control = control, hessian = FALSE,
+               Model=Model, Pop.Data=Data, LB=Par$LB, UB=Par$UB,
+               GUIFlag=trace,fast=fast,Linear=Linear)
+  NegLogL     <- out$value
+  ParEstimate <- out$par
+  #if(CI) Hess <- out$hessian
     
-    },
-    nlm={ 
-      if(trace>1)  cat( "Using Optimizer: \t nlm\n")
-
-      # typsize=Par$Init,stepmax=(.1*abs(Par$Init))+1e-3,          
-      out <- nlm(f=APL.KF, p=Par$Init, hessian=FALSE, print.level=trace,
-                 Model=Model, Pop.Data=Data, LB=Par$LB,
-                 UB=Par$UB, GUIFlag=trace,fast=fast,Linear=Linear,...)
-                 
-        NegLogL     <- out$minimum 
-        ParEstimate <- out$estimate
-        # if(CI) Hess <- out$hessian
-    },
-    "Otherwise" = {       stop( "Optimizer not recognized")     } 
-    )
     
   if(!is.null(Par$LB)) {
     ParEstimate = invlogit(ParEstimate,Par$LB,Par$UB)
   }
   
   ci <- CI
-  STD <- COR <- FALSE
+  SD <- COR <- FALSE
   if(CI) {
     if(trace) cat( "Evaluating Hessian...\n")
     tmpfun <- function(THETA,Model,Data,THETAnames,GUIFlag) {
@@ -114,10 +98,10 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     Hess <- hessian(tmpfun,ParEstimate, method = "Richardson",
                Model=Model,Data=Data,GUIFlag=trace,THETAnames=names(Par$Init))
     COV <- solve(Hess)
-    STD <- matrix(sqrt(diag(COV)),nrow=1)
-    STDmat <- t(STD)%*%STD
-    COR <- 1/STDmat*COV
-    colnames(STD) <- colnames(COR) <- rownames(COR) <- names(Par$Init)
+    SD <- matrix(sqrt(diag(COV)),nrow=1)
+    SDmat <- t(SD)%*%SD
+    COR <- 1/SDmat*COV
+    colnames(SD) <- colnames(COR) <- rownames(COR) <- names(Par$Init)
 
     ci <- matrix(c(
                    ParEstimate-1.96*sqrt(diag(solve(Hess))),
@@ -135,7 +119,7 @@ function(Model,Data,Par,CI=FALSE,trace=0,optimizer="optim", controllist=NULL,fas
     print(tid,quote=FALSE)
   }
 
-  list(NegLogL = NegLogL, THETA = ParEstimate, CI = ci, STD=STD, COR=COR, opt = out, sec = totaltime)
+  list(NegLogL = NegLogL, THETA = ParEstimate, CI = ci, SD=SD, COR=COR, sec = totaltime, opt = out)
 
 }
 

@@ -1,4 +1,4 @@
-PSM.template <- function(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,file="") {
+PSM.template <- function(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,file="") {
   
   str <- "MyModel <- vector(mode=\"list\")"
   
@@ -62,8 +62,6 @@ PSM.template <- function(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,fi
     str <- paste(str,",\n       OMEGA=matrix(c(  ), nrow=",dimEta,", ncol=",dimEta,")\n       ",sep="")
   str <- paste(str,")\n}",sep="")
 
-  if(Dose)
-    str <- paste(str,"MyModel$Dose = list(Time=c(  ), State=c(  ), Amount=c(  ))",sep="\n")
 
   str <- paste("\n",str,"\n\n",sep="\n")
 

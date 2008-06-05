@@ -71,10 +71,13 @@ PSM.simulate(Model, Data, THETA, deltaTime, longX=TRUE)
     Time points for measurements
   }
   \item{U}{
-    Input vector used in simulation
+    Input vector used in the simulation
   }
   \item{eta}{
     The random effects used in the simulation
+  }
+  \item{Dose}{
+    The dose list used in the simulation
   }
   \item{longX}{
     Entire outcome of simulated states

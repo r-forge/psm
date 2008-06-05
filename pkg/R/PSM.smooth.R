@@ -5,11 +5,12 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
   for(i in 1:dimS) {
     check <- ModelCheck(Model,Data[[i]],list(Init=THETA))
     if(!check$ok) {
-      print(paste("Error occured using data for individual",i))
+      errmsg <- check$errmsg
+      errmsg <- paste(errmsg, "- the error occured using data for individual", i)
       break
     }
   }
-  if(!check$ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(errmsg)
   Linear <- check$Linear
   
   OMEGA <- Model$ModelPar(THETA)$OMEGA
@@ -71,7 +72,8 @@ function(Model,Data,THETA,subsample=0,trace=0,etaList=NULL) {
     } else {
       # OMEGA IS NULL
       phi <- Model$h( eta=NULL , theta=theta , covar=Data[[1]]$covar)
-    }    
+    }
+    Di$Dose <- Data[[i]]$Dose
     
     if(Linear) {
       lkf[[i]] <- LinKalmanSmoother( phi=phi, Model=Model , Data=Di )

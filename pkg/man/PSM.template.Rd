@@ -7,7 +7,7 @@
   Creates a template with R-syntax to help setup a model in PSM. 
 }
 \usage{
-  PSM.template(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,Dose=TRUE,file="")
+  PSM.template(Linear=FALSE,dimX=2,dimY=3,dimU=4,dimEta=5,file="")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -25,9 +25,6 @@ Number of input variables (can be zero).
   }
   \item{dimEta}{
 Number of random effects (can be zero).
-  }
-  \item{Dose}{
-Boolean. Used to include dosage regimen.
   }
   \item{file}{
   A character string naming the file to print
@@ -57,10 +54,10 @@ Boolean. Used to include dosage regimen.
 
 \examples{
 # Linear model with input, random effects and dose
-PSM.template(Linear=TRUE,dimX=1,dimY=2,dimU=3,dimEta=4,Dose=TRUE)
+PSM.template(Linear=TRUE,dimX=1,dimY=2,dimU=3,dimEta=4)
 
 # Non-linear model without input, random effects and dose
-PSM.template(Linear=FALSE,dimX=1,dimY=2,dimU=0,dimEta=0,Dose=FALSE)
+PSM.template(Linear=FALSE,dimX=1,dimY=2,dimU=0,dimEta=0)
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

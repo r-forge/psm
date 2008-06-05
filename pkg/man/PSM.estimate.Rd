@@ -8,7 +8,7 @@
   maximum likelihood and the Kalman filter.
 }
 \usage{
-PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",controllist=NULL,fast=TRUE,...)
+PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, control=NULL, fast=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -74,19 +74,6 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	    defined, see above. }
 	}
       }
-      \item{\code{Dose}}{
-	A list containing the 3 elements listed below. If the element
-	\code{Dose} is missing or \code{NULL}, no dose is assumed. 
-	\describe{
-	  \item{\code{Time}}{ A vector of timepoints for the dosing. Each must
-	    coinside with a measurement time. Remember to insert a
-	    missing measurement in \code{Data$Y} if a corresponding
-	    timepoint is not present. Dose is considered added to the system
-	    just after the measurement.}
-	  \item{\code{State}}{ A vector with indexes of the state for dosing.}
-	  \item{\code{Amount}}{ A vector of amounts to be added.}
-	}
-      }
     }
   }
   \item{Data}{An unnamed list where each element contains
@@ -107,6 +94,20 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
 	contain any \code{NA}. If \code{U} is ommitted, the model is 
 	assumed to have no input and \code{matB} and \code{matD} need no
 	to be specified.}
+      
+      \item{\code{Dose}}{
+	A list containing the 3 elements listed below. If the element
+	\code{Dose} is missing or \code{NULL}, no dose is assumed. 
+	\describe{
+	  \item{\code{Time}}{ A vector of timepoints for the dosing. Each must
+	    coinside with a measurement time. Remember to insert a
+	    missing measurement in \code{Y} if a corresponding
+	    timepoint is not present. Dose is considered added to the system
+	    just after the measurement.}
+	  \item{\code{State}}{ A vector with indexes of the state for dosing.}
+	  \item{\code{Amount}}{ A vector of amounts to be added.}
+	}
+      }
     }
   }
   \item{Par}{A list containing the following elements:
@@ -130,16 +131,13 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
     information on the progress of the optimization is produced. Higher
     values produces more tracing information.
   }
-  \item{optimizer}{ May be either \code{"optim"} or
-    \code{"nlm"}. Chooses between the native optimizers in R.
-  }
-  \item{controllist}{ Controllist passed to \code{"optim"}. As default
-    the max iteration limit is set to 100 and the remaining options are the same
+  \item{control}{ The list is passed to \code{"optim"} to control the
+    settings for the optimization. As default the max iteration limit is
+    set to 100 and the remaining options are the same
     as in \code{"optim"}. 
   }
   \item{fast}{  Boolean. Use compiled Fortran code for faster
-    estimation.}
-  \item{...}{Further arguments for control of \code{"nlm"} if chosen.
+    estimation.
   }
 }
 
@@ -178,11 +176,10 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, optimizer = "optim",contro
   \item{NegLogL}{Value of the negative log-likelihood function at optimum.}
   \item{THETA}{Population parameters at optimum}
   \item{CI}{95\% confidence interval for the estimated parameters}
-  \item{STD}{Standard deviation for the estimated parameters}
+  \item{SD}{Standard deviation for the estimated parameters}
   \item{COR}{Correlation matrix for the estimated parameters}
-  \item{opt}{Raw output from the optimizer}
   \item{sec}{Time for the estimation in seconds}
-  
+  \item{opt}{Raw output from \code{optim}}
 }
 
 \note{

@@ -12,13 +12,12 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
   for(i in 1:dimS) {
     check <- ModelCheck(Model,Data[[i]],list(Init=THETA),DataHasY=FALSE)
     if(!check$ok) {
-      print(paste("Error occured using data for individual",i))
+      errmsg <- check$errmsg
+      errmsg <- paste(errmsg, "- the error occured using data for individual", i)
       break
     }
   }
-  
-  
-  if(!check$ok) stop(paste("Input did not pass model check."))
+  if(!check$ok) stop(errmsg)
 
   Linear = check$Linear
   # if(!Linear) stop('Simulation only implemented for linear models.')
@@ -88,7 +87,7 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
     }
 
     # Create logical depending on Dose    
-    ModelHasDose <- "Dose" %in% names(Model)
+    DataHasDose <- "Dose" %in% names(Data[[i]])
 
     # Initial States
     InitialState  <- Model$X0(Time=t[1], phi=phi, U = Ustart)
@@ -149,10 +148,10 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
         }
       
         # Add dose after measurement is taken at Time[k]
-        if(ModelHasDose) {
-          idxD = which(tseq[k]==Model$Dose$Time)
+        if(DataHasDose) {
+          idxD = which(tseq[k]==Data[[i]]$Dose$Time)
           if(length(idxD)==1) {
-            X[Model$Dose$State[idxD],k] <- X[Model$Dose$State[idxD],k] + Model$Dose$Amount[idxD]
+            X[Data[[i]]$Dose$State[idxD],k] <- X[Data[[i]]$Dose$State[idxD],k] + Data[[i]]$Dose$Amount[idxD]
           }
         }
       
@@ -262,14 +261,14 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
         Y[,k] <- Y[,k] + ObsErr
         
         # Add dose after measurement is taken at tseq[k]
-        if(ModelHasDose) {
+        if(DataHasDose) {
            # Check if dosing is occuring at this timepoint.
-          if( any(tseq[k]==Model$Dose$Time)) {
-            idxD = which(tseq[k]==Model$Dose$Time)
+          if( any(tseq[k]==Data[[i]]$Dose$Time)) {
+            idxD = which(tseq[k]==Data[[i]]$Dose$Time)
             # Multiple dosing a timepoint[k]
             for(cmt in 1:length(idxD)) {
-              X[Model$Dose$State[idxD[cmt]],k] <-
-                X[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
+              X[Data[[i]]$Dose$State[idxD[cmt]],k] <-
+                X[Data[[i]]$Dose$State[idxD[cmt]],k] + Data[[i]]$Dose$Amount[idxD[cmt]]
             }
           }
         }
@@ -293,6 +292,9 @@ function(Model, Data, THETA, deltaTime, longX=TRUE) {
 
     Result[[i]] <- list(X=matrix(X[,idx],nrow=dimX),Y=matrix(Y[,idx],nrow=dimY),
                         Time=SampleTime,U=Ulist[[i]],eta=eta[,i])
+    if(DataHasDose) {
+      Result[[i]]$Dose <- Data[[i]]$Dose
+    }
     if(longX) {
       Result[[i]]$longX <- X
       Result[[i]]$longTime <- tseq

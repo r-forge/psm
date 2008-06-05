@@ -27,7 +27,7 @@ function(phi, Model, Data) {
     Uk <- NA
   } 
 
-  ModelHasDose <- "Dose" %in% names(Model)
+  DataHasDose <- "Dose" %in% names(Data)
 
   f  <- Model$Functions$f
   df <- Model$Functions$df
@@ -176,14 +176,14 @@ function(phi, Model, Data) {
 
     
  
-    if(ModelHasDose ) {
+    if(DataHasDose ) {
       # Check if dosing is occuring at this timepoint.
-      if( any(Time[tau-1]==Model$Dose$Time)) {
-        idxD = which(Time[tau-1]==Model$Dose$Time)
+      if( any(Time[tau-1]==Data$Dose$Time)) {
+        idxD = which(Time[tau-1]==Data$Dose$Time)
         # Multiple dosing a timepoint[k]
-        for(cmt in 1:length(idxD)) 
+        for(cmt in 1:length(idxD))
           sPred[,tau-1] <- sPred[,tau-1] -
-            tmpP[,Model$Dose$State[idxD[cmt]]]*Model$Dose$Amount[idxD[cmt]]
+            tmpP[,Data$Dose$State[idxD[cmt]]]*Data$Dose$Amount[idxD[cmt]]
       }
     }
     

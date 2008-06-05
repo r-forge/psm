@@ -56,7 +56,7 @@ function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
       Uk <- U[,1,drop=FALSE]
     } else {Uk <- NA}
 
-    ModelHasDose <- "Dose" %in% names(Model)
+    DataHasDose <- "Dose" %in% names(Data)
      
     tmp   <- Model$Matrices(phi=phi)
     matA  <- tmp$matA
@@ -112,12 +112,12 @@ function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
     }
     
     # DOSING
-    if(ModelHasDose) {
+    if(DataHasDose) {
       if(echo) {cat("USING ORIGINAL DOSING SCHEME \n")}
-      DoseN     <- length(Model$Dose$Time)
-      DoseTime  <- Model$Dose$Time
-      DoseState <- Model$Dose$State
-      DoseAmt   <- Model$Dose$Amount
+      DoseN     <- length(Data$Dose$Time)
+      DoseTime  <- Data$Dose$Time
+      DoseState <- Data$Dose$State
+      DoseAmt   <- Data$Dose$Amount
     } else {
       # Create Pseudo Dose with Amount 0
       if(echo) {cat("CREATING PSEUDO DOSE \n")}
@@ -317,14 +317,14 @@ function( phi , Model , Data , echo=FALSE, outputInternals=FALSE,fast=TRUE) {
         }
 
         
-        if(ModelHasDose) {
+        if(DataHasDose) {
           # Check if dosing is occuring at this timepoint.
-          if( any(Time[k]==Model$Dose$Time)) {
-            if(echo) cat("Dosing...\n")          
-            idxD = which(Time[k]==Model$Dose$Time)
+          if( any(Time[k]==Data$Dose$Time)) {
+            if(echo) cat("Dosing...\n")
+            idxD = which(Time[k]==Data$Dose$Time)
             # Multiple dosing a timepoint[k]
             for(cmt in 1:length(idxD)) {
-              Xf[Model$Dose$State[idxD[cmt]],k] <- Xf[Model$Dose$State[idxD[cmt]],k] + Model$Dose$Amount[idxD[cmt]]
+              Xf[Data$Dose$State[idxD[cmt]],k] <- Xf[Data$Dose$State[idxD[cmt]],k] + Data$Dose$Amount[idxD[cmt]]
             }
           }
         }

@@ -22,7 +22,7 @@ function( phi, Model, Data, outputInternals=FALSE) {
     Uk <- U[,1,drop=FALSE]
   } else {Uk <- NA}
 
-  ModelHasDose <- "Dose" %in% names(Model)
+  DataHasDose <- "Dose" %in% names(Data)
 
   f  <- Model$Functions$f
   df <- Model$Functions$df
@@ -185,14 +185,14 @@ function( phi, Model, Data, outputInternals=FALSE) {
 
     Xstart <- Xf[,k]
     # Add dose before starting to predict.
-    if(ModelHasDose) {
+    if(DataHasDose) {
       # Check if dosing is occuring at this timepoint.
-      if( any(Time[k]==Model$Dose$Time)) {
-        idxD = which(Time[k]==Model$Dose$Time)
+      if( any(Time[k]==Data$Dose$Time)) {
+        idxD = which(Time[k]==Data$Dose$Time)
         # Multiple dosing a timepoint[k]
         for(cmt in 1:length(idxD)) {
-          Xstart[Model$Dose$State[idxD[cmt]]] <-
-            Xstart[Model$Dose$State[idxD[cmt]]] + Model$Dose$Amount[idxD[cmt]]
+          Xstart[Data$Dose$State[idxD[cmt]]] <-
+            Xstart[Data$Dose$State[idxD[cmt]]] + Data$Dose$Amount[idxD[cmt]]
         }
       }
     }
