@@ -46,9 +46,10 @@ Model definition, description and examples}
 \maketitle
 
 \begin{center}
-\begin{tabular}{lp{6cm}}
+%\begin{tabular}{lp{6cm}}
+\begin{tabular}{ll}
 Package:& \Sexpr{foo[['Package']]}, version \Sexpr{foo[['Version']]}\\
-Built:  & \Sexpr{foo[['Built']]} \\
+%Built:  & \Sexpr{foo[['Built']]} \\
 URL:    & \Sexpr{foo[['URL']]} 
 \end{tabular}
 \end{center}
@@ -126,7 +127,7 @@ noise  measurement error,  that is $\bs e_{ij}\in N(\bs 0,\bs
 S(\bs\phi_i))$. For a non-linear model the covariance matrix may also
 depend on input and time, that is $S(\bs u_t, t, \bs\phi_i))$.
 
-In the evaluation of the non-linear model is nescessary to specify a
+In the evaluation of the non-linear model is necessary to specify a
 Jacobian matrix function with first-order partial derivatives for $\bs
 f$ and $\bs h$. These functions are defined as
 
@@ -210,7 +211,7 @@ given as
 \end{eqnarray}
 
 \noindent where $l_i$ is the a posteriori log-likelihood function for
-the $i$th individual. This likelihhod function is evaluated using the
+the $i$th individual. This likelihood function is evaluated using the
 Kalman Filter for linear models which gives an exact solution. For
 non-linear models the Extended Kalman filter (EKF) is used which is only an
 approximation. The 2nd derivative $\bs\Delta l_i$
@@ -241,7 +242,7 @@ asymptotically have the distribution
   \hat{\bs\Theta} \sim N(\bs\Theta,\bs j ( \hat{\bs\Theta} )^{-1} ). \label{thetadist}
 \end{equation}
 
-This is used in PSM to provied a Wald 95\% confidence interval,
+This is used in PSM to provide a Wald 95\% confidence interval,
 standard error and correlation matrix for the estimates. The Hessian
 is evaluated using \verb+hessian+ in the \verb+numDeriv+ package.
 
@@ -250,7 +251,7 @@ is evaluated using \verb+hessian+ in the \verb+numDeriv+ package.
 A key feature of the SDE approach to population modelling is the
 ability to give improved estimates of the system states given the
 individual parameters and also to provide confidence bands for the
-states. Confidence bands at a timepoint $t$ are directly given by the
+states. Confidence bands at a time point $t$ are directly given by the
 estimated state  covariance matrix $\hat{\bs P}_{i(t|...)}$ from the
 EKF, where $t$ can be both at or between measurements.
 
@@ -295,12 +296,12 @@ the system in \emph{post hoc} analysis \cite{mortensen07}.
 
 \subsubsection*{Comparison to NONMEM}
 
-The Nonmem software is a widely used tool for mixed effects modelling
+The NONMEM software is a widely used tool for mixed effects modelling
 based on ODEs \cite{nonmem}. NONMEM also performs maximum likelihood
 estimation using the FOCE approximation and for many it might thus be
 of interest to know how the two objective functions are related. 
 
-The objective function in Nonmem ($l_{NM}$) is advertised as $-2\log L$ but
+The objective function in NONMEM ($l_{NM}$) is advertised as $-2\log L$ but
 in fact it lacks a constant equal to the likelihood of the data. The PSM
 objective function ($l_{PSM}$) is  $-\log L$ as seen in
 Eq. \eqref{PSMobj} and the relation thereby becomes $l_{NM} = 2\cdot
@@ -351,9 +352,9 @@ PSM is built around two key objects. These are
 \item a model object.
 \end{itemize}
 
-The data object contains sample times, observatinos and possible input
-and covariates for all individuals and the model object contains
-everything related to the model.
+The data object contains sample times, observations and possible
+input, covariates and dosing regimen for all individuals and the model
+object contains everything related to the model.
 
 \subsubsection*{Model object}
 
@@ -364,7 +365,7 @@ input and random effects. When this is done the function
 models as shown below to print a template for the model.
 
 <<PSMtemplateLinear>>=
-PSM.template(Linear=TRUE,dim=3,dimY=1,dimU=0,dimEta=3)
+PSM.template(Linear=TRUE,dimX=3,dimY=1,dimU=0,dimEta=3)
 @ 
 
 The structure of the model object and what each function should return
@@ -381,7 +382,7 @@ The input arguments to the functions are defined as follow:
 \toprule
 Input arg. & Type \\
 \hline 
-\verb+THETA+ &  Vector (possibly named) containg the parameters to be
+\verb+THETA+ &  Vector (possibly named) containing the parameters to be
 maximum likelihood estimated.\\
 %\hline
 \verb+theta+ &  Vector of all parameters in the model.\\
@@ -405,19 +406,26 @@ maximum likelihood estimated.\\
 \subsubsection*{Data object}
 
 The data object is a list with one element for each individual in the
-data set. Each element in the list contains
+data set. Each element in the list must contain:
 
 \begin{itemize}
-  \item \verb+Y+ Matrix with observations. Each columns holds one
+  \item \verb+Y+ - Matrix with observations. Each columns holds one
     (possibly multi-dimensional) observation. Missing observations
     should be marked as NA.
-  \item \verb+Time+ Vector of sample times. The length must correspond
+  \item \verb+Time+ - Vector of sample times. The length must correspond
     to the number of columns in \verb+Y+ for the individual.
-  \item \verb+U+ Matrix with input at sample times. The input cannot contain
+\end{itemize}
+
+\noindent Each element in the list can optionally contain:
+
+\begin{itemize}
+  \item \verb+U+ - Matrix with input at sample times. The input cannot contain
     missing values and is assumed constant between sample times
     (zero-order hold). It must have the same number of columns as \verb+Y+.
-  \item \verb+covar+ A vector/list with covariates to be used in the
+  \item \verb+covar+ - A vector/list with covariates to be used in the
     function \verb+$h$+.
+  \item \verb+Dose+ - A list containing three vectors: Time, State and
+    Amount. See help(PSM.estimate) for more detail.
 \end{itemize}
 
 The data object is illustrated with a small example. The object shown
@@ -425,27 +433,32 @@ contains 4 and 5 observations for two individuals sampled at different
 times and it also has 'BMI' as a covariate for each individual.
 
 <<DataObj>>=
-MyData = list( list(Time=1:4,Y=matrix(c(2.1,3.2,3.4,3.7),nrow=1),covar=c(BMI=20.1)), list(Time=1:5,Y=matrix(c(1.9,2.1,2.0,2.9,3.5),nrow=1),covar=c(BMI=23.4)))
+MyData <- list()
+MyData[[1]] <- list(Time=1:4,Y=matrix(c(2.1,3.2,3.4,3.7),nrow=1),covar=c(BMI=20.1))
+MyData[[2]] <- list(Time=3:7,Y=matrix(c(1.9,2.1,2.0,2.9,3.5),nrow=1),covar=c(BMI=23.4))
 @ 
 
 \subsubsection*{Main functions}
 
-PSM is build around three main functions:
+The PSM program is accessed in R through three main functions:
 
 \begin{itemize}
-\item \verb+PSM.simulate+
-\item \verb+PSM.estimate+
-\item \verb+PSM.smooth+
+\item \verb+PSM.simulate(Model, Data, THETA, deltaTime)+ \\
+  Simulates data for multiple individuals. The number of individuals is
+  determined by length(Data). The simulation is based on the Euler method
+  to be able to simulate SDEs and thus a short time step should be chosen.
+\item \verb+PSM.estimate(Model, Data, Par, CI)+\\
+  Estimates population parameters for any linear or non-linear
+  model. The Par argument is a list containing initial estimates and
+  bounds for the parameter search.
+\item \verb+PSM.smooth(Model, Data, THETA, subsample)+\\
+  Optimal estimates of model states based on estimated parameters. It
+  returns both the predicted, filtered and smoothed state
+  estimates and for models with random effects an estimate of these are
+  also returned. 
 \end{itemize}
 
-
-%Par object PSM.est - good idea to give initial estimates.
-
-%does not have to be sampled at the
-%same time... 
-
-
-%Please also refer to the help files in R.
+For more information please also refer to the help files in R.
 
 
 
@@ -649,14 +662,14 @@ As initial guess for the parameters in $\bs\Theta$ the true parameters
 are used and the bounds are $\pm$ a factor away.
 
 <<Dose.EstimateParameters>>=
-parA <- list(LB=SimDose.THETA/10, Init=SimDose.THETA , UB=SimDose.THETA*1.9 )
+parA <- list(LB=SimDose.THETA*.5, Init=SimDose.THETA , UB=SimDose.THETA*1.5 )
 if(Redo) fitA <- PSM.estimate(Model.SimDose,SimDose.Data,parA,CI=T)
 fitA[1:5]
 SimDose.THETA
 @ 
 
 It is seen that the estimated parameters are reasonably close to the
-true values in \verb+SimDose.THETA+ and the 95\% conficdence intervals
+true values in \verb+SimDose.THETA+ and the 95\% confidence intervals
 include the true values. In particular the first parameter $\sigma_1$
 is significantly different from zero which shows that deviations from
 a normal ODE two-compartment model are significant.
