@@ -8,7 +8,7 @@
 \usepackage{boxedminipage}
 
 <<Sweavepath,include=FALSE,echo=FALSE>>=
-sweavepath <- paste(R.home(),"/share/texmf/",sep="")
+sweavepath <- gsub("[\\]",'/',R.home("share/texmf/"))
 @ 
 \usepackage{\Sexpr{sweavepath}Sweave}
 %%%
