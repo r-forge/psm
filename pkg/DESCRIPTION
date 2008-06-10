@@ -1,8 +1,8 @@
 Package: PSM
 Type: Package
 Title: Non-Linear Mixed-Effects modelling using Stochastic Differential Equations.
-Version: 0.7
-Date: 2008-06-04
+Version: 0.8
+Date: 2008-06-10
 Encoding: latin1
 Author: Stig Mortensen <sbm@imm.dtu.dk> and Søren Klim <skl@imm.dtu.dk>
 Maintainer: Søren Klim <skl@imm.dtu.dk>
