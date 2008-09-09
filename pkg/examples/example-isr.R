@@ -76,7 +76,7 @@ Rprof(NULL)
 summaryRprof(filename = "Rprof1.out")
 summaryRprof(filename = "Rprof2.out")
 
-fit1[1:3] 
+fit1[1:5] 
                                         #$NegLogL [1] 3052.865,
                                         #Runtime:  23:23.02 (linux04, CI=F)
 
@@ -85,6 +85,8 @@ fit1[1:3]
                                         #Runtime:  18:15.79 (linux06, CI=T)
 
 smooth1 <- PSM.smooth(Model=Model1,Data=Cpep,THETA=fit1$THETA,sub=10)
+
+PSM.plot(smooth1,Cpep,indiv=3:5,type=c('Xs','YpObs','res.p','acf.p'))
 
 par(mfcol=c(3,2))
 for(j in 2:3)
@@ -106,11 +108,12 @@ Model1b <- Model1
 Model1b$ModelPar = function(THETA){
               return(list(theta=list(C0=THETA[1],S=THETA[2],SIG33=THETA[3]),
                           OMEGA=NULL))}
+Model1b$h <- function(eta,theta,covar) {theta}
 par1b <- list(LB  = c(  200,  50^2,   0 ),
              Init = c( 1000, 100^2,  10 ),
              UB   = c( 1800, 150^2,  20 ))
 
-fit1b <- PSM.estimate(Model=Model1b,Data=Cpep,Par=par1b,CI=F,trace=1)
+fit1b <- PSM.estimate(Model=Model1b,Data=Cpep,Par=par1b,CI=TRUE,trace=1)
 fit1b[1:3]
                                         #final  value 3071.008968 
 
