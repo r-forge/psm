@@ -1,30 +1,32 @@
 \name{PSM.plot}
 \alias{PSM.plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Basic plots of output}
+\title{Basic plots of data and output}
 \description{
-  Create basic plots for objects from PSM.smooth. 
+  Create basic plots of data and state estimates in PSM. 
 }
 
 \usage{
-  PSM.plot(Smooth, Data, indiv = NULL, type = c('Xs','YsObs')) 
+  PSM.plot(Data, Smooth = NULL, indiv = NULL, type = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{Smooth}{
-    Object from \code{\link{PSM.smooth}}.
-  }
   \item{Data}{
-    Data list.*
+    Data list, see description in \code{\link{PSM.estimate}}.
+  }
+  \item{Smooth}{
+    Output from \code{\link{PSM.smooth}}.
   }
   \item{indiv}{
     A vector of integers with which individuals to include.
   }
   \item{type}{
     A vector of strings listing the types of plots to create. The
-    possibilities are:     Xp, Xf, Xs, Yp, Ys, YpObs, YsObs, res.p, acf.p, res.s, acf.s
+    possibilities are: 'X', 'longX', 'Xp', 'Xf', 'Xs', 'Yp', 'Ys',
+    'Yp.Y', 'Ys.Y', 'res.p', 'acf.p', 'res.s', 'acf.s', 'eta'. If a
+    string i preceeded by 'logx.', 'logy.' or 'logx.logy.' the
+    corresponding axis is shown on log-scale. An example is: c('Xs','logy.Ys.Y','eta')
   }
-  * See description in \link{PSM.estimate}.
 }
 
 \value{

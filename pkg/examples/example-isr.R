@@ -86,7 +86,7 @@ fit1[1:5]
 
 smooth1 <- PSM.smooth(Model=Model1,Data=Cpep,THETA=fit1$THETA,sub=10)
 
-PSM.plot(smooth1,Cpep,indiv=3:5,type=c('Xs','YpObs','res.p','acf.p'))
+PSM.plot(Cpep,smooth1,indiv=3:5,type=c('Xs','Yp.Y','res.p','acf.p','eta'))
 
 par(mfcol=c(3,2))
 for(j in 2:3)
@@ -118,6 +118,8 @@ fit1b[1:3]
                                         #final  value 3071.008968 
 
 smooth1b <- PSM.smooth(Model=Model1b,Data=Cpep,THETA=fit1b$THETA,sub=10,trace=0)
+
+PSM.plot(Cpep,smooth1b,indiv=3:8,type=c('Xs','Yp.Y','res.p','acf.p','eta'))
 
 par(mfcol=c(3,2))
 for(j in 2:3)        # Note worse fit for initial obs.
@@ -210,6 +212,8 @@ fit2[1:3]
                                         # Runtime:  261:44.0 > $NegLogL 2950.348 (factr 1e10) (diag cov neg..)
 
 smooth2 <- PSM.smooth(Model=Model2,Data=Cpep2,THETA=fit2$THETA,sub=10)
+
+PSM.plot(Cpep,smooth2,indiv=3:5,type=c('Xs','Ys.Y','eta'))
 
 par(mfcol=c(4,2))
 for(j in 2:3)
