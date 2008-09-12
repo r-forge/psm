@@ -11,11 +11,12 @@ PSM.plot <- function(Data, Smooth = NULL, indiv = NULL, type = NULL) {
                                   %in% names(Smooth[[i]]))
     if(!issmooth)
       stop('Smooth does not appear to be valid.')
+    if(length(Smooth)!=length(Data))
+      stop('Smooth and Data has different length')
   }
-  if(length(Smooth)!=length(Data))
-    stop('Smooth and Data has different length')
-  if(!is.integer(indiv))
-    stop('indiv must be a vector of integers')
+  if(!is.null(indiv))
+    if(!is.integer(indiv))
+      stop('indiv must be a vector of integers')
   smoothplot <- function(type,obs,len,log) {
     if(is.null(Smooth))
        stop(paste('Smooth must be provied for plot type:',type))
@@ -44,7 +45,7 @@ PSM.plot <- function(Data, Smooth = NULL, indiv = NULL, type = NULL) {
            Data[[j]][[paste(type,'X',sep="")]][i,],
            type="l",xlab="",ylab="",log=log)
       if(j==indiv[1])
-        mtext(paste(type,i,sep=""),side=2,line=2.5)
+        mtext(paste(type,'X',i,sep=""),side=2,line=2.5)
       if(i==1 && k==1)
         title(main=paste('Subject',j))
     }
@@ -59,44 +60,52 @@ PSM.plot <- function(Data, Smooth = NULL, indiv = NULL, type = NULL) {
         title(main=paste('Subject',j))
     }
   }
-  resfun <- function(type) {
+  resfun <- function() {
     if(is.null(Smooth))
-       stop(paste('Smooth must be provied for plot type: res.X and acf.X'))
+       stop(paste('Smooth must be provied for plot type: res and acf'))
     subs <- ceiling(length(Smooth[[j]]$Time)/length(Data[[j]]$Time)) - 1
     idx <- (1:dimT)*(subs+1)-subs
-    Data[[j]]$Y-Smooth[[j]][[type]][,idx]
+    Data[[j]]$Y-Smooth[[j]][['Yp']][,idx]
   }
-  resplot <- function(type,log) {
-    res <- resfun(type)
+  resplot <- function(log) {
+    res <- resfun()
     for(i in 1:dimY) {
       plot(Data[[j]]$Time,res[i,],xlab="",ylab="",log=log)
       abline(h=0)
       if(j==indiv[1])
-        mtext(paste('Y',i," - ",type,i,sep=""),side=2,line=2.5)
+        mtext(paste('Y',i," - Yp",i,sep=""),side=2,line=2.5)
       if(i==1 && k==1)
         title(main=paste('Subject',j))
     }
   }
-  acfplot <- function(type) {
-    res <- resfun(type)
+  acfplot <- function() {
+    res <- resfun()
     for(i in 1:dimY) {
-      tmpylab <- ifelse(j==indiv[1],paste('ACF (Y',i," - ",type,i,')',sep=""),'')
+      tmpylab <- ifelse(j==indiv[1],paste('ACF (Y',i," - Yp",i,')',sep=""),'')
       acf(res[i,],main="",ylab=tmpylab)
       if(i==1 && k==1)
         title(main=paste('Subject',j))
     }
   }
   etaplot <- function() {
+    sim <- ''
     if(is.null(Smooth))
-       stop(paste('Smooth must be provied for plot type:',type))
+      if(!is.null(Data[[j]]$eta)) {
+        sim <- 'sim-'
+      }
+    if(sim=='') { #cannot use ifelse due to possible NULL
+      tmp <- Smooth[[j]]$eta
+    } else {
+      tmp <- Data[[j]]$eta
+    }
     plot.new()
     plot.window(xlim=c(0,10),ylim=c(0,10))
-    len <- length(Smooth[[j]]$eta)
+    len <- length(tmp)
     if(len==0) {
       mtext("No eta's",cex=.7)
     } else {
-      for(m in 1:length(Smooth[[j]]$eta))
-        mtext(paste('eta',m,': ',signif(Smooth[[j]]$eta[m],4),sep=""),line=-1*m+1,cex=.7)
+      for(m in 1:length(tmp))
+        mtext(paste(sim,'eta',m,': ',signif(tmp[m],4),sep=""),line=-1*m+1,cex=.7)
     }
   }
   #Default plots
@@ -124,7 +133,6 @@ PSM.plot <- function(Data, Smooth = NULL, indiv = NULL, type = NULL) {
       numrows <- numrows + dimY
     }
   #Setup plot
-  plot.new()
   par(mfcol=c(numrows,length(indiv)),mar=c(2,4,2,0)+.1)
   #Loop over individuals
   for(j in indiv) {
@@ -149,10 +157,8 @@ PSM.plot <- function(Data, Smooth = NULL, indiv = NULL, type = NULL) {
              X = dataXplot('',log=log),
              longX = dataXplot('long',log=log),
              Y = dataYplot(log=log),
-             res.p = resplot('Yp',log=log),
-             acf.p = acfplot('Yp'),
-             res.s = resplot('Ys',log=log),
-             acf.s = acfplot('Ys'),
+             res = resplot(log=log),
+             acf = acfplot(),
              eta = etaplot(),
              stop(paste('Unknown type:',tk))
              )       

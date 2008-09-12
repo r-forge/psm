@@ -5,9 +5,11 @@
 rm(list=ls())
 
 library(PSM)
+#library(nlme)
 
 # Load the Data and Variables
 tmpData <- read.table("sde0_1.csv",sep=";", col.names=c("Time","F","y1","y2","y3"))
+tmpData <- read.table("~/PSM/PSM/examples/sde0_1.csv",sep=";", col.names=c("Time","F","y1","y2","y3"))
 Time=tmpData$Time
 Y=t(tmpData[,c("y1","y2","y3")])
 U=t(as.matrix(tmpData[,c("F")]))
@@ -87,7 +89,7 @@ MyPar <- list(LB = 0.5*ctsmTHETA,
               UB = 1.5*ctsmTHETA)
 
 fit <- PSM.estimate(MyModel,list(Data),MyPar,CI=TRUE,trace=1)
-fit[1:3]
+fit[1:5]
 
 ###########
 # Parameter uncertainty comparison

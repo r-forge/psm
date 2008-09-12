@@ -80,13 +80,13 @@ fit1[1:5]
                                         #$NegLogL [1] 3052.865,
                                         #Runtime:  23:23.02 (linux04, CI=F)
 
-                                        #med L-BFGS-B på indvendig opt:
+                                        #med L-BFGS-B p? indvendig opt:
                                         #$NegLogL [1] 3052.866
                                         #Runtime:  18:15.79 (linux06, CI=T)
 
 smooth1 <- PSM.smooth(Model=Model1,Data=Cpep,THETA=fit1$THETA,sub=10)
 
-PSM.plot(Cpep,smooth1,indiv=3:5,type=c('Xs','Yp.Y','res.p','acf.p','eta'))
+PSM.plot(Cpep,smooth1,indiv=3:5,type=c('Xs','Yp.Y','res','acf','eta'))
 
 par(mfcol=c(3,2))
 for(j in 2:3)
@@ -119,7 +119,7 @@ fit1b[1:3]
 
 smooth1b <- PSM.smooth(Model=Model1b,Data=Cpep,THETA=fit1b$THETA,sub=10,trace=0)
 
-PSM.plot(Cpep,smooth1b,indiv=3:8,type=c('Xs','Yp.Y','res.p','acf.p','eta'))
+PSM.plot(Cpep,smooth1b,indiv=3:8,type=c('Xs','Yp.Y','res','acf','eta'))
 
 par(mfcol=c(3,2))
 for(j in 2:3)        # Note worse fit for initial obs.
@@ -199,7 +199,7 @@ Model2 <- list(
 par2 <- list(LB   = c(   0.01, 0.005,  2     ,  200     ,    1     ),
              Init = c( 0.0263, 0.0097, 4.7853,  422.2910,    1.7505), 
              UB   = c(   0.05, 0.020,  8     ,  600     ,    2.5   ))
-#ovenstående startværdier genskaber AAA matrice, der giver problemer for Matrix:expm.
+#ovenst?ende startv?rdier genskaber AAA matrice, der giver problemer for Matrix:expm.
 par2$Init <- c( 0.03, 0.01, 5,  400,  2)
 par2$LB <- par2$Init/7
 par2$UB <- par2$Init*7
@@ -207,13 +207,13 @@ par2$UB <- par2$Init*7
 fit2 <- PSM.estimate(Model=Model2,Data=Cpep2,Par=par2,CI=T,trace=1)
 fit2[1:3]
                                         # Runtime:  566:1.2 > $NegLogL [1] 2950.34
-                                        # Runtime:  235:4.6 > $NegLogL [1] 2950.357 (2. sæt par) $THETA [1] 2.605852e-02 9.804498e-03 4.815092e+00 3.973301e+02 1.655686e+00
-                                        # med L-BFGS-B på intern opt:
+                                        # Runtime:  235:4.6 > $NegLogL [1] 2950.357 (2. s?t par) $THETA [1] 2.605852e-02 9.804498e-03 4.815092e+00 3.973301e+02 1.655686e+00
+                                        # med L-BFGS-B p? intern opt:
                                         # Runtime:  261:44.0 > $NegLogL 2950.348 (factr 1e10) (diag cov neg..)
 
 smooth2 <- PSM.smooth(Model=Model2,Data=Cpep2,THETA=fit2$THETA,sub=10)
 
-PSM.plot(Cpep,smooth2,indiv=3:5,type=c('Xs','Ys.Y','eta'))
+PSM.plot(Cpep,smooth2,indiv=3:5,type=c('Xs','Ys.Y','res','acf','eta'))
 
 par(mfcol=c(4,2))
 for(j in 2:3)

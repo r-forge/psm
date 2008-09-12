@@ -153,7 +153,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, control=NULL, fast=TRUE)
 
   \deqn{ dx_t = f(x_t,u_t,t,\phi_i)dt + \sigma(u_t,t,\phi_i) d\omega_t}{
     dx = f(x,u,t,phi)dt + SIG(u,t,phi)dw}
-  \deqn{y_{ij} = h(x_{ij},u_{ij},t_{ij},\phi_i) + e_{ij}}{y = h(x, u, t,
+  \deqn{y_{ij} = g(x_{ij},u_{ij},t_{ij},\phi_i) + e_{ij}}{y = g(x, u, t,
     phi) + e}
 
   where \eqn{e_{ij} \sim N(0,S(u_{ij},t_{ij},\phi_i))}{e ~ N(0,S(x, u, t))} and \eqn{\omega_t}{w} is a
