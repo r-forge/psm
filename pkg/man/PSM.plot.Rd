@@ -24,7 +24,7 @@
     A vector of strings listing the types of plots to create. The
     possibilities are: 'X', 'longX', 'Xp', 'Xf', 'Xs', 'Yp', 'Ys',
     'Yp.Y', 'Ys.Y', 'res', 'acf', 'eta'. If a
-    string i preceeded by 'logx.', 'logy.' or 'logx.logy.' the
+    string is preceeded by 'logx.', 'logy.' or 'logx.logy.' the
     corresponding axis is shown on log-scale. An example is: type=c('Xs','logy.Ys.Y','res','eta')
   }
 }

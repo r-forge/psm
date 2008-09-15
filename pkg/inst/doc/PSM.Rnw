@@ -465,7 +465,7 @@ data set. Each element in the list must contain:
     missing values and is assumed constant between sample times
     (zero-order hold). It must have the same number of columns as \verb+Y+.
   \item \verb+covar+ - A vector/list with covariates to be used in the
-    function \verb+$h$+.
+    function \verb+$h+.
   \item \verb+Dose+ - A list containing three vectors: Time, State and
     Amount. See help(PSM.estimate) for more detail.
 \end{itemize}
@@ -482,7 +482,7 @@ MyData[[2]] <- list(Time=3:7,Y=matrix(c(1.9,2.1,2.0,2.9,3.5),nrow=1),covar=c(BMI
 
 \subsubsection*{Main functions}
 
-The PSM program is accessed in R through three main functions:
+The PSM program is accessed in R through five main functions:
 
 \begin{itemize}
 \item \verb+PSM.simulate(Model, Data, THETA, deltaTime)+ \\
@@ -500,12 +500,13 @@ The PSM program is accessed in R through three main functions:
   also returned. 
 \item \verb+PSM.plot(Data, Smooth, indiv, type)+\\
   Creates a matrix plot with a column for each individual. The rows
-  can show observations, simulated and estimated states, simulated or
-  estimated eta-values, residuals,
-  auto-correlation functions, the x and y axis can be on log-scale and
-  it is possible to list estimated random effects on the plot.
-\item \verb+PSM.template(Linear,dimX,dimY,dimU,dimEta,file=""))+\\
-  *** add numerical eta option in the function ***
+  can show observations, simulated and estimated states, residuals,
+  auto-correlation functions, the x and/or y axis can be on log-scale and
+  it is possible to list simulated or estimated random effects on the plot.
+\item \verb+PSM.template(Linear,dimX,dimY,dimU,dimEta,file)+\\
+  Creates a template with R-syntax to help setup a model in PSM. It
+  works for both linear and non-linear models and it can output the
+  resulting template to the screen or a file.
  
 \end{itemize}
 

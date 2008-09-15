@@ -40,7 +40,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, control=NULL, fast=TRUE)
 	and \code{dg} are the Jacobian matrices with first-order partial
 	derivatives for \code{f(x)} and \code{g(x)} which is needed to
 	evaluate the model. A warning is issued if \code{df}
-	and \code{dg} appear to be different based on a numerical
+	or \code{dg} appear to be incorrect based on a numerical
 	evaluation of the Jacobians of \code{f(x)} and \code{g(x)}.
 
 	It is possible to avoid specifying the Jacobian functions in the model
@@ -204,7 +204,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, control=NULL, fast=TRUE)
   functions \code{MyModel$Functions$f} and
   \code{MyModel$Functions$g}. When these are defined in MyModel the
   functions \code{df} and \code{dg} can be added to the model object by
-  writing exactly as below: 
+  writing as below: 
 
   \preformatted{
   MyModel$Functions$df = function(x,u,time,phi) {
@@ -219,7 +219,7 @@ PSM.estimate(Model, Data, Par, CI = FALSE, trace = 0, control=NULL, fast=TRUE)
   This way of defining \code{df} and \code{dg} forces a numerical
   evaluation of the Jacobians using the \pkg{numDeriv} package. It may
   be usefull in some cases, but it should be stressed that it will
-  probably give at least \emph{a ten-fold increase in estimation times.}
+  probably give at least a ten-fold increase in estimation times.
 
 }
 
