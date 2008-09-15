@@ -171,7 +171,13 @@ f$ and $\bs g$. These functions are defined as
 \frac{\partial \bs f}{\partial \bs x_t} ~~, ~~ \frac{\partial \bs g}{\partial \bs x_t}
 \end{equation}
 
-\noindent and must be given with the model specification. 
+\noindent and must be given with the model specification. PSM will
+check the user defined Jacobian functions with numerical evaluations of
+the Jacobians of $\bs f$ and $\bs g$ to ensure that they are correct. 
+It is possible to avoid specifying the Jacobian functions in the model
+and use numerical approximations instead, but this will increase
+estimation time at least ten-fold. See the help file in \verb+R+ for
+\verb+PSM.estimate+ for details regarding this.
 
 The initial state of the model is given as a function of $t_1$,
 $\bs\phi_i$, and $u_{i1}$ and defines the model state at time $t_1$
@@ -498,6 +504,8 @@ The PSM program is accessed in R through three main functions:
   estimated eta-values, residuals,
   auto-correlation functions, the x and y axis can be on log-scale and
   it is possible to list estimated random effects on the plot.
+\item \verb+PSM.template(Linear,dimX,dimY,dimU,dimEta,file=""))+\\
+  *** add numerical eta option in the function ***
  
 \end{itemize}
 

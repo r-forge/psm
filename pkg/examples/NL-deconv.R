@@ -36,6 +36,14 @@ MyModel$ModelPar = function(THETA) {
          ))
 }
 
+#TEST numerical df + dg
+MyModel$Functions$df = function(x,u,time,phi) {
+  jacobian(MyModel$Functions$f,x=x,u=u,time=time,phi=phi)
+}
+MyModel$Functions$dg = function(x,u,time,phi) {
+  jacobian(MyModel$Functions$g,x=x,u=u,time=time,phi=phi)
+}
+
 
 TimeData <- list(list( Time = seq(0,100,10,
                        Dose = list(Time=c(10,20,40,50,50), State=c(3,3,3,2,1),
@@ -60,7 +68,9 @@ par <- list(LB = MyTHETA*.1,
             Init = MyTHETA,
             UB = MyTHETA*2)
 
-fit <- PSM.estimate(MyModel,Data,par,trace=1,CI=TRUE)
+system.time(
+            fit <- PSM.estimate(MyModel,Data,par,trace=1,CI=TRUE)
+            )
 fit[1:5]
 
 smooth <- PSM.smooth(MyModel,Data,fit$THETA,subs=40)

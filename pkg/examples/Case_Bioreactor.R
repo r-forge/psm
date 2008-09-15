@@ -84,11 +84,21 @@ phi <- MyModel$ModelPar(ctsmTHETA)$theta
 ExtKalmanFilter(phi,MyModel,Data) #CTSM: -388.4857 #PSM: -388.4689
 
 
-MyPar <- list(LB = 0.5*ctsmTHETA,
-              Init = ctsmTHETA*1.1,
-              UB = 1.5*ctsmTHETA)
+if(FALSE) { #Numerical gradients
+  MyModel$Functions$df = function(x,u,time,phi) {
+    jacobian(MyModel$Functions$f,x=x,u=u,time=time,phi=phi)
+  }
+  MyModel$Functions$dg = function(x,u,time,phi) {
+    jacobian(MyModel$Functions$g,x=x,u=u,time=time,phi=phi)
+  }
+}
 
-fit <- PSM.estimate(MyModel,list(Data),MyPar,CI=TRUE,trace=1)
+MyPar <- list(LB = 0.5*ctsmTHETA,
+              Init = ctsmTHETA*1,
+              UB = 1.5*ctsmTHETA)
+system.time(
+fit <- PSM.estimate(MyModel,list(Data),MyPar,CI=FALSE,trace=1)
+            )
 fit[1:5]
 
 ###########
