@@ -75,7 +75,7 @@ function(Model,Data,Par,CI=FALSE,trace=0, control=NULL, fast=TRUE) {
     optimizer <- control$optimizer
     if(is.null(optimizer))
       stop('Include choice of optimizer in control$optimizer')
-    if(!(optimizer %in% c('optim','ucminf','nlm')))
+    if(!(optimizer %in% c('optim','ucminf')))
       stop( "Optimizer not recognized")
     control <- control[-match('optimizer',names(control))]
   }
